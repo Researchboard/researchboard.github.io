@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ResearchBoard — daily science publishing tracker</title>
+<meta name="description" content="Daily graphs of papers added to PubMed, papers published worldwide, new citations, top countries, universities and most-cited scientists.">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="brand">
+      <span class="pulse-dot" aria-hidden="true"></span>
+      <div>
+        <h1>ResearchBoard</h1>
+        <p class="sub">The daily market board for science publishing</p>
+      </div>
+    </div>
+    <div class="status">
+      <span id="asof">Loading…</span>
+      <button id="themeBtn" class="ghost" type="button" aria-label="Switch light or dark theme">◐</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="emptyState" class="notice" hidden>
+    <strong>No data yet.</strong> Run the daily update once (see README → step 4) and refresh this page.
+  </div>
+
+  <!-- Ticker strip -->
+  <section class="ticker" aria-label="Latest day at a glance">
+    <div class="tile" id="t-pubmed">
+      <div class="label">Added to PubMed</div>
+      <div class="value">—</div>
+      <div class="delta">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-papers">
+      <div class="label">Papers published (worldwide)</div>
+      <div class="value">—</div>
+      <div class="delta">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-cites">
+      <div class="label">New citations made</div>
+      <div class="value">—</div>
+      <div class="delta">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-country">
+      <div class="label">Top country</div>
+      <div class="value small">—</div>
+      <div class="delta">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-inst">
+      <div class="label">Top university / institute</div>
+      <div class="value small">—</div>
+      <div class="delta">&nbsp;</div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Time range">
+      <button type="button" data-range="30" class="on">30D</button>
+      <button type="button" data-range="90">90D</button>
+      <button type="button" data-range="365">1Y</button>
+      <button type="button" data-range="0">All</button>
+    </div>
+    <label class="daypick">Day shown in rankings
+      <select id="daySelect"></select>
+    </label>
+  </div>
+
+  <!-- Trend charts -->
+  <section class="grid3">
+    <article class="card">
+      <header><h2>Papers added to PubMed per day</h2></header>
+      <div class="chart"><canvas id="c-pubmed" aria-label="Line chart of daily PubMed additions"></canvas></div>
+      <p class="foot">Records entering PubMed each day (Entrez date).</p>
+    </article>
+    <article class="card">
+      <header><h2>Papers published per day (all fields)</h2></header>
+      <div class="chart"><canvas id="c-papers" aria-label="Line chart of daily papers published"></canvas></div>
+      <p class="foot">OpenAlex works with that publication date. Recent days keep rising as papers are indexed.</p>
+    </article>
+    <article class="card">
+      <header><h2>New citations made per day</h2></header>
+      <div class="chart"><canvas id="c-cites" aria-label="Line chart of new citations made per day"></canvas></div>
+      <p class="foot">Total references listed in that day's new papers = citations added to the literature.</p>
+    </article>
+  </section>
+
+  <!-- Countries & universities -->
+  <section class="grid2">
+    <article class="card">
+      <header><h2>Top countries <span class="muted" id="cDay"></span></h2></header>
+      <div class="chart tall"><canvas id="c-countries" aria-label="Bar chart of papers by country"></canvas></div>
+      <p class="foot">Papers with at least one author from that country. Click a bar to open the country.</p>
+    </article>
+    <article class="card">
+      <header><h2>Top universities &amp; institutes <span class="muted" id="iDay"></span></h2></header>
+      <div class="chart tall"><canvas id="c-insts" aria-label="Bar chart of papers by institution"></canvas></div>
+      <p class="foot">Papers with at least one author affiliated (including sub-units).</p>
+    </article>
+  </section>
+
+  <!-- Country view -->
+  <section class="card country" id="countryCard">
+    <header class="row">
+      <h2>Country view</h2>
+      <select id="countrySelect" aria-label="Choose country"></select>
+    </header>
+    <div class="country-grid">
+      <div>
+        <div class="mini-tiles">
+          <div class="mini"><div class="label">Papers published</div><div class="value" id="cv-papers">—</div></div>
+          <div class="mini"><div class="label">Added to PubMed</div><div class="value" id="cv-pubmed">—</div></div>
+          <div class="mini"><div class="label">World rank</div><div class="value" id="cv-rank">—</div></div>
+        </div>
+        <div class="chart"><canvas id="c-country" aria-label="Line chart of this country's daily papers"></canvas></div>
+      </div>
+      <div>
+        <h3>Top institutions</h3>
+        <ol id="cv-insts" class="rank"></ol>
+        <h3>Most-cited scientists</h3>
+        <ol id="cv-authors" class="rank"></ol>
+      </div>
+    </div>
+    <p class="foot" id="cv-note"></p>
+  </section>
+
+  <!-- Leaderboards -->
+  <section class="grid2">
+    <article class="card">
+      <header><h2>Top 5 scientists — citations gained <span class="muted" id="gainNote"></span></h2></header>
+      <div class="chart short"><canvas id="c-gainers" aria-label="Bar chart of citation gains"></canvas></div>
+      <p class="foot" id="gainFoot">Measured among the 200 most-cited scientists by comparing today's totals with the last snapshot.</p>
+    </article>
+    <article class="card">
+      <header><h2>Most-cited scientists (all time)</h2></header>
+      <div class="table-wrap">
+        <table id="tbl-authors">
+          <thead><tr><th>#</th><th>Scientist</th><th>Institution</th><th class="num">Citations</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid2">
+    <article class="card">
+      <header><h2>Hottest papers (published in last 12 months)</h2></header>
+      <ol id="hotPapers" class="papers"></ol>
+    </article>
+    <article class="card">
+      <header><h2>Most-cited papers (all time)</h2></header>
+      <ol id="topPapers" class="papers"></ol>
+    </article>
+  </section>
+
+  <section class="card about">
+    <h2>About the numbers</h2>
+    <ul>
+      <li><b>PubMed</b> numbers come from NCBI E-utilities and count records added that day. Country counts search author affiliations, so a paper with authors in two countries counts for both.</li>
+      <li><b>Worldwide papers, countries, universities and citations</b> come from <a href="https://openalex.org" rel="noopener">OpenAlex</a>. Many journals give only a month, which is stored as the 1st — expect spikes on the 1st of each month.</li>
+      <li>Each day shown is the last <b>complete UTC day</b>. The last 7 days are re-counted daily, so recent points move up as late papers arrive.</li>
+      <li>Citation totals of scientists update when OpenAlex refreshes them, which is not always daily; a gain can cover more than one day.</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="wrap foot-site">
+  Data: <a href="https://pubmed.ncbi.nlm.nih.gov/" rel="noopener">PubMed / NCBI</a> · <a href="https://openalex.org" rel="noopener">OpenAlex</a> (CC0). Updated automatically every day.
+</footer>
+</body>
+</html>
