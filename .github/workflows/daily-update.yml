@@ -6,7 +6,7 @@ on:
   workflow_dispatch:         # "Run workflow" button in the Actions tab
   push:
     branches: [main]         # re-publish when you edit the website or write a blog post
-    paths-ignore: ["data/**", "posts/daily/**"]
+    paths-ignore: ["data/**", "posts/daily/**", "posts/images/cards/**"]
 
 permissions:
   contents: write
@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install blog tools
-        run: pip install markdown==3.7
+        run: pip install markdown==3.7 pillow==11.3.0
 
       - name: Collect the latest numbers
         if: github.event_name != 'push'
@@ -43,11 +43,15 @@ jobs:
           EXTRA_COUNTRIES: ${{ vars.EXTRA_COUNTRIES }}
         run: python scripts/update_data.py
 
-      - name: Write today's automatic blog post
+      - name: Write today's automatic blog post and image card
         if: github.event_name != 'push'
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/build_blog.py --daily
 
       - name: Build the blog
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/build_blog.py
 
       - name: Save the new data to the repository
@@ -55,7 +59,7 @@ jobs:
         run: |
           git config user.name  "researchboard-bot"
           git config user.email "researchboard-bot@users.noreply.github.com"
-          git add data/ posts/daily/
+          git add data/ posts/daily/ posts/images/cards/
           if git diff --cached --quiet; then
             echo "No changes"
           else
@@ -77,3 +81,26 @@ jobs:
           path: _site
       - id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Post to social media
+        if: github.event_name != 'push'
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          FB_GRAPH_VERSION: ${{ vars.FB_GRAPH_VERSION }}
+          LINKEDIN_VERSION: ${{ vars.LINKEDIN_VERSION }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
+          LINKEDIN_AUTHOR: ${{ secrets.LINKEDIN_AUTHOR }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
+        run: |
+          python scripts/post_social.py
+          if [ -n "$(git status --porcelain -- data/social_log.json)" ]; then
+            git add data/social_log.json
+            git commit -m "Social posts $(date -u +%F)"
+            git pull --rebase --autostash origin main || true
+            git push
+          fi
