@@ -241,3 +241,30 @@ dialog::backdrop { background: rgba(10, 20, 40, .45); }
   .hero h1 { font-size: 22px; }
   .chart.tall { height: 380px; }
 }
+
+/* ---------------------------------------------------------------- research market ticker */
+.market { background: #0b1220; color: #e8eef8; border-radius: 16px; padding: 14px 18px 12px; margin-bottom: 18px;
+  border: 1px solid #1d2a40; overflow: hidden; }
+.market-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-bottom: 10px; }
+.market-tag { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12px; letter-spacing: .08em;
+  text-transform: uppercase; color: #3fdc82; }
+.market-dot { width: 8px; height: 8px; border-radius: 50%; background: #3fdc82; box-shadow: 0 0 0 0 rgba(63,220,130,.6);
+  animation: mpulse 2s infinite; }
+@keyframes mpulse { 0% { box-shadow: 0 0 0 0 rgba(63,220,130,.6); } 70% { box-shadow: 0 0 0 8px rgba(63,220,130,0); } 100% { box-shadow: 0 0 0 0 rgba(63,220,130,0); } }
+.market-window { font-size: 12.5px; color: #9fb0c8; }
+.ticker { position: relative; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.ticker-track { display: inline-flex; gap: 34px; white-space: nowrap; padding: 4px 0; animation: tick 45s linear infinite; }
+.ticker:hover .ticker-track { animation-play-state: paused; }
+@keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.tk { display: inline-flex; align-items: baseline; gap: 8px; font-size: 15px; }
+.tk .lbl { color: #c9d4e5; font-weight: 500; }
+.tk .val { color: #3fdc82; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tk.big .val { font-size: 19px; }
+.tk .fi { border-radius: 2px; }
+.market-note { margin: 8px 0 0; font-size: 12.5px; color: #8fa0b8; }
+.market-note b { color: #dfe7f3; }
+.market.flagged .ticker-track { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; flex-wrap: wrap; white-space: normal; row-gap: 6px; }
+  .market-dot { animation: none; }
+}

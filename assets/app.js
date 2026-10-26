@@ -149,7 +149,7 @@
     set("k-insts", "institutions_active"); set("k-cites", "citations_made");
     const lab = $("#dayLabel");
     const ld = S.latest && S.latest.latest_day;
-    lab.textContent = S.day === ld ? "Latest complete day" : S.day > ld ? "Still being indexed" : "Selected day";
+    lab.textContent = S.day === ld ? "Latest fully counted day" : S.day > ld ? "Still being indexed" : "Selected day";
   }
 
   // ------------------------------------------------------------------ trend
@@ -457,9 +457,46 @@
 
   // ------------------------------------------------------------------ render all
   function renderDayParts() { renderKpis(); renderTables(); renderFields(); renderCountry(); renderMap(); buildSearch(); }
+  // ------------------------------------------------------------------ research market (last 24 hours)
+  function renderMarket() {
+    const m = S.latest && S.latest.market;
+    const box = $("#market");
+    if (!m) { box.hidden = true; return; }
+    box.hidden = false;
+    const t0 = new Date(m.from), t1 = new Date(m.to);
+    const f = (d) => d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
+    $("#mWindow").textContent = `${f(t0)} → ${f(t1)} UTC`;
+    const track = $("#mTrack"); track.textContent = "";
+    const ld = S.latest.latest_day;
+    if (m.flagged) {
+      box.classList.add("flagged");
+      track.appendChild(el("span", "tk", "Today's 24-hour change is not shown: " + m.flagged + "."));
+    } else {
+      box.classList.remove("flagged");
+      const items = [];
+      const tk = (label, value, code, big) => {
+        const s = el("span", "tk" + (big ? " big" : ""));
+        if (code) { const fl = el("span", "fi fi-" + code.toLowerCase()); s.appendChild(fl); }
+        s.appendChild(el("span", "lbl", label)); s.appendChild(el("span", "val", value)); return s;
+      };
+      items.push(tk("New papers added", "▲ +" + fmt(m.papers_added), null, true));
+      if (m.pubmed_yesterday) items.push(tk("PubMed records added", "▲ +" + fmt(m.pubmed_yesterday), null, true));
+      if (m.countries_active) items.push(tk("Countries contributing", fmt(m.countries_active), null, true));
+      (m.countries || []).slice(0, 10).forEach((c) => items.push(tk(countryName(c.code), "▲ +" + fmt(c.added), c.code)));
+      (m.institutions || []).slice(0, 5).forEach((i) => items.push(tk(i.name, "▲ +" + fmt(i.added))));
+      // two copies so the scroll loops seamlessly
+      [0, 1].forEach((copy) => items.forEach((n) => { const x = n.cloneNode(true); if (copy) x.setAttribute("aria-hidden", "true"); track.appendChild(x); }));
+    }
+    const note = $("#mNote"); note.textContent = "";
+    note.append("Papers added to the global research record between our last two updates. ");
+    note.append("The dashboard below shows the latest ");
+    note.appendChild(el("b", null, "fully counted day"));
+    note.append(ld ? ` (${longDate(ld)}), because journals report papers over several days.` : ".");
+  }
+
   function renderAll() {
     if (!S.history) return;
-    renderDayParts(); renderTrend(); renderCitations(); renderScientists(); renderPapers();
+    renderMarket(); renderDayParts(); renderTrend(); renderCitations(); renderScientists(); renderPapers();
   }
 
   // ------------------------------------------------------------------ blog strip
