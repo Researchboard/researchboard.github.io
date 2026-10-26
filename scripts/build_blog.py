@@ -145,6 +145,7 @@ def page(title: str, description: str, body: str, canonical: str, extra_head: st
 <link rel="stylesheet" href="../assets/blog.css">
 {extra_head}
 <script>try{{var t=localStorage.getItem("researchboard-theme");if(t)document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}</script>
+<script data-goatcounter="https://researchboard.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <header class="topbar">
