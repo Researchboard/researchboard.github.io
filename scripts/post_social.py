@@ -42,7 +42,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 LOG = DATA / "social_log.json"
-SITE = os.environ.get("SITE_URL", "").strip().rstrip("/") or "https://researchboard.github.io"
+SITE = os.environ.get("SITE_URL", "").strip().rstrip("/") or "https://researchboard.net"
 FB_VERSION = os.environ.get("FB_GRAPH_VERSION", "").strip() or "v23.0"
 LI_VERSION = os.environ.get("LINKEDIN_VERSION", "").strip() or "202608"
 DRY = os.environ.get("SOCIAL_DRY_RUN", "") not in ("", "0", "false")

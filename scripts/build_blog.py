@@ -42,7 +42,7 @@ DAILY = POSTS / "daily"
 OUT = ROOT / "blog"
 DATA = ROOT / "data"
 import os
-SITE_URL = (os.environ.get("SITE_URL", "").strip().rstrip("/") or "https://researchboard.github.io")
+SITE_URL = (os.environ.get("SITE_URL", "").strip().rstrip("/") or "https://researchboard.net")
 SITE_NAME = "ResearchBoard"
 TAGLINE = "Every Paper. Every Citation. Every Discovery."
 
