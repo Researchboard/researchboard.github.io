@@ -483,6 +483,9 @@
     const t0 = new Date(m.from), t1 = new Date(m.to);
     const f = (d) => d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
     $("#mWindow").textContent = `${f(t0)} → ${f(t1)} UTC`;
+    const hrs = Math.round(m.hours || 24);
+    const tag = document.querySelector("#market .market-tag");
+    if (tag) tag.lastChild.textContent = "Research Market · " + (Math.abs(hrs - 24) <= 2 ? "Last 24 hours" : `Last ${hrs} hours`);
     const track = $("#mTrack"); track.textContent = "";
     const ld = S.latest.latest_day;
     if (m.flagged) {
@@ -505,7 +508,7 @@
       [0, 1].forEach((copy) => items.forEach((n) => { const x = n.cloneNode(true); if (copy) x.setAttribute("aria-hidden", "true"); track.appendChild(x); }));
     }
     const note = $("#mNote"); note.textContent = "";
-    note.append("Papers added to the global research record between our last two updates. ");
+    note.append(`Papers added to the global research record in the ${Math.abs(hrs - 24) <= 2 ? "last 24 hours" : "last " + hrs + " hours"}, between our two most recent updates. `);
     note.append("The dashboard below shows the latest ");
     note.appendChild(el("b", null, "fully counted day"));
     note.append(ld ? ` (${longDate(ld)}), because journals report papers over several days.` : ".");
