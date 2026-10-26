@@ -364,6 +364,25 @@ def citation_gainers(authors: list[dict], today: dt.date) -> tuple[list[dict], s
 
 # --------------------------------------------------------------------------- main
 
+def pick_complete_day(days: dict, newest: dt.date, look_back: int = 14) -> dt.date:
+    """Newest day whose OpenAlex count is at least 40% of the recent median."""
+    counts = []
+    for i in range(1, look_back + 1):
+        v = days.get(iso(newest - dt.timedelta(days=i)), {}).get("openalex_published")
+        if isinstance(v, int):
+            counts.append(v)
+    if not counts:
+        return newest
+    counts.sort()
+    median = counts[len(counts) // 2]
+    for i in range(0, 7):
+        d = newest - dt.timedelta(days=i)
+        v = days.get(iso(d), {}).get("openalex_published")
+        if isinstance(v, int) and v >= 0.4 * median:
+            return d
+    return newest
+
+
 def main() -> int:
     today = dt.datetime.now(dt.timezone.utc).date()
     latest_day = today - dt.timedelta(days=1)  # last complete UTC day
@@ -388,7 +407,13 @@ def main() -> int:
         merged = {**old, **fresh}
         days[iso(d)] = merged
 
-    # 3) Country detail for the latest day.
+    # 3) Pick the newest day OpenAlex has mostly finished indexing. The last
+    #    day or two are often only partly indexed (a few hundred papers instead
+    #    of tens of thousands), which would make the rankings misleading.
+    latest_day = pick_complete_day(days, latest_day)
+    print("Rankings day:", latest_day)
+
+    # Country detail for that day.
     latest_rec = days[iso(latest_day)]
     country_list = list(latest_rec.get("countries", []))
     names = {c["code"]: c["name"] for c in country_list}
