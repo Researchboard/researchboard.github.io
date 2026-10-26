@@ -5,8 +5,8 @@ on:
     - cron: "17 6 * * *"   # every day at 06:17 UTC (after the UTC day has closed)
   workflow_dispatch:         # "Run workflow" button in the Actions tab
   push:
-    branches: [main]         # re-publish when you edit the website files
-    paths-ignore: ["data/**"]
+    branches: [main]         # re-publish when you edit the website or write a blog post
+    paths-ignore: ["data/**", "posts/daily/**"]
 
 permissions:
   contents: write
@@ -28,9 +28,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
-        if: github.event_name != 'push'
         with:
           python-version: "3.12"
+
+      - name: Install blog tools
+        run: pip install markdown==3.7
 
       - name: Collect the latest numbers
         if: github.event_name != 'push'
@@ -41,23 +43,31 @@ jobs:
           EXTRA_COUNTRIES: ${{ vars.EXTRA_COUNTRIES }}
         run: python scripts/update_data.py
 
+      - name: Write today's automatic blog post
+        if: github.event_name != 'push'
+        run: python scripts/build_blog.py --daily
+
+      - name: Build the blog
+        run: python scripts/build_blog.py
+
       - name: Save the new data to the repository
         if: github.event_name != 'push'
         run: |
           git config user.name  "researchboard-bot"
           git config user.email "researchboard-bot@users.noreply.github.com"
-          git add data/
+          git add data/ posts/daily/
           if git diff --cached --quiet; then
             echo "No changes"
           else
             git commit -m "Daily data update $(date -u +%F)"
+            git pull --rebase --autostash origin main || true
             git push
           fi
 
       - name: Prepare site
         run: |
           mkdir -p _site
-          cp -r index.html assets _site/
+          cp -r index.html assets blog _site/
           if [ -d data ]; then cp -r data _site/; fi
           rm -f _site/data/*snapshot*.json
 
