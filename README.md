@@ -95,6 +95,13 @@ anyone else from using your domain on GitHub.
 
 ---
 
+## Blog and social media
+
+- **Blog:** write posts in the `posts/` folder (see `posts/README.md`). A "Today in Research"
+  report with an image card is written automatically every morning.
+- **Social media:** the daily report can be posted automatically to a Facebook Page and
+  LinkedIn. See **SOCIAL_SETUP.md** for the keys you need.
+
 ## What each number means (read this before trusting a graph)
 
 | Number | Source | Exactly what is counted |
