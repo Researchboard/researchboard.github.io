@@ -10,6 +10,10 @@ Repository secrets (Settings -> Secrets and variables -> Actions):
     FB_PAGE_ID            the Page's numeric ID
     FB_PAGE_TOKEN         a Page access token with pages_manage_posts
 
+  Bluesky
+    BLUESKY_HANDLE        e.g. researchboard.bsky.social
+    BLUESKY_APP_PASSWORD  an app password (Settings > Privacy and security > App passwords)
+
   LinkedIn Page via Make.com (used when set)
     MAKE_WEBHOOK_URL      the Custom webhook address of the Make scenario
 
@@ -102,7 +106,13 @@ def compose() -> dict | None:
     url = f"{SITE}/blog/daily-{day}.html"
     lines += ["", f"Full daily report 👉 {url}", "", "#Research #Science #OpenScience #Bibliometrics #PubMed #ResearchBoard"]
     card = ROOT / "posts" / "images" / "cards" / f"daily-{day}.png"
-    return {"day": day, "text": "\n".join(lines), "url": url,
+    short = [f"📊 Today in Research — {d:%b} {d.day}, {d.year}",
+             f"📄 {f(rec.get('papers'))} papers · 🌍 {f(rec.get('countries_active'))} countries",
+             f"🧬 {f(rec.get('pubmed_added'))} PubMed · 🔗 {f(rec.get('citations_made'))} citations"]
+    if top:
+        short.append(" ".join(f"{medals[i]} {names.get(c, c)}" for i, (c, _) in enumerate(top)))
+    short += [f"Report: {url.split('://', 1)[-1]}", "#Science #Research"]
+    return {"day": day, "text": "\n".join(lines), "url": url, "short": "\n".join(short),
             "title": f"Today in Research — {d:%B} {d.day}, {d.year}",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/daily-{day}.png" if card.exists() else None}
@@ -133,7 +143,13 @@ def compose_market() -> dict | None:
     lines += ["", f"Live dashboard 👉 {SITE}", "", "#Research #Science #OpenScience #ResearchMarket #ResearchBoard"]
     day = t1.date().isoformat()
     card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
-    return {"day": day, "text": "\n".join(lines), "url": SITE + "/",
+    short = [f"📈 Research Market — {span}", f"▲ +{m['papers_added']:,} new papers added"]
+    if m.get("pubmed_yesterday"):
+        short.append(f"🧬 +{m['pubmed_yesterday']:,} PubMed records")
+    if movers:
+        short.append("Top: " + " · ".join(f"{names.get(c['code'], c['code'])} +{c['added']:,}" for c in movers[:3]))
+    short += [f"Live: {SITE.split('://', 1)[-1]}", "#Science #Research"]
+    return {"day": day, "text": "\n".join(lines), "url": SITE + "/", "short": "\n".join(short),
             "title": f"Research Market — {span} to {t1:%b} {t1.day}",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/market-{day}.png" if card.exists() else None}
@@ -251,6 +267,53 @@ def linkedin_escape(text: str) -> str:
     return re.sub(r"\\#(\w+)", lambda m: "{hashtag|\\#|" + m.group(1) + "}", text)
 
 
+# --------------------------------------------------------------------------- Bluesky
+
+BSKY = "https://bsky.social/xrpc"
+
+
+def bluesky_facets(text: str) -> list[dict]:
+    """Make links and #hashtags clickable (Bluesky needs UTF-8 byte offsets)."""
+    facets = []
+    for m in re.finditer(r"(https?://\S+|(?<!\w)[a-z0-9-]+\.[a-z]{2,}(?:/\S*)?)", text):
+        start = len(text[:m.start()].encode()); end = start + len(m.group(0).encode())
+        uri = m.group(0) if m.group(0).startswith("http") else "https://" + m.group(0)
+        facets.append({"index": {"byteStart": start, "byteEnd": end},
+                       "features": [{"$type": "app.bsky.richtext.facet#link", "uri": uri}]})
+    for m in re.finditer(r"(?<!\w)#(\w+)", text):
+        start = len(text[:m.start()].encode()); end = start + len(m.group(0).encode())
+        facets.append({"index": {"byteStart": start, "byteEnd": end},
+                       "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": m.group(1)}]})
+    return facets
+
+
+def post_bluesky(msg: dict) -> str:
+    handle, password = env("BLUESKY_HANDLE").lstrip("@"), env("BLUESKY_APP_PASSWORD")
+    if not (handle and password):
+        return "skipped (no BLUESKY_HANDLE / BLUESKY_APP_PASSWORD)"
+    text = msg.get("short") or msg["text"]
+    if len(text) > 300:
+        text = text[:297].rsplit("\n", 1)[0]
+    if DRY:
+        return f"dry run ({len(text)} chars)"
+    h = {"Content-Type": "application/json"}
+    _, _, sess = request("POST", f"{BSKY}/com.atproto.server.createSession",
+                         {"identifier": handle, "password": password}, headers=h)
+    auth = {"Authorization": f"Bearer {sess['accessJwt']}"}
+    record = {"$type": "app.bsky.feed.post", "text": text, "langs": ["en"],
+              "createdAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+              "facets": bluesky_facets(text)}
+    if msg.get("card_path"):
+        _, _, up = request("POST", f"{BSKY}/com.atproto.repo.uploadBlob", raw=msg["card_path"].read_bytes(),
+                           headers={**auth, "Content-Type": "image/png"})
+        record["embed"] = {"$type": "app.bsky.embed.images", "images": [
+            {"alt": msg["title"], "image": up["blob"], "aspectRatio": {"width": 1200, "height": 630}}]}
+    _, _, res = request("POST", f"{BSKY}/com.atproto.repo.createRecord",
+                        {"repo": sess["did"], "collection": "app.bsky.feed.post", "record": record},
+                        headers={**h, **auth})
+    return f"posted ({res.get('uri', 'ok')})"
+
+
 # --------------------------------------------------------------------------- main
 
 def main() -> int:
@@ -268,7 +331,7 @@ def main() -> int:
             print(f"{kind}: nothing to post")
             continue
         print(f"----- {kind} message -----\n" + msg["text"] + "\n-------------------")
-        for name, fn in (("facebook", post_facebook), ("linkedin", post_linkedin)):
+        for name, fn in (("facebook", post_facebook), ("linkedin", post_linkedin), ("bluesky", post_bluesky)):
             key = name + suffix
             done = log.get(key, [])
             if msg["day"] in done:
