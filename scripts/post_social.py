@@ -25,6 +25,7 @@ Repository secrets (Settings -> Secrets and variables -> Actions):
 
 Repository variables (optional): SITE_URL, FB_GRAPH_VERSION, LINKEDIN_VERSION.
 Set SOCIAL_DRY_RUN=1 to print the posts without sending them.
+SOCIAL_MODE=market | report | both chooses which post(s) to send (default both).
 """
 
 from __future__ import annotations
@@ -105,6 +106,35 @@ def compose() -> dict | None:
             "title": f"Today in Research — {d:%B} {d.day}, {d.year}",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/daily-{day}.png" if card.exists() else None}
+
+
+def compose_market() -> dict | None:
+    latest = json.loads((DATA / "latest.json").read_text(encoding="utf-8"))
+    m = latest.get("market")
+    if not m or m.get("flagged"):
+        return None
+    names = latest.get("country_names", {})
+    t0 = dt.datetime.fromisoformat(m["from"]); t1 = dt.datetime.fromisoformat(m["to"])
+    window = f"{t0:%b} {t0.day}, {t0:%H:%M} → {t1:%b} {t1.day}, {t1:%H:%M} UTC"
+    lines = [f"📈 Research Market — last 24 hours", f"⏱️ {window}", "",
+             f"▲ +{m['papers_added']:,} new papers added to the global research record"]
+    if m.get("pubmed_yesterday"):
+        lines.append(f"🧬 +{m['pubmed_yesterday']:,} records added to PubMed")
+    if m.get("countries_active"):
+        lines.append(f"🌍 {m['countries_active']:,} countries contributed")
+    movers = m.get("countries", [])[:5]
+    if movers:
+        lines += ["", "Top movers:"] + [f"▲ {names.get(c['code'], c['code'])} +{c['added']:,}" for c in movers]
+    inst = (m.get("institutions") or [])[:1]
+    if inst:
+        lines += ["", f"🏛️ Top institution: {inst[0]['name']} +{inst[0]['added']:,}"]
+    lines += ["", f"Live dashboard 👉 {SITE}", "", "#Research #Science #OpenScience #ResearchMarket #ResearchBoard"]
+    day = t1.date().isoformat()
+    card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
+    return {"day": day, "text": "\n".join(lines), "url": SITE + "/",
+            "title": f"Research Market — last 24 hours to {t1:%b} {t1.day}",
+            "card_path": card if card.exists() else None,
+            "card_url": f"{SITE}/blog/images/cards/market-{day}.png" if card.exists() else None}
 
 
 # --------------------------------------------------------------------------- Facebook
@@ -222,26 +252,34 @@ def linkedin_escape(text: str) -> str:
 # --------------------------------------------------------------------------- main
 
 def main() -> int:
-    msg = compose()
-    if not msg:
-        print("Nothing to post (no complete day).")
-        return 0
+    mode = env("SOCIAL_MODE") or "both"          # market | report | both
+    jobs = []
+    if mode in ("market", "both"):
+        jobs.append(("_market", compose_market()))
+    if mode in ("report", "both"):
+        jobs.append(("", compose()))
     log = json.loads(LOG.read_text(encoding="utf-8")) if LOG.exists() else {}
-    print("----- message -----\n" + msg["text"] + "\n-------------------")
     changed = False
-    for name, fn in (("facebook", post_facebook), ("linkedin", post_linkedin)):
-        done = log.get(name, [])
-        if msg["day"] in done:
-            print(f"{name}: already posted for {msg['day']}")
+    for suffix, msg in jobs:
+        kind = "market" if suffix else "report"
+        if not msg:
+            print(f"{kind}: nothing to post")
             continue
-        try:
-            result = fn(msg)
-        except Exception as e:  # noqa: BLE001 - one platform must not block the other
-            result = f"FAILED: {e}"
-        print(f"{name}: {result}")
-        if result.startswith("posted"):
-            log[name] = (done + [msg["day"]])[-60:]
-            changed = True
+        print(f"----- {kind} message -----\n" + msg["text"] + "\n-------------------")
+        for name, fn in (("facebook", post_facebook), ("linkedin", post_linkedin)):
+            key = name + suffix
+            done = log.get(key, [])
+            if msg["day"] in done:
+                print(f"{key}: already posted for {msg['day']}")
+                continue
+            try:
+                result = fn(msg)
+            except Exception as e:  # noqa: BLE001 - one platform must not block the other
+                result = f"FAILED: {e}"
+            print(f"{key}: {result}")
+            if result.startswith("posted"):
+                log[key] = (done + [msg["day"]])[-60:]
+                changed = True
     if changed and not DRY:
         LOG.write_text(json.dumps(log, indent=1), encoding="utf-8")
     return 0

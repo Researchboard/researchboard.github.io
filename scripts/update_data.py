@@ -43,6 +43,7 @@ HISTORY_FILE = DATA / "history.json"
 LATEST_FILE = DATA / "latest.json"
 AUTHOR_SNAPSHOT = DATA / "authors_snapshot.json"
 WORK_SNAPSHOT = DATA / "works_snapshot.json"
+TOTALS_SNAPSHOT = DATA / "totals_snapshot.json"
 
 SCHEMA = 2  # bump when the meaning of stored numbers changes; triggers a rebuild
 
@@ -331,6 +332,61 @@ def pick_complete_day(days: dict, newest: dt.date, previous: dict, today: dt.dat
     return newest
 
 
+
+# --------------------------------------------------------------------------- 24-hour "market" change
+
+def totals_now(today: dt.date) -> dict:
+    """
+    Running totals of recent papers (published this year or last year): overall,
+    per country and per institution. The difference between two daily runs is
+    what was added to the scientific record in those ~24 hours.
+    """
+    flt = f"publication_year:>{today.year - 2},{PAPER_TYPES}"
+    by_country = openalex("works", filter=flt, group_by="authorships.countries")
+    countries_ = {}
+    for g in by_country.get("group_by", []):
+        code = short_id(g.get("key")).upper()
+        if len(code) == 2:
+            countries_[code] = g["count"]
+    insts = {}
+    for g in group(flt, "authorships.institutions.lineage"):
+        if g.get("key"):
+            insts[short_id(g["key"])] = [g.get("key_display_name") or "Unknown", g["count"]]
+    total = int(by_country.get("meta", {}).get("count") or openalex("works", filter=flt, per_page=1, select="id")["meta"]["count"])
+    return {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "filter": flt,
+            "total": total, "countries": countries_, "institutions": insts}
+
+
+def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_deltas: list[int]) -> dict | None:
+    """Compare two snapshots ~24 h apart. Returns None if they can't be compared."""
+    if not prev or prev.get("filter") != now["filter"]:
+        return None
+    t0 = dt.datetime.fromisoformat(prev["at"])
+    t1 = dt.datetime.fromisoformat(now["at"])
+    hours = (t1 - t0).total_seconds() / 3600
+    if not 18 <= hours <= 32:
+        return None
+    added = now["total"] - prev["total"]
+    flagged = ""
+    usual = sorted(history_deltas)[len(history_deltas) // 2] if len(history_deltas) >= 3 else None
+    if added <= 0:
+        flagged = "no growth (database update pending)"
+    elif usual and (added > 4 * usual or added < usual / 4):
+        flagged = f"unusual jump ({added:,} vs usual {usual:,}) - likely a database clean-up or bulk import"
+    c_delta = {c: n - prev["countries"].get(c, 0) for c, n in now["countries"].items() if c in prev["countries"]}
+    c_top = sorted(((c, d) for c, d in c_delta.items() if d > 0), key=lambda x: -x[1])[:10]
+    i_top = []
+    for iid, (name, n) in now["institutions"].items():
+        if iid in prev["institutions"]:
+            d = n - prev["institutions"][iid][1]
+            if d > 0:
+                i_top.append({"id": iid, "name": name, "added": d})
+    i_top.sort(key=lambda x: -x["added"])
+    return {"from": prev["at"], "to": now["at"], "hours": round(hours, 1), "papers_added": added,
+            "pubmed_yesterday": pubmed_yesterday, "countries": [{"code": c, "added": d} for c, d in c_top],
+            "countries_active": sum(1 for d in c_delta.values() if d > 0),
+            "institutions": i_top[:10], "flagged": flagged}
+
 # --------------------------------------------------------------------------- leaderboards
 
 PAPER_FIELDS = "id,doi,display_name,cited_by_count,publication_year,publication_date,primary_location"
@@ -535,6 +591,20 @@ def main() -> int:
     if author_gains:
         rec["top_gainers"] = [{"id": g["id"], "name": g["name"], "gain": g["gain"]} for g in author_gains[:5]]
 
+    # 6) 24-hour change of the running totals ("market" post).
+    prev_totals = load_json(TOTALS_SNAPSHOT, {})
+    now_totals = safe("24h totals", lambda: totals_now(today))
+    market = None
+    deltas = [m["papers_added"] for m in history.get("market", []) if not m.get("flagged")][-14:]
+    if now_totals:
+        market = market_change(now_totals, prev_totals, days.get(iso(newest), {}).get("pubmed_added"), deltas)
+        if market:
+            history["market"] = (history.get("market", []) + [market])[-120:]
+        # Keep the old snapshot if this run came too soon after it (e.g. a manual re-run).
+        if not prev_totals or market or (dt.datetime.fromisoformat(now_totals["at"]) -
+                                         dt.datetime.fromisoformat(prev_totals["at"])).total_seconds() > 32 * 3600:
+            save_json(TOTALS_SNAPSHOT, now_totals)
+
     latest = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "latest_day": iso(rank_day),
@@ -553,6 +623,7 @@ def main() -> int:
         "paper_gainers_baseline": p_base,
         "paper_gainers_days": p_gap,
         "countries_detail": countries_detail,
+        "market": market or previous_latest.get("market"),
         "calls": calls,
         "warnings": warnings[-20:],
     }

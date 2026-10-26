@@ -157,10 +157,84 @@ def make_default_card(site: str = "researchboard.net") -> Path:
     return out
 
 
+def make_market_card(site: str = "researchboard.net") -> Path | None:
+    """Stock-ticker style card for the last-24-hours change."""
+    latest = json.loads((DATA / "latest.json").read_text(encoding="utf-8"))
+    m = latest.get("market")
+    if not m or m.get("flagged"):
+        return None
+    names = latest.get("country_names", {})
+    t0 = dt.datetime.fromisoformat(m["from"]); t1 = dt.datetime.fromisoformat(m["to"])
+    up, down = (52, 220, 120), (255, 92, 92)
+    bg1, bg2, grid = (8, 12, 20), (18, 26, 40), (30, 42, 60)
+
+    img = Image.new("RGB", (W, H), bg1)
+    d = ImageDraw.Draw(img, "RGBA")
+    for x in range(W):
+        t = x / (W - 1)
+        d.line([(x, 0), (x, H)], fill=tuple(int(bg1[i] + (bg2[i] - bg1[i]) * t) for i in range(3)))
+    for y in range(140, H, 40):
+        d.line([(0, y), (W, y)], fill=grid, width=1)
+    # faint rising chart line
+    pts, v = [], 470
+    import random
+    rnd = random.Random(t1.toordinal())
+    for i, x in enumerate(range(560, W + 20, 40)):
+        v -= rnd.randint(-14, 30)
+        pts.append((x, max(170, min(540, v))))
+    d.line(pts, fill=(52, 220, 120, 70), width=4)
+
+    logo(d, 64, 52)
+    d.text((136, 50), "ResearchBoard", font=font("x", 34), fill=WHITE)
+    d.text((137, 92), "Every Paper. Every Citation. Every Discovery.", font=font("r", 18), fill=(150, 162, 184))
+    d.text((W - 64, 66), site, font=font("b", 22), fill=(150, 162, 184), anchor="ra")
+
+    d.text((64, 156), "RESEARCH MARKET  ·  LAST 24 HOURS", font=font("b", 20), fill=up)
+    d.text((64, 184), f"{t0:%b} {t0.day}, {t0:%H:%M}  →  {t1:%b} {t1.day}, {t1:%H:%M} UTC",
+           font=font("x", 34), fill=WHITE)
+
+    # headline number
+    d.text((64, 248), "▲", font=font("x", 54), fill=up)
+    d.text((128, 238), f"+{m['papers_added']:,}", font=font("x", 76), fill=up)
+    d.text((64, 330), "new papers added to the global research record", font=font("b", 22), fill=(190, 200, 216))
+    y = 372
+    if m.get("pubmed_yesterday"):
+        d.text((64, y), f"+{m['pubmed_yesterday']:,}", font=font("x", 34), fill=WHITE)
+        d.text((64 + d.textlength(f"+{m['pubmed_yesterday']:,}", font=font("x", 34)) + 12, y + 9),
+               "records added to PubMed", font=font("r", 21), fill=(150, 162, 184))
+        y += 52
+    d.text((64, y), f"{m.get('countries_active', 0):,}", font=font("x", 34), fill=WHITE)
+    d.text((64 + d.textlength(f"{m.get('countries_active', 0):,}", font=font("x", 34)) + 12, y + 9),
+           "countries contributed", font=font("r", 21), fill=(150, 162, 184))
+
+    # movers board
+    x0, yb = 700, 248
+    d.rounded_rectangle([x0, yb - 12, W - 64, 560], radius=16, fill=(255, 255, 255, 10), outline=grid, width=2)
+    d.text((x0 + 24, yb), "TOP MOVERS", font=font("b", 16), fill=(150, 162, 184))
+    for i, c in enumerate(m.get("countries", [])[:5]):
+        yy = yb + 34 + i * 50
+        name = names.get(c["code"], c["code"])
+        d.text((x0 + 24, yy), c["code"], font=font("x", 22), fill=(150, 162, 184))
+        d.text((x0 + 70, yy), name[:20], font=font("b", 22), fill=WHITE)
+        d.text((W - 88, yy), f"▲ +{c['added']:,}", font=font("x", 22), fill=up, anchor="ra")
+    inst = (m.get("institutions") or [])[:1]
+    if inst:
+        d.text((64, 568), f"Top institution: {inst[0]['name']}  ▲ +{inst[0]['added']:,}",
+               font=font("r", 20), fill=(150, 162, 184))
+
+    CARDS.mkdir(parents=True, exist_ok=True)
+    out = CARDS / f"market-{t1.date().isoformat()}.png"
+    img.save(out, optimize=True)
+    print("Market card written:", out.relative_to(ROOT))
+    return out
+
+
 if __name__ == "__main__":
     import os
     site = os.environ.get("SITE_URL", "https://researchboard.net").split("://", 1)[-1].rstrip("/")
     if "--default" in sys.argv:
         make_default_card(site)
+    elif "--market" in sys.argv:
+        make_market_card(site)
     else:
         make_daily_card(site)
