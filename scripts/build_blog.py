@@ -41,7 +41,8 @@ POSTS = ROOT / "posts"
 DAILY = POSTS / "daily"
 OUT = ROOT / "blog"
 DATA = ROOT / "data"
-SITE_URL = "https://researchboard.net"
+import os
+SITE_URL = (os.environ.get("SITE_URL", "").strip().rstrip("/") or "https://researchboard.github.io")
 SITE_NAME = "ResearchBoard"
 TAGLINE = "Every Paper. Every Citation. Every Discovery."
 
@@ -82,9 +83,12 @@ def parse(path: Path, kind: str) -> dict | None:
     slug = meta.get("slug") or (f"daily-{date.isoformat()}" if kind == "daily" else slugify(title))
     image = meta.get("image", "")
     image = re.sub(r"^(?:\.\./)?(?:posts/)?", "", image) if image else ""
+    social = image
+    if kind == "daily" and (POSTS / "images" / "cards" / f"daily-{date.isoformat()}.png").exists():
+        social = f"images/cards/daily-{date.isoformat()}.png"
     return {"title": title, "date": date, "author": meta.get("author") or SITE_NAME, "summary": summary,
             "tags": tags, "kind": kind, "slug": slug, "html": html_body, "minutes": max(1, round(words / 220)),
-            "image": image}
+            "image": image, "social": social}
 
 
 def load_posts() -> list[dict]:
@@ -114,7 +118,8 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-def page(title: str, description: str, body: str, canonical: str, extra_head: str = "") -> str:
+def page(title: str, description: str, body: str, canonical: str, extra_head: str = "", image: str = "") -> str:
+    image = image or f"{SITE_URL}/assets/og-card.png"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -126,6 +131,11 @@ def page(title: str, description: str, body: str, canonical: str, extra_head: st
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(description)}">
 <meta property="og:type" content="article">
+<meta property="og:url" content="{esc(canonical)}">
+<meta property="og:image" content="{esc(image)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="{LOGO}" type="image/svg+xml">
 <link rel="alternate" type="application/rss+xml" title="{SITE_NAME} blog" href="feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -243,8 +253,9 @@ def build_post(p: dict, prev: dict | None, nxt: dict | None) -> str:
   </div>
   {nav}
 </article>"""
+    img = f"{SITE_URL}/blog/{p['social']}" if p.get("social") else ""
     return page(f"{p['title']} · {SITE_NAME}", p["summary"], body, url,
-                f'<script type="application/ld+json">{ld}</script>')
+                f'<script type="application/ld+json">{ld}</script>', img)
 
 
 def build_feed(posts: list[dict]) -> str:
@@ -324,6 +335,8 @@ def write_daily() -> Path | None:
         "tags: daily report",
         "---",
         "",
+        f"![Today in Research — {nice}](images/cards/daily-{day}.png)",
+        "",
         f"Here is the research world on **{nice}**, the newest day that is mostly indexed. "
         "All numbers come straight from OpenAlex and PubMed and will keep rising slightly as late records arrive.",
         "",
@@ -383,4 +396,10 @@ if __name__ == "__main__":
             write_daily()
         except Exception as e:  # noqa: BLE001 - never block the blog build
             print("Daily post skipped:", e, file=sys.stderr)
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from social_card import make_daily_card
+            make_daily_card(SITE_URL.split("://", 1)[-1])
+        except Exception as e:  # noqa: BLE001
+            print("Image card skipped:", e, file=sys.stderr)
     build()
