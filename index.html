@@ -13,6 +13,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/blog.css">
+<link rel="alternate" type="application/rss+xml" title="ResearchBoard blog" href="blog/feed.xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>
@@ -37,6 +39,7 @@
       <a href="#fields">Fields</a>
       <a href="#articles">Articles</a>
       <a href="#citations">Citations</a>
+      <a href="blog/">Blog</a>
       <a href="#about">About</a>
     </nav>
     <div class="top-actions">
@@ -64,6 +67,7 @@
       <a href="#articles"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M14 3v5h5"/></svg>Articles</a>
       <a href="#scientists"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Scientists</a>
       <a href="#citations"><svg viewBox="0 0 24 24"><path d="M10 7H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3M20 7h-4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3"/></svg>Citations</a>
+      <a href="blog/"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>Blog</a>
       <a href="#country-view"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 16V9M11 16V5M16 16v-4M21 16v-8"/></svg>Country Deep-dive</a>
       <a href="#download"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Download Data</a>
     </nav>
@@ -282,6 +286,12 @@
         <header class="card-head"><h2>Most-Cited Papers <span class="muted">· all time</span></h2></header>
         <ol id="topPapers" class="paper-list"></ol>
       </article>
+    </section>
+
+    <!-- Blog -->
+    <section class="card" id="blog" hidden>
+      <header class="card-head"><h2>From the Blog</h2><a class="link-btn" href="blog/">All posts →</a></header>
+      <div class="blog-strip" id="blogStrip"></div>
     </section>
 
     <!-- Download + about -->
