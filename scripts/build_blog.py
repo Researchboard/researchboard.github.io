@@ -283,7 +283,17 @@ def build() -> None:
         nxt = posts[i + 1] if i + 1 < len(posts) else None
         (OUT / f"{p['slug']}.html").write_text(build_post(p, prev, nxt), encoding="utf-8")
     (OUT / "feed.xml").write_text(build_feed(posts), encoding="utf-8")
-    summary = [{"title": p["title"], "slug": p["slug"], "date": p["date"].isoformat(), "kind": p["kind"],
+    # sitemap + robots for search engines (the workflow copies these to the site root)
+    today = dt.date.today().isoformat()
+    urls = [(f"{SITE_URL}/", today, "daily", "1.0"), (f"{SITE_URL}/blog/", today, "daily", "0.8")]
+    urls += [(f"{SITE_URL}/blog/{p['slug']}.html", p["date"].isoformat(), "monthly",
+              "0.7" if p["kind"] == "article" else "0.5") for p in posts]
+    (OUT / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "".join(f"<url><loc>{u}</loc><lastmod>{m}</lastmod><changefreq>{c}</changefreq><priority>{pr}</priority></url>\n"
+                  for u, m, c, pr in urls) + "</urlset>\n", encoding="utf-8")
+    (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
+    summary =[{"title": p["title"], "slug": p["slug"], "date": p["date"].isoformat(), "kind": p["kind"],
                 "summary": p["summary"], "minutes": p["minutes"], "author": p["author"],
                 "image": ("blog/" + p["image"]) if p["image"] else ""} for p in posts[:12]]
     (OUT / "posts.json").write_text(json.dumps({"posts": summary}, ensure_ascii=False), encoding="utf-8")
