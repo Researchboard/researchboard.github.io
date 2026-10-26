@@ -92,6 +92,16 @@
       <strong>No data yet.</strong> The first daily update has not run. It fills in within a few minutes of running the workflow.
     </div>
 
+    <!-- Research Market: last 24 hours -->
+    <section class="market" id="market" hidden aria-label="Research market, last 24 hours">
+      <div class="market-head">
+        <span class="market-tag"><span class="market-dot"></span>Research Market · Last 24 hours</span>
+        <span class="market-window" id="mWindow"></span>
+      </div>
+      <div class="ticker"><div class="ticker-track" id="mTrack"></div></div>
+      <p class="market-note" id="mNote"></p>
+    </section>
+
     <!-- Hero -->
     <section class="hero" id="overview">
       <div>
@@ -317,6 +327,7 @@
         <ul class="about-list">
           <li><b>Papers</b> are OpenAlex works of type article, review, preprint, letter, conference paper or book chapter, by publication date. Datasets and other records are left out.</li>
           <li><b>PubMed</b> counts records added that day. Country counts search author affiliations, so a paper with authors in two countries counts for both.</li>
+          <li><b>Two views of the same data.</b> The <b>Research Market</b> strip at the top shows what was <i>added</i> to the research record in the last 24 hours (between our two most recent updates), like a share-price change. The dashboard below shows the latest <i>fully counted</i> publication day, usually about 2 days back, because journals report papers to the databases over several days.</li>
           <li><b>Rankings</b> use the newest day that is mostly indexed; the last day or two fill in over the following week.</li>
           <li>Many journals give only a month, stored as the 1st — expect a spike on the 1st of each month.</li>
           <li><b>Citation gains</b> compare today's totals with yesterday's snapshot. OpenAlex doesn't refresh every count daily, so a gain can span several days.</li>
