@@ -59,7 +59,7 @@ jobs:
           mkdir -p _site
           cp -r index.html assets _site/
           if [ -d data ]; then cp -r data _site/; fi
-          rm -f _site/data/authors_snapshot.json
+          rm -f _site/data/*snapshot*.json
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
