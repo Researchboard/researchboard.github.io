@@ -27,14 +27,14 @@ WHITE, MUTED, ACCENT, GREEN, VIOLET = (255, 255, 255), (169, 186, 214), (79, 155
 
 # Eight colour themes; the daily card rotates through them (one per day, in order).
 THEMES = [
-    dict(name="Navy",          c1=(11, 27, 54), c2=(24, 52, 99),   line=(40, 72, 125),  acc=(79, 155, 255),  muted=(169, 186, 214), v2=(165, 151, 255), v3=(126, 240, 181), box=(60, 92, 145)),
-    dict(name="Ocean Teal",    c1=(4, 40, 48),  c2=(9, 84, 92),    line=(24, 104, 112), acc=(64, 224, 208),  muted=(160, 210, 212), v2=(120, 236, 255), v3=(255, 214, 120), box=(40, 120, 128)),
-    dict(name="Royal Purple",  c1=(30, 16, 60), c2=(64, 36, 116),  line=(84, 60, 140),  acc=(190, 150, 255), muted=(196, 184, 228), v2=(255, 160, 220), v3=(140, 230, 255), box=(98, 74, 160)),
-    dict(name="Forest Green",  c1=(8, 38, 26),  c2=(18, 76, 52),   line=(34, 96, 68),   acc=(110, 230, 150), muted=(170, 214, 190), v2=(220, 240, 120), v3=(140, 220, 255), box=(48, 112, 82)),
-    dict(name="Burgundy",      c1=(52, 12, 26), c2=(102, 26, 48),  line=(122, 46, 68),  acc=(255, 130, 150), muted=(226, 180, 190), v2=(255, 200, 120), v3=(150, 220, 255), box=(138, 62, 84)),
-    dict(name="Charcoal Gold", c1=(18, 20, 26), c2=(42, 46, 56),   line=(58, 62, 74),   acc=(244, 190, 80),  muted=(184, 188, 198), v2=(244, 190, 80),  v3=(126, 240, 181), box=(78, 82, 96)),
-    dict(name="Bright Blue",   c1=(6, 50, 112), c2=(22, 104, 196), line=(44, 124, 212), acc=(150, 215, 255), muted=(196, 222, 248), v2=(255, 220, 120), v3=(140, 255, 200), box=(70, 140, 220)),
-    dict(name="Sunset Copper", c1=(58, 24, 10), c2=(118, 54, 22),  line=(136, 74, 40),  acc=(255, 176, 96),  muted=(232, 198, 170), v2=(255, 226, 140), v3=(150, 226, 255), box=(150, 90, 56)),
+    dict(name="Royal Blue",   c1=(12, 38, 120), c2=(36, 96, 226),  line=(70, 124, 236), acc=(150, 205, 255), muted=(205, 222, 255), v2=(255, 220, 110), v3=(140, 255, 190), box=(110, 150, 240)),
+    dict(name="Teal",         c1=(0, 78, 88),   c2=(0, 150, 150),  line=(40, 170, 170), acc=(150, 255, 235), muted=(196, 240, 236), v2=(255, 226, 120), v3=(255, 255, 255), box=(80, 190, 190)),
+    dict(name="Purple",       c1=(58, 18, 130), c2=(126, 52, 214), line=(150, 92, 226), acc=(225, 195, 255), muted=(226, 212, 255), v2=(255, 200, 235), v3=(150, 240, 255), box=(170, 120, 236)),
+    dict(name="Green",        c1=(6, 86, 46),   c2=(18, 156, 84),  line=(60, 180, 116), acc=(190, 255, 200), muted=(206, 242, 214), v2=(255, 240, 120), v3=(255, 255, 255), box=(90, 196, 136)),
+    dict(name="Crimson",      c1=(122, 12, 40), c2=(212, 38, 78),  line=(226, 90, 120), acc=(255, 200, 210), muted=(255, 218, 226), v2=(255, 236, 140), v3=(190, 240, 255), box=(236, 120, 148)),
+    dict(name="Orange",       c1=(150, 56, 0),  c2=(238, 122, 18), line=(246, 156, 70), acc=(255, 232, 170), muted=(255, 230, 204), v2=(255, 255, 255), v3=(255, 248, 160), box=(250, 170, 96)),
+    dict(name="Sky Blue",     c1=(0, 88, 164),  c2=(0, 162, 226),  line=(60, 186, 236), acc=(200, 240, 255), muted=(214, 238, 255), v2=(255, 236, 130), v3=(170, 255, 210), box=(90, 196, 244)),
+    dict(name="Magenta",      c1=(124, 16, 104),c2=(214, 46, 156), line=(228, 100, 186), acc=(255, 205, 238), muted=(255, 220, 242), v2=(255, 240, 150), v3=(170, 240, 255), box=(236, 130, 200)),
 ]
 THEME = THEMES[0]
 
@@ -88,7 +88,7 @@ def header(d: ImageDraw.ImageDraw, site: str) -> None:
 
 
 def stat(d: ImageDraw.ImageDraw, x: int, y: int, value: str, label: str, color) -> None:
-    d.rounded_rectangle([x, y, x + 252, y + 150], radius=18, fill=(255, 255, 255, 18), outline=THEME["box"], width=2)
+    d.rounded_rectangle([x, y, x + 252, y + 150], radius=18, fill=(0, 0, 0, 46), outline=THEME["box"], width=2)
     d.text((x + 22, y + 22), label.upper(), font=font("b", 16), fill=MUTED)
     size = 52 if len(value) <= 6 else 46 if len(value) <= 7 else 37 if len(value) <= 9 else 30
     d.text((x + 22, y + 56), value, font=font("x", size), fill=color)
