@@ -5,6 +5,12 @@ on:
     - cron: "7 13 * * *"   # 13:07 UTC (~8-9 am US Eastern): update data + "last 24 hours" market post
     - cron: "7 21 * * *"   # 21:07 UTC (~4-5 pm US Eastern): full "Today in Research" report post
   workflow_dispatch:         # "Run workflow" button in the Actions tab
+    inputs:
+      mode:
+        description: "full = normal update; totals-only = just save the 24-hour starting snapshot"
+        type: choice
+        options: [full, totals-only]
+        default: full
   push:
     branches: [main]         # re-publish when you edit the website or write a blog post
     paths-ignore: ["data/**", "posts/daily/**", "posts/images/cards/**"]
@@ -36,7 +42,7 @@ jobs:
         run: pip install markdown==3.7 pillow==11.3.0
 
       - name: Collect the latest numbers
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && github.event.inputs.mode != 'totals-only'
         env:
           OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
@@ -45,7 +51,7 @@ jobs:
         run: python scripts/update_data.py
 
       - name: Write today's automatic blog post and image card
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && github.event.inputs.mode != 'totals-only'
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
@@ -58,7 +64,7 @@ jobs:
         run: python scripts/build_blog.py
 
       - name: Save the new data to the repository
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && github.event.inputs.mode != 'totals-only'
         run: |
           git config user.name  "researchboard-bot"
           git config user.email "researchboard-bot@users.noreply.github.com"
@@ -86,8 +92,22 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v4
 
+      - name: Save the 24-hour starting snapshot only
+        if: github.event.inputs.mode == 'totals-only'
+        env:
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+        run: |
+          python scripts/update_data.py --totals-only
+          git config user.name  "researchboard-bot"
+          git config user.email "researchboard-bot@users.noreply.github.com"
+          git add data/totals_snapshot.json
+          git commit -m "24-hour starting snapshot $(date -u +%F)" || true
+          git pull --rebase --autostash origin main || true
+          git push
+
       - name: Post to social media
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' && github.event.inputs.mode != 'totals-only'
         continue-on-error: true
         env:
           SOCIAL_MODE: ${{ github.event.schedule == '7 21 * * *' && 'report' || (github.event_name == 'schedule' && 'market' || 'both') }}
