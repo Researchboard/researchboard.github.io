@@ -5,10 +5,13 @@ ResearchBoard - daily data collector.
 Pulls daily publishing numbers from two free sources and saves them as JSON
 files that the website (index.html) turns into charts:
 
-  * PubMed (NCBI E-utilities): how many records were ADDED to PubMed each day,
-    overall and per country (by author affiliation).
-  * OpenAlex: papers published each day worldwide, top countries, top
-    universities, new citations made that day, most-cited papers and scientists.
+  * PubMed (NCBI E-utilities): records ADDED to PubMed each day, overall and
+    per country (by author affiliation).
+  * OpenAlex: scholarly papers published each day (articles, reviews,
+    preprints, letters, conference papers, book chapters - datasets and other
+    non-paper records are left out), countries, universities, journals,
+    research fields, citations made, and leaderboards of most-cited papers
+    and scientists, plus who/what gained the most citations since yesterday.
 
 Run once a day (GitHub Actions does this automatically - see README.md).
 Uses only the Python standard library.
@@ -38,7 +41,10 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 HISTORY_FILE = DATA / "history.json"
 LATEST_FILE = DATA / "latest.json"
-SNAPSHOT_FILE = DATA / "authors_snapshot.json"
+AUTHOR_SNAPSHOT = DATA / "authors_snapshot.json"
+WORK_SNAPSHOT = DATA / "works_snapshot.json"
+
+SCHEMA = 2  # bump when the meaning of stored numbers changes; triggers a rebuild
 
 OPENALEX = "https://api.openalex.org"
 ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
@@ -50,14 +56,22 @@ EXTRA_COUNTRIES = [c.strip().upper() for c in os.environ.get("EXTRA_COUNTRIES", 
 REFRESH_DAYS = int(os.environ.get("REFRESH_DAYS", "7"))
 BACKFILL_DAYS = int(os.environ.get("BACKFILL_DAYS", "30"))
 
-TOP_COUNTRIES_DETAIL = 25   # countries that get a detail card (authors, universities, PubMed count)
-COUNTRIES_PER_DAY = 60      # countries kept in each day's history
-INSTITUTIONS_PER_DAY = 25
-AUTHOR_SNAPSHOT_SIZE = 200  # top authors snapshotted daily to measure citation gains
-MAX_CITATION_PAGES = 40
+# What counts as a "paper". OpenAlex also lists datasets, software, errata,
+# peer reviews etc.; on some days ~100,000 dataset records from a single
+# repository would otherwise swamp the numbers.
+PAPER_TYPES = "type:article|review|preprint|letter|conference-paper|book-chapter"
 
-# PubMed affiliation search terms for countries whose OpenAlex name differs
-# from how affiliations are usually written.
+# Works with known broken citation counts in OpenAlex (shown as all-time #1 otherwise).
+EXCLUDE_WORKS = {"W3038568908"}
+
+TOP_COUNTRIES_DETAIL = 25
+INSTITUTIONS_PER_DAY = 25
+JOURNALS_PER_DAY = 15
+AUTHOR_SNAPSHOT_SIZE = 200
+WORK_SNAPSHOT_SIZE = 200
+MAX_CITATION_PAGES = 40
+MAX_INSTITUTION_PAGES = 80
+
 PUBMED_COUNTRY_TERMS = {
     "US": '("United States"[ad] OR USA[ad] OR U.S.A.[ad])',
     "GB": '("United Kingdom"[ad] OR UK[ad] OR England[ad] OR Scotland[ad] OR Wales[ad])',
@@ -72,7 +86,7 @@ PUBMED_COUNTRY_TERMS = {
     "VN": '(Vietnam[ad] OR "Viet Nam"[ad])',
 }
 
-USER_AGENT = "ResearchBoard/1.0 (daily stats dashboard" + (f"; mailto:{CONTACT}" if CONTACT else "") + ")"
+USER_AGENT = "ResearchBoard/2.0 (daily stats dashboard" + (f"; mailto:{CONTACT}" if CONTACT else "") + ")"
 
 calls = {"openalex": 0, "pubmed": 0}
 warnings: list[str] = []
@@ -113,10 +127,10 @@ def redact(url: str) -> str:
 def openalex(path: str, **params) -> dict:
     if OA_KEY:
         params["api_key"] = OA_KEY
-    url = f"{OPENALEX}/{path}?{urllib.parse.urlencode(params, safe=':,|*')}"
+    url = f"{OPENALEX}/{path}?{urllib.parse.urlencode(params, safe=':,|*!')}"
     calls["openalex"] += 1
     data = http_json(url)
-    time.sleep(0.12)
+    time.sleep(0.1)
     return data
 
 
@@ -126,7 +140,7 @@ def pubmed_count(term: str) -> int:
         params["api_key"] = NCBI_KEY
     calls["pubmed"] += 1
     data = http_json(f"{ESEARCH}?{urllib.parse.urlencode(params)}")
-    time.sleep(0.12 if NCBI_KEY else 0.4)  # NCBI allows 3 req/s without key, 10 with
+    time.sleep(0.12 if NCBI_KEY else 0.4)
     return int(data["esearchresult"]["count"])
 
 
@@ -165,6 +179,11 @@ def safe(label: str, fn, default=None):
         return default
 
 
+def day_filter(day: dt.date, extra: str = "") -> str:
+    f = f"publication_date:{iso(day)},{PAPER_TYPES}"
+    return f + ("," + extra if extra else "")
+
+
 # --------------------------------------------------------------------------- daily metrics
 
 def pubmed_added(day: dt.date, extra: str | None = None) -> int:
@@ -178,73 +197,117 @@ def pubmed_country_term(code: str, name: str) -> str:
     return PUBMED_COUNTRY_TERMS.get(code, f'("{name}"[ad])')
 
 
-def works_published(day: dt.date) -> int:
-    data = openalex("works", filter=f"publication_date:{iso(day)}", per_page=1, select="id")
-    return int(data["meta"]["count"])
+def papers_published(day: dt.date) -> int:
+    return int(openalex("works", filter=day_filter(day), per_page=1, select="id")["meta"]["count"])
 
 
 def group(filter_: str, field: str) -> list[dict]:
     """First page of a group_by: up to 200 groups, largest first."""
-    data = openalex("works", filter=filter_, group_by=field)
-    return data.get("group_by", [])
+    return openalex("works", filter=filter_, group_by=field).get("group_by", [])
 
 
-def top_countries(day: dt.date) -> list[dict]:
-    out = []
-    for g in group(f"publication_date:{iso(day)}", "authorships.countries"):
+def countries(day: dt.date) -> tuple[dict, dict]:
+    """{code: papers} for every country that published, and {code: name}."""
+    counts, names = {}, {}
+    for g in group(day_filter(day), "authorships.countries"):
         code = short_id(g.get("key")).upper()
         if len(code) == 2:
-            out.append({"code": code, "name": g.get("key_display_name") or code, "count": g["count"]})
-    out.sort(key=lambda x: -x["count"])
-    return out[:COUNTRIES_PER_DAY]
+            counts[code] = g["count"]
+            names[code] = g.get("key_display_name") or code
+    return dict(sorted(counts.items(), key=lambda kv: -kv[1])), names
 
 
-def top_institutions(day: dt.date, country: str | None = None, n: int = INSTITUTIONS_PER_DAY) -> list[dict]:
-    f = f"publication_date:{iso(day)}"
-    if country:
-        f += f",authorships.institutions.country_code:{country}"
-    out = [
-        {"id": short_id(g.get("key")), "name": g.get("key_display_name") or "Unknown", "count": g["count"]}
-        for g in group(f, "authorships.institutions.lineage")
-    ]
+def ranked(groups: list[dict], n: int) -> list[dict]:
+    out = [{"id": short_id(g.get("key")), "name": g.get("key_display_name") or "Unknown", "count": g["count"]}
+           for g in groups if g.get("key")]
     out.sort(key=lambda x: -x["count"])
     return out[:n]
 
 
+def top_institutions(day: dt.date, country: str | None = None, n: int = INSTITUTIONS_PER_DAY) -> list[dict]:
+    extra = f"authorships.institutions.country_code:{country}" if country else ""
+    return ranked(group(day_filter(day, extra), "authorships.institutions.lineage"), n)
+
+
+def top_journals(day: dt.date) -> list[dict]:
+    return ranked(group(day_filter(day, "primary_location.source.type:journal"), "primary_location.source.id"),
+                  JOURNALS_PER_DAY)
+
+
+def fields(day: dt.date) -> list[dict]:
+    return ranked(group(day_filter(day), "primary_topic.field.id"), 30)
+
+
+def paged_groups(filter_: str, field: str, max_pages: int):
+    cursor, pages = "*", 0
+    while cursor and pages < max_pages:
+        data = openalex("works", filter=filter_, group_by=field, cursor=cursor)
+        yield data.get("group_by", [])
+        cursor = data.get("meta", {}).get("next_cursor")
+        pages += 1
+
+
+def active_institutions(day: dt.date) -> int | None:
+    """Number of distinct institutions with at least one paper that day."""
+    total, pages = 0, 0
+    for groups in paged_groups(day_filter(day), "authorships.institutions.id", MAX_INSTITUTION_PAGES):
+        total += sum(1 for g in groups if g.get("key"))
+        pages += 1
+    return None if pages >= MAX_INSTITUTION_PAGES else total
+
+
 def citations_made(day: dt.date) -> int:
     """
-    New citations created on a day = total references listed in the papers
-    published that day. One grouped query per 200 distinct reference counts:
-    sum(reference_count * number_of_papers_with_that_count).
+    New citations created on a day = total references listed in that day's
+    papers: sum(reference_count * number_of_papers_with_that_count).
     """
-    total, cursor, pages = 0, "*", 0
-    while cursor and pages < MAX_CITATION_PAGES:
-        data = openalex(
-            "works",
-            filter=f"publication_date:{iso(day)}",
-            group_by="referenced_works_count",
-            cursor=cursor,
-        )
-        for g in data.get("group_by", []):
+    total = 0
+    for groups in paged_groups(day_filter(day), "referenced_works_count", MAX_CITATION_PAGES):
+        for g in groups:
             try:
                 total += int(float(g["key"])) * int(g["count"])
             except (TypeError, ValueError):
                 pass
-        cursor = data.get("meta", {}).get("next_cursor")
-        pages += 1
     return total
 
 
-def collect_day(day: dt.date, include_pubmed: bool) -> dict:
+def collect_day(day: dt.date, include_pubmed: bool, names: dict, deep: bool) -> dict:
     rec: dict = {}
     if include_pubmed:
         rec["pubmed_added"] = safe(f"pubmed {day}", lambda: pubmed_added(day))
-    rec["openalex_published"] = safe(f"works {day}", lambda: works_published(day))
+    rec["papers"] = safe(f"papers {day}", lambda: papers_published(day))
     rec["citations_made"] = safe(f"citations {day}", lambda: citations_made(day))
-    rec["countries"] = safe(f"countries {day}", lambda: top_countries(day), [])
+    got = safe(f"countries {day}", lambda: countries(day))
+    if got:
+        rec["countries"], n = got
+        names.update(n)
+        rec["countries_active"] = len(rec["countries"])
     rec["institutions"] = safe(f"institutions {day}", lambda: top_institutions(day), [])
+    rec["journals"] = safe(f"journals {day}", lambda: top_journals(day), [])
+    rec["fields"] = safe(f"fields {day}", lambda: fields(day), [])
+    if deep:
+        rec["institutions_active"] = safe(f"active institutions {day}", lambda: active_institutions(day))
     rec["checked_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     return {k: v for k, v in rec.items() if v is not None}
+
+
+def pick_complete_day(days: dict, newest: dt.date, look_back: int = 14) -> dt.date:
+    """Newest day whose paper count is at least 40% of the recent median."""
+    counts = []
+    for i in range(1, look_back + 1):
+        v = days.get(iso(newest - dt.timedelta(days=i)), {}).get("papers")
+        if isinstance(v, int):
+            counts.append(v)
+    if not counts:
+        return newest
+    counts.sort()
+    median = counts[len(counts) // 2]
+    for i in range(0, 7):
+        d = newest - dt.timedelta(days=i)
+        v = days.get(iso(d), {}).get("papers")
+        if isinstance(v, int) and v >= 0.4 * median:
+            return d
+    return newest
 
 
 # --------------------------------------------------------------------------- leaderboards
@@ -280,21 +343,27 @@ def author_row(a: dict) -> dict:
     }
 
 
+def works_list(filter_: str, n: int) -> list[dict]:
+    rows, page = [], 1
+    while len(rows) < n:
+        data = openalex("works", filter=filter_, sort="cited_by_count:desc",
+                        per_page=min(100, n + len(EXCLUDE_WORKS)), page=page, select=PAPER_FIELDS)
+        results = data.get("results", [])
+        if not results:
+            break
+        rows += [paper_row(w) for w in results if short_id(w.get("id")) not in EXCLUDE_WORKS]
+        page += 1
+    return rows[:n]
+
+
 def top_papers_all_time() -> list[dict]:
-    data = openalex("works", sort="cited_by_count:desc", per_page=10, select=PAPER_FIELDS)
-    return [paper_row(w) for w in data.get("results", [])]
+    return works_list("type:article|review,primary_location.source.type:journal", 10)
 
 
-def hot_papers(today: dt.date) -> list[dict]:
-    start = today - dt.timedelta(days=365)
-    data = openalex(
-        "works",
-        filter=f"from_publication_date:{iso(start)},to_publication_date:{iso(today)}",
-        sort="cited_by_count:desc",
-        per_page=10,
-        select=PAPER_FIELDS,
-    )
-    return [paper_row(w) for w in data.get("results", [])]
+def recent_papers(today: dt.date, n: int) -> list[dict]:
+    start = today - dt.timedelta(days=730)
+    return works_list(f"from_publication_date:{iso(start)},to_publication_date:{iso(today)},"
+                      "type:article|review,primary_location.source.type:journal", n)
 
 
 def top_authors(n: int) -> list[dict]:
@@ -326,151 +395,156 @@ def top_authors_in(country: str, n: int = 5) -> list[dict]:
     raise last_err  # type: ignore[misc]
 
 
-def citation_gainers(authors: list[dict], today: dt.date) -> tuple[list[dict], str | None, float | None]:
-    """Compare today's citation totals with the previous snapshot."""
-    prev = load_json(SNAPSHOT_FILE, {})
-    prev_counts: dict = prev.get("counts", {})
-    prev_date = prev.get("date")
-    gains = []
-    for a in authors:
-        before = prev_counts.get(a["id"])
-        if before is not None and a["citations"] >= before:
-            gains.append({**a, "gain": a["citations"] - before})
-    gains.sort(key=lambda x: -x["gain"])
-    days_between = None
-    if prev_date:
-        days_between = (today - dt.date.fromisoformat(prev_date)).days or None
-    # Only advance the baseline when the date changes, so re-runs on the same day
-    # do not wipe out the gain.
-    if prev_date != iso(today):
-        save_json(SNAPSHOT_FILE, {"date": iso(today), "counts": {a["id"]: a["citations"] for a in authors},
-                                  "previous": {"date": prev_date, "counts": prev_counts} if prev_date else None})
-        if prev_date is None:
-            return [], None, None
-        return [g for g in gains if g["gain"] > 0][:10], prev_date, days_between
-    # Same-day re-run: compare against the stored previous baseline instead.
-    older = prev.get("previous") or {}
-    if not older.get("date"):
+def institution_countries(ids: list[str], known: dict) -> dict:
+    """Look up the country of each institution id not seen before."""
+    todo = [i for i in dict.fromkeys(ids) if i and i not in known]
+    for k in range(0, len(todo), 50):
+        chunk = todo[k:k + 50]
+        data = openalex("institutions", filter="openalex:" + "|".join(chunk), per_page=50,
+                        select="id,country_code")
+        for r in data.get("results", []):
+            known[short_id(r.get("id"))] = (r.get("country_code") or "").upper() or None
+        for i in chunk:
+            known.setdefault(i, None)
+    return known
+
+
+def gains(rows: list[dict], path: Path, today: dt.date) -> tuple[list[dict], str | None, int | None]:
+    """
+    Compare today's citation totals with the previous daily snapshot.
+    Re-runs on the same day compare with the day before, so a manual re-run
+    never wipes out the day's gains.
+    """
+    snap = load_json(path, {})
+    snap_date = snap.get("date")
+    if snap_date != iso(today):
+        base_date, base = snap_date, snap.get("counts", {})
+        save_json(path, {"date": iso(today), "counts": {r["id"]: r["citations"] for r in rows},
+                         "previous": {"date": snap_date, "counts": base} if snap_date else None})
+    else:
+        prev = snap.get("previous") or {}
+        base_date, base = prev.get("date"), prev.get("counts", {})
+        # keep today's counts current
+        snap["counts"] = {r["id"]: r["citations"] for r in rows}
+        save_json(path, snap)
+    if not base_date:
         return [], None, None
-    gains = []
-    for a in authors:
-        before = older["counts"].get(a["id"])
-        if before is not None and a["citations"] >= before:
-            gains.append({**a, "gain": a["citations"] - before})
-    gains.sort(key=lambda x: -x["gain"])
-    days_between = (today - dt.date.fromisoformat(older["date"])).days or None
-    return [g for g in gains if g["gain"] > 0][:10], older["date"], days_between
+    out = []
+    for r in rows:
+        before = base.get(r["id"])
+        if before is not None and r["citations"] > before:
+            out.append({**r, "gain": r["citations"] - before})
+    out.sort(key=lambda x: -x["gain"])
+    gap = (today - dt.date.fromisoformat(base_date)).days or None
+    return out[:10], base_date, gap
 
 
 # --------------------------------------------------------------------------- main
 
-def pick_complete_day(days: dict, newest: dt.date, look_back: int = 14) -> dt.date:
-    """Newest day whose OpenAlex count is at least 40% of the recent median."""
-    counts = []
-    for i in range(1, look_back + 1):
-        v = days.get(iso(newest - dt.timedelta(days=i)), {}).get("openalex_published")
-        if isinstance(v, int):
-            counts.append(v)
-    if not counts:
-        return newest
-    counts.sort()
-    median = counts[len(counts) // 2]
-    for i in range(0, 7):
-        d = newest - dt.timedelta(days=i)
-        v = days.get(iso(d), {}).get("openalex_published")
-        if isinstance(v, int) and v >= 0.4 * median:
-            return d
-    return newest
-
-
 def main() -> int:
     today = dt.datetime.now(dt.timezone.utc).date()
-    latest_day = today - dt.timedelta(days=1)  # last complete UTC day
-    print(f"Collecting for {latest_day} (OpenAlex key: {'yes' if OA_KEY else 'no'}, NCBI key: {'yes' if NCBI_KEY else 'no'})")
+    newest = today - dt.timedelta(days=1)  # last complete UTC day
+    print(f"Collecting up to {newest} (OpenAlex key: {'yes' if OA_KEY else 'no'}, NCBI key: {'yes' if NCBI_KEY else 'no'})",
+          flush=True)
 
     history = load_json(HISTORY_FILE, {"days": {}})
-    days: dict = history.setdefault("days", {})
+    previous_latest = load_json(LATEST_FILE, {})
+    if history.get("schema") != SCHEMA:
+        print("Data format changed - rebuilding history", flush=True)
+        old_pubmed = {d: r.get("pubmed_added") for d, r in history.get("days", {}).items()}
+        history = {"schema": SCHEMA, "days": {}}
+        for d, v in old_pubmed.items():  # PubMed numbers did not change meaning; keep them
+            if v is not None:
+                history["days"][d] = {"pubmed_added": v}
+    days: dict = history["days"]
+    names: dict = dict(previous_latest.get("country_names", {}))
 
-    # 1) Backfill on first run(s) so the graphs have a line from day one.
+    # 1) Backfill so the graphs have a line from day one.
     for i in range(BACKFILL_DAYS, REFRESH_DAYS, -1):
-        d = latest_day - dt.timedelta(days=i - 1)
-        if iso(d) not in days:
-            print("backfill", d)
-            days[iso(d)] = collect_day(d, include_pubmed=True)
+        d = newest - dt.timedelta(days=i - 1)
+        if "papers" not in days.get(iso(d), {}):
+            print("backfill", d, flush=True)
+            days[iso(d)] = {**days.get(iso(d), {}),
+                            **collect_day(d, "pubmed_added" not in days.get(iso(d), {}), names, deep=False)}
 
-    # 2) Re-count the most recent days: databases keep adding papers for a while.
+    # 2) Re-count recent days: databases keep adding papers for a while.
     for i in range(REFRESH_DAYS - 1, -1, -1):
-        d = latest_day - dt.timedelta(days=i)
+        d = newest - dt.timedelta(days=i)
         old = days.get(iso(d), {})
-        print("refresh", d)
-        fresh = collect_day(d, include_pubmed=(i < 3 or "pubmed_added" not in old))
-        merged = {**old, **fresh}
-        days[iso(d)] = merged
+        print("refresh", d, flush=True)
+        days[iso(d)] = {**old, **collect_day(d, i < 3 or "pubmed_added" not in old, names, deep=True)}
 
-    # 3) Pick the newest day OpenAlex has mostly finished indexing. The last
-    #    day or two are often only partly indexed (a few hundred papers instead
-    #    of tens of thousands), which would make the rankings misleading.
-    latest_day = pick_complete_day(days, latest_day)
-    print("Rankings day:", latest_day)
+    # 3) Rankings use the newest day OpenAlex has mostly finished indexing.
+    rank_day = pick_complete_day(days, newest)
+    print("Rankings day:", rank_day, flush=True)
+    rec = days[iso(rank_day)]
 
-    # Country detail for that day.
-    latest_rec = days[iso(latest_day)]
-    country_list = list(latest_rec.get("countries", []))
-    names = {c["code"]: c["name"] for c in country_list}
-    detail_codes = [c["code"] for c in country_list[:TOP_COUNTRIES_DETAIL]]
+    country_counts = rec.get("countries", {})
+    detail_codes = list(country_counts)[:TOP_COUNTRIES_DETAIL]
     for code in EXTRA_COUNTRIES:
         if code not in detail_codes:
             detail_codes.append(code)
 
-    countries_detail = {}
-    pubmed_by_country = {}
+    countries_detail, pubmed_by_country = {}, {}
     for code in detail_codes:
         name = names.get(code, code)
-        papers = next((c["count"] for c in country_list if c["code"] == code), 0)
-        pm = safe(f"pubmed {code}", lambda: pubmed_added(latest_day, pubmed_country_term(code, name)))
+        pm = safe(f"pubmed {code}", lambda: pubmed_added(rank_day, pubmed_country_term(code, name)))
         if pm is not None:
             pubmed_by_country[code] = pm
         countries_detail[code] = {
             "name": name,
-            "papers": papers,
+            "papers": country_counts.get(code, 0),
             "pubmed_added": pm,
-            "top_institutions": safe(f"institutions {code}", lambda: top_institutions(latest_day, code, 5), []),
+            "top_institutions": safe(f"institutions {code}", lambda: top_institutions(rank_day, code, 5), []),
             "top_authors": safe(f"authors {code}", lambda: top_authors_in(code), []),
         }
-    latest_rec["pubmed_by_country"] = pubmed_by_country
+    rec["pubmed_by_country"] = pubmed_by_country
 
-    # 4) Leaderboards and daily citation gainers.
+    # 4) Country of each institution shown on the board.
+    inst_country = dict(previous_latest.get("inst_country", {}))
+    inst_ids = [x["id"] for d in days.values() for x in d.get("institutions", [])[:10]]
+    inst_ids += [x["id"] for c in countries_detail.values() for x in c.get("top_institutions", [])]
+    inst_country = safe("institution countries", lambda: institution_countries(inst_ids, inst_country), inst_country)
+
+    # 5) Leaderboards and "gained the most citations since yesterday".
     authors = safe("top authors", lambda: top_authors(AUTHOR_SNAPSHOT_SIZE), []) or []
-    gainers, baseline, gap = ([], None, None)
-    if authors:
-        gainers, baseline, gap = citation_gainers(authors, today)
-        if gainers:
-            latest_rec["top_gainers"] = [{"id": g["id"], "name": g["name"], "gain": g["gain"]} for g in gainers[:5]]
+    author_gains, a_base, a_gap = gains(authors, AUTHOR_SNAPSHOT, today) if authors else ([], None, None)
+    recent = safe("recent papers", lambda: recent_papers(today, WORK_SNAPSHOT_SIZE), []) or []
+    paper_gains, p_base, p_gap = gains(recent, WORK_SNAPSHOT, today) if recent else ([], None, None)
+    if author_gains:
+        rec["top_gainers"] = [{"id": g["id"], "name": g["name"], "gain": g["gain"]} for g in author_gains[:5]]
 
-    previous_latest = load_json(LATEST_FILE, {})
     latest = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "latest_day": iso(latest_day),
+        "latest_day": iso(rank_day),
+        "newest_day": iso(newest),
+        "paper_types": PAPER_TYPES.split(":", 1)[1].split("|"),
+        "country_names": names,
+        "inst_country": inst_country,
         "top_papers": safe("top papers", top_papers_all_time) or previous_latest.get("top_papers", []),
-        "hot_papers": safe("hot papers", lambda: hot_papers(today)) or previous_latest.get("hot_papers", []),
+        "hot_papers": recent[:10] or previous_latest.get("hot_papers", []),
         "top_authors": authors[:20] or previous_latest.get("top_authors", []),
-        "gainers": gainers[:10],
-        "gainers_baseline": baseline,
-        "gainers_days": gap,
+        "gainers": author_gains,
+        "gainers_baseline": a_base,
+        "gainers_days": a_gap,
+        "paper_gainers": paper_gains,
+        "paper_gainers_baseline": p_base,
+        "paper_gainers_days": p_gap,
         "countries_detail": countries_detail,
         "calls": calls,
         "warnings": warnings[-20:],
     }
 
+    history["schema"] = SCHEMA
     history["updated"] = latest["generated_at"]
     history["days"] = dict(sorted(days.items()))
     save_json(HISTORY_FILE, history)
     save_json(LATEST_FILE, latest)
 
-    print(f"Done. API calls: {calls}. Warnings: {len(warnings)}")
-    # Fail the run only if nothing at all came back (e.g. bad API key), so a
-    # broken setup is visible in GitHub Actions instead of silently empty.
-    got_anything = any(k in latest_rec for k in ("pubmed_added", "openalex_published"))
+    print(f"Done. API calls: {calls}. Warnings: {len(warnings)}", flush=True)
+    for w in warnings[:10]:
+        print("  -", w)
+    got_anything = any(k in rec for k in ("pubmed_added", "papers"))
     return 0 if got_anything else 1
 
 
