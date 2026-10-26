@@ -101,10 +101,12 @@ anyone else from using your domain on GitHub.
 |---|---|---|
 | Added to PubMed | NCBI E-utilities | records whose *Entrez date* is that day |
 | PubMed by country | NCBI E-utilities | same, filtered by author affiliation text (a paper with authors in 2 countries counts in both) |
-| Papers published | OpenAlex | works whose publication date is that day (all fields, all types) |
+| Papers published | OpenAlex | articles, reviews, preprints, letters, conference papers and book chapters with that publication date (datasets and other records left out) |
 | New citations made | OpenAlex | total references listed in that day's papers |
 | Top countries / universities | OpenAlex | papers with ≥1 author from that country / institution |
-| Citation gainers | OpenAlex | change in total citations among the 200 most-cited scientists since the previous snapshot |
+| Citation gainers | OpenAlex | change in total citations since the previous daily snapshot, among the 200 most-cited scientists and the 200 most-cited journal articles of the last two years |
+| Journals / Fields | OpenAlex | papers per journal and per main research field that day |
+| Active institutions | OpenAlex | distinct institutions with at least one paper that day |
 
 Things to know:
 - **Each day shown is the last complete UTC day** (yesterday). The last 7 days
