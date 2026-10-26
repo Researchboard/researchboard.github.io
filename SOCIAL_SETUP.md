@@ -34,6 +34,19 @@ Never paste keys into a file or a chat.
 
 ---
 
+## LinkedIn Page via Make.com (what ResearchBoard uses)
+
+LinkedIn only lets approved apps post to a company Page, so the daily post goes
+through a free **Make.com** scenario: *Custom webhook → HTTP Download a file →
+LinkedIn Create a Company Image Post* (Company: ResearchBoard).
+
+1. In Make, open the scenario, click the Webhook module and copy the webhook address.
+2. Add it as the secret `MAKE_WEBHOOK_URL`.
+3. Keep the scenario switched **on** (Active). The free plan's monthly credits
+   are far more than one post a day needs.
+
+When `MAKE_WEBHOOK_URL` is set, the LinkedIn options below are ignored.
+
 ## LinkedIn, personal profile (about 10 minutes, no approval needed)
 
 1. Go to **linkedin.com/developers → Create app**. LinkedIn asks you to link the app
