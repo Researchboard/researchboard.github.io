@@ -291,21 +291,42 @@ def collect_day(day: dt.date, include_pubmed: bool, names: dict, deep: bool) -> 
     return {k: v for k, v in rec.items() if v is not None}
 
 
-def pick_complete_day(days: dict, newest: dt.date, look_back: int = 14) -> dt.date:
-    """Newest day whose paper count is at least 40% of the recent median."""
-    counts = []
-    for i in range(1, look_back + 1):
-        v = days.get(iso(newest - dt.timedelta(days=i)), {}).get("papers")
-        if isinstance(v, int):
-            counts.append(v)
-    if not counts:
-        return newest
-    counts.sort()
-    median = counts[len(counts) // 2]
+def is_complete(days: dict, d: dt.date, newest: dt.date) -> bool:
+    """
+    A day counts as complete when it has at least 40% of the papers that the
+    same weekday usually has (so quieter weekends can qualify too).
+    Reference days are at least a week old, i.e. mostly indexed already.
+    """
+    v = days.get(iso(d), {}).get("papers")
+    if not isinstance(v, int):
+        return False
+    same = [days.get(iso(d - dt.timedelta(days=7 * k)), {}).get("papers") for k in range(1, 6)]
+    ref = sorted(x for x in same if isinstance(x, int))
+    if len(ref) < 2:  # not enough history for this weekday: use all mature days
+        ref = sorted(r.get("papers") for k, r in days.items()
+                     if isinstance(r.get("papers"), int) and k <= iso(newest - dt.timedelta(days=7)))
+    if not ref:
+        return True
+    return v >= 0.4 * ref[len(ref) // 2]
+
+
+def pick_complete_day(days: dict, newest: dt.date, previous: dict, today: dt.date) -> dt.date:
+    """
+    The day the rankings, the daily report and the social posts are about.
+    Moves forward ONE day per daily run, so every day (weekends too) gets its
+    own report in order. Falls back to the newest complete day when starting
+    fresh or when it has fallen far behind.
+    """
+    prev = previous.get("latest_day")
+    prev_d = dt.date.fromisoformat(prev) if prev else None
+    if prev_d and previous.get("advanced_on") == iso(today):
+        return prev_d                      # already advanced today (manual re-run)
+    if prev_d and dt.timedelta(days=1) <= newest - prev_d <= dt.timedelta(days=10):
+        nxt = prev_d + dt.timedelta(days=1)
+        return nxt if is_complete(days, nxt, newest) else prev_d
     for i in range(0, 7):
         d = newest - dt.timedelta(days=i)
-        v = days.get(iso(d), {}).get("papers")
-        if isinstance(v, int) and v >= 0.4 * median:
+        if is_complete(days, d, newest):
             return d
     return newest
 
@@ -475,7 +496,7 @@ def main() -> int:
         days[iso(d)] = {**old, **collect_day(d, i < 3 or "pubmed_added" not in old, names, deep=True)}
 
     # 3) Rankings use the newest day OpenAlex has mostly finished indexing.
-    rank_day = pick_complete_day(days, newest)
+    rank_day = pick_complete_day(days, newest, previous_latest, today)
     print("Rankings day:", rank_day, flush=True)
     rec = days[iso(rank_day)]
 
@@ -517,6 +538,7 @@ def main() -> int:
     latest = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "latest_day": iso(rank_day),
+        "advanced_on": iso(today) if iso(rank_day) != previous_latest.get("latest_day") else previous_latest.get("advanced_on"),
         "newest_day": iso(newest),
         "paper_types": PAPER_TYPES.split(":", 1)[1].split("|"),
         "country_names": names,
