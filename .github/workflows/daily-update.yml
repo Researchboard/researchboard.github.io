@@ -72,6 +72,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html assets blog _site/
+          mv _site/blog/sitemap.xml _site/blog/robots.txt _site/ 2>/dev/null || true
           if [ -d data ]; then cp -r data _site/; fi
           rm -f _site/data/*snapshot*.json
 
