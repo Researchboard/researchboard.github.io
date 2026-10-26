@@ -310,14 +310,20 @@
 
     const L = S.latest || {};
     const gains = (L.paper_gainers || []).slice(0, 8);
-    $("#paperGainNote").textContent = L.paper_gainers_baseline ? "since " + shortDate(L.paper_gainers_baseline) : "";
-    fillTable($("#tbl-paper-gains tbody"), gains, (p, i) => {
+    const fallback = !gains.length;
+    const rows = fallback ? (L.hot_papers || []).slice(0, 8) : gains;
+    const card = $("#tbl-paper-gains").closest(".card");
+    const sub = card && card.querySelector("h2 .muted");
+    if (sub) sub.textContent = fallback ? "· most cited, last 2 years" : "· largest increase";
+    const lastTh = $("#tbl-paper-gains thead th:last-child"); if (lastTh) lastTh.textContent = fallback ? "Citations" : "Increase";
+    $("#paperGainNote").textContent = fallback ? "daily increase starts tomorrow" : (L.paper_gainers_baseline ? "since " + shortDate(L.paper_gainers_baseline) : "");
+    fillTable($("#tbl-paper-gains tbody"), rows, (p, i) => {
       const tr = el("tr");
       const t = el("td", "name"); const a = el("a", null, p.title); a.href = p.doi || "https://openalex.org/" + p.id; a.target = "_blank"; a.rel = "noopener";
       const wrap = el("div", "t"); const lbl = el("span", "lbl"); lbl.appendChild(a); lbl.title = p.title; wrap.appendChild(lbl); t.appendChild(wrap);
       const j = el("td", "muted", p.venue || "—"); j.style.whiteSpace = "nowrap"; j.style.maxWidth = "160px"; j.style.overflow = "hidden"; j.style.textOverflow = "ellipsis"; j.title = p.venue || "";
-      return rowCells(tr, [td(String(i + 1), "rank"), t, j, td("+" + fmt(p.gain), "num gain")]);
-    }, "Appears after the second daily update (needs yesterday's snapshot to compare).");
+      return rowCells(tr, [td(String(i + 1), "rank"), t, j, fallback ? td(fmt(p.citations), "num") : td("+" + fmt(p.gain), "num gain")]);
+    }, "No data yet.");
   }
 
   // ------------------------------------------------------------------ fields + scientists
@@ -331,11 +337,22 @@
     const g = (L.gainers || []).slice(0, 5);
     if (g.length) {
       hbar("c-gainers", g.map((x) => x.name), g.map((x) => x.gain), "Citations gained", css("--up"));
+      const sub0 = $("#c-gainers").closest(".card").querySelector("h2 .muted"); if (sub0) sub0.textContent = "· citations gained";
       const span = L.gainers_days && L.gainers_days > 1 ? ` (${L.gainers_days} days)` : "";
       $("#gainNote").textContent = L.gainers_baseline ? "since " + shortDate(L.gainers_baseline) + span : "";
     } else {
-      if (S.charts["c-gainers"]) { S.charts["c-gainers"].destroy(); delete S.charts["c-gainers"]; }
-      $("#gainFoot").textContent = "Appears after the second daily update (needs yesterday's snapshot). Measured among the 200 most-cited scientists.";
+      // Until there is a day-to-day comparison, show the most-cited scientists instead of an empty chart.
+      const top = (L.top_authors || []).slice(0, 5);
+      const sub = $("#c-gainers").closest(".card").querySelector("h2 .muted");
+      if (top.length) {
+        hbar("c-gainers", top.map((x) => x.name), top.map((x) => x.citations), "Total citations", css("--accent"));
+        if (sub) sub.textContent = "· most cited (total)";
+        $("#gainNote").textContent = "daily gains start tomorrow";
+        $("#gainFoot").textContent = "Daily citation gains appear once two daily snapshots exist. Until then: the most-cited scientists by total citations.";
+      } else {
+        if (S.charts["c-gainers"]) { S.charts["c-gainers"].destroy(); delete S.charts["c-gainers"]; }
+        $("#gainFoot").textContent = "Appears after the second daily update (needs yesterday's snapshot). Measured among the 200 most-cited scientists.";
+      }
     }
     fillTable($("#tbl-authors tbody"), L.top_authors || [], (a, i) => {
       const tr = el("tr");
