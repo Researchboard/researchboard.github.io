@@ -114,6 +114,8 @@ def post_facebook(msg: dict) -> str:
     if DRY:
         return "dry run"
     token, note = page_token(page, token)
+    page = globals().get("_FB_PAGE_OVERRIDE") or page
+    base = f"https://graph.facebook.com/{FB_VERSION}/{page}"
     if msg["card_url"]:
         # photo post: the image card plus the text (the link is in the text)
         _, _, res = request("POST", f"{base}/photos", {"url": msg["card_url"], "caption": msg["text"], "access_token": token})
@@ -132,11 +134,20 @@ def page_token(page: str, token: str) -> tuple[str, str]:
     _, _, me = request("GET", f"{graph}/me?fields=id&access_token={urllib.parse.quote(token)}")
     if str(me.get("id")) == str(page):
         return token, ""
-    _, _, pg = request("GET", f"{graph}/{page}?fields=access_token&access_token={urllib.parse.quote(token)}")
-    if not pg.get("access_token"):
-        raise RuntimeError("could not get the Page token - is this account an admin of the Page?")
-    return pg["access_token"], " [note: FB_PAGE_TOKEN is a personal token; it works until it expires - "\
-                               "replace it with the Page token for a permanent setup]"
+    _, _, acc = request("GET", f"{graph}/me/accounts?fields=id,name,access_token&limit=100"
+                               f"&access_token={urllib.parse.quote(token)}")
+    pages = acc.get("data", [])
+    pick = next((p for p in pages if str(p.get("id")) == str(page)), None) \
+        or next((p for p in pages if (p.get("name") or "").strip().lower() == "researchboard"), None)
+    if not pick or not pick.get("access_token"):
+        seen = ", ".join(f"{p.get('name')} (id {p.get('id')})" for p in pages) or "none"
+        raise RuntimeError(f"this token can't reach the Page. Pages it can see: {seen}")
+    note = " [note: FB_PAGE_TOKEN is a personal token; it works until it expires - " \
+           "replace it with the Page token for a permanent setup]"
+    if str(pick["id"]) != str(page):
+        note += f" [note: the Page's API id is {pick['id']} - update FB_PAGE_ID to this]"
+    globals()["_FB_PAGE_OVERRIDE"] = pick["id"]
+    return pick["access_token"], note
 
 
 # --------------------------------------------------------------------------- LinkedIn
