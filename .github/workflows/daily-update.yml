@@ -2,7 +2,7 @@ name: Update data and publish site
 
 on:
   schedule:
-    - cron: "17 6 * * *"   # every day at 06:17 UTC (after the UTC day has closed)
+    - cron: "7 13 * * *"   # every day at 13:07 UTC = about 8-9 am US Eastern, 7:07 pm Bangladesh
   workflow_dispatch:         # "Run workflow" button in the Actions tab
   push:
     branches: [main]         # re-publish when you edit the website or write a blog post
