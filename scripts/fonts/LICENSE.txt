@@ -1,0 +1,3 @@
+Inter font by Rasmus Andersson (https://rsms.me/inter/).
+Licensed under the SIL Open Font License 1.1 (https://openfontlicense.org).
+Used only to draw the daily social-media image cards.
