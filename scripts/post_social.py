@@ -10,8 +10,11 @@ Repository secrets (Settings -> Secrets and variables -> Actions):
     FB_PAGE_ID            the Page's numeric ID
     FB_PAGE_TOKEN         a Page access token with pages_manage_posts
 
-  LinkedIn
-    LINKEDIN_TOKEN        access token with w_member_social (personal profile)
+  LinkedIn Page via Make.com (used when set)
+    MAKE_WEBHOOK_URL      the Custom webhook address of the Make scenario
+
+  LinkedIn via the API (only if MAKE_WEBHOOK_URL is not set)
+    LINKEDIN_TOKEN       access token with w_member_social (personal profile)
                           or w_organization_social (company page)
     LINKEDIN_AUTHOR       urn:li:person:XXXX or urn:li:organization:12345
                           (optional for a personal profile - found automatically
@@ -162,6 +165,9 @@ def linkedin_token() -> str:
 
 
 def post_linkedin(msg: dict) -> str:
+    hook = env("MAKE_WEBHOOK_URL")
+    if hook:
+        return post_via_make(hook, msg)
     token = linkedin_token()
     if not token:
         return "skipped (no LINKEDIN_TOKEN)"
@@ -188,6 +194,21 @@ def post_linkedin(msg: dict) -> str:
         body["content"] = content
     _, headers, _ = request("POST", "https://api.linkedin.com/rest/posts", body, headers=h)
     return f"posted (id {headers.get('x-restli-id') or headers.get('X-RestLi-Id') or 'ok'})"
+
+
+def post_via_make(hook: str, msg: dict) -> str:
+    """
+    Hand the post to a Make.com scenario (Custom webhook -> HTTP download ->
+    LinkedIn "Create a Company Image Post"), which posts as the ResearchBoard Page.
+    """
+    if not msg["card_url"]:
+        return "skipped (no image card today)"
+    if DRY:
+        return "dry run via Make"
+    payload = {"day": msg["day"], "title": msg["title"], "text": msg["text"],
+               "link": msg["url"], "image_url": msg["card_url"]}
+    status, _, res = request("POST", hook, payload, headers={"Content-Type": "application/json"})
+    return f"posted (sent to Make, HTTP {status}: {str(res)[:40]})"
 
 
 def linkedin_escape(text: str) -> str:
