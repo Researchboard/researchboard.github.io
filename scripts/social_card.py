@@ -189,7 +189,9 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
     d.text((137, 92), "Every Paper. Every Citation. Every Discovery.", font=font("r", 18), fill=(150, 162, 184))
     d.text((W - 64, 66), site, font=font("b", 22), fill=(150, 162, 184), anchor="ra")
 
-    d.text((64, 156), "RESEARCH MARKET  ·  LAST 24 HOURS", font=font("b", 20), fill=up)
+    hrs = round(m.get("hours") or 24)
+    span = "LAST 24 HOURS" if abs(hrs - 24) <= 2 else f"LAST {hrs} HOURS"
+    d.text((64, 156), f"RESEARCH MARKET  ·  {span}", font=font("b", 20), fill=up)
     d.text((64, 184), f"{t0:%b} {t0.day}, {t0:%H:%M}  →  {t1:%b} {t1.day}, {t1:%H:%M} UTC",
            font=font("x", 34), fill=WHITE)
 

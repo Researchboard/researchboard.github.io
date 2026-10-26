@@ -116,7 +116,9 @@ def compose_market() -> dict | None:
     names = latest.get("country_names", {})
     t0 = dt.datetime.fromisoformat(m["from"]); t1 = dt.datetime.fromisoformat(m["to"])
     window = f"{t0:%b} {t0.day}, {t0:%H:%M} → {t1:%b} {t1.day}, {t1:%H:%M} UTC"
-    lines = [f"📈 Research Market — last 24 hours", f"⏱️ {window}", "",
+    hrs = round(m.get("hours") or 24)
+    span = "last 24 hours" if abs(hrs - 24) <= 2 else f"last {hrs} hours"
+    lines = [f"📈 Research Market — {span}", f"⏱️ {window}", "",
              f"▲ +{m['papers_added']:,} new papers added to the global research record"]
     if m.get("pubmed_yesterday"):
         lines.append(f"🧬 +{m['pubmed_yesterday']:,} records added to PubMed")
@@ -132,7 +134,7 @@ def compose_market() -> dict | None:
     day = t1.date().isoformat()
     card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
     return {"day": day, "text": "\n".join(lines), "url": SITE + "/",
-            "title": f"Research Market — last 24 hours to {t1:%b} {t1.day}",
+            "title": f"Research Market — {span} to {t1:%b} {t1.day}",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/market-{day}.png" if card.exists() else None}
 

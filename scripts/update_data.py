@@ -364,7 +364,7 @@ def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_d
     t0 = dt.datetime.fromisoformat(prev["at"])
     t1 = dt.datetime.fromisoformat(now["at"])
     hours = (t1 - t0).total_seconds() / 3600
-    if not 18 <= hours <= 32:
+    if not 12 <= hours <= 36:
         return None
     added = now["total"] - prev["total"]
     flagged = ""
@@ -602,7 +602,7 @@ def main() -> int:
             history["market"] = (history.get("market", []) + [market])[-120:]
         # Keep the old snapshot if this run came too soon after it (e.g. a manual re-run).
         if not prev_totals or market or (dt.datetime.fromisoformat(now_totals["at"]) -
-                                         dt.datetime.fromisoformat(prev_totals["at"])).total_seconds() > 32 * 3600:
+                                         dt.datetime.fromisoformat(prev_totals["at"])).total_seconds() > 36 * 3600:
             save_json(TOTALS_SNAPSHOT, now_totals)
 
     latest = {
@@ -641,5 +641,16 @@ def main() -> int:
     return 0 if got_anything else 1
 
 
+def totals_only() -> int:
+    """Save just the running totals (the starting point for the next 24-hour comparison)."""
+    today = dt.datetime.now(dt.timezone.utc).date()
+    now_totals = safe("24h totals", lambda: totals_now(today))
+    if not now_totals:
+        return 1
+    save_json(TOTALS_SNAPSHOT, now_totals)
+    print("Saved totals snapshot:", now_totals["at"], f"{now_totals['total']:,} papers", flush=True)
+    return 0
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(totals_only() if "--totals-only" in sys.argv else main())
