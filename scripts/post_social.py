@@ -113,12 +113,30 @@ def post_facebook(msg: dict) -> str:
     base = f"https://graph.facebook.com/{FB_VERSION}/{page}"
     if DRY:
         return "dry run"
+    token, note = page_token(page, token)
     if msg["card_url"]:
         # photo post: the image card plus the text (the link is in the text)
         _, _, res = request("POST", f"{base}/photos", {"url": msg["card_url"], "caption": msg["text"], "access_token": token})
     else:
         _, _, res = request("POST", f"{base}/feed", {"message": msg["text"], "link": msg["url"], "access_token": token})
-    return f"posted (id {res.get('post_id') or res.get('id')})"
+    return f"posted (id {res.get('post_id') or res.get('id')}){note}"
+
+
+def page_token(page: str, token: str) -> tuple[str, str]:
+    """
+    Accept either the Page token or the admin's personal (user) token.
+    With a user token, ask Facebook for the Page's own token first, because
+    only a Page token may publish as the Page.
+    """
+    graph = f"https://graph.facebook.com/{FB_VERSION}"
+    _, _, me = request("GET", f"{graph}/me?fields=id&access_token={urllib.parse.quote(token)}")
+    if str(me.get("id")) == str(page):
+        return token, ""
+    _, _, pg = request("GET", f"{graph}/{page}?fields=access_token&access_token={urllib.parse.quote(token)}")
+    if not pg.get("access_token"):
+        raise RuntimeError("could not get the Page token - is this account an admin of the Page?")
+    return pg["access_token"], " [note: FB_PAGE_TOKEN is a personal token; it works until it expires - "\
+                               "replace it with the Page token for a permanent setup]"
 
 
 # --------------------------------------------------------------------------- LinkedIn
