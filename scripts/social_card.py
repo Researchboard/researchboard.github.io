@@ -72,12 +72,49 @@ def background() -> Image.Image:
     return img
 
 
+_ICON_CACHE: dict = {}
+
+
+def brand_icon(size: int) -> Image.Image:
+    """The ResearchBoard icon: navy globe disc, white rising line, green dot (transparent corners)."""
+    if size in _ICON_CACHE:
+        return _ICON_CACHE[size]
+    S = 1000
+    g = Image.new("RGB", (S, S))
+    px = ImageDraw.Draw(g)
+    c1, c2 = (24, 58, 130), (10, 24, 58)
+    for y in range(S):
+        t = y / (S - 1)
+        px.line([(0, y), (S, y)], fill=tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3)))
+    d = ImageDraw.Draw(g, "RGBA")
+    cx, cy, r = 500, 500, 350
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=(255, 255, 255, 95), width=10)
+    for k in (115, 230):
+        d.ellipse([cx - r + k, cy - r, cx + r - k, cy + r], outline=(255, 255, 255, 75), width=8)
+    for yy in (-175, 0, 175):
+        hw = int((r * r - yy * yy) ** 0.5)
+        d.line([(cx - hw, cy + yy), (cx + hw, cy + yy)], fill=(255, 255, 255, 75), width=8)
+    base = [(.2, .64), (.35, .52), (.46, .6), (.6, .42), (.7, .48), (.82, .32)]
+    pts = [(80 + x * 840, 60 + y * 840) for x, y in base]
+    w = 78
+    d.line(pts, fill=WHITE, width=w, joint="curve")
+    for p_ in pts[1:-1]:
+        d.ellipse([p_[0] - w / 2, p_[1] - w / 2, p_[0] + w / 2, p_[1] + w / 2], fill=WHITE)
+    x_, y_ = pts[-1]
+    d.ellipse([x_ - 78, y_ - 78, x_ + 78, y_ + 78], fill=(110, 240, 170))
+    # thin light rim so the disc stays visible on dark backgrounds
+    d.ellipse([6, 6, S - 7, S - 7], outline=(255, 255, 255, 60), width=12)
+    mask = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(mask).ellipse([0, 0, S - 1, S - 1], fill=255)
+    out = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    out.paste(g, (0, 0), mask)
+    _ICON_CACHE[size] = out.resize((size, size), Image.LANCZOS)
+    return _ICON_CACHE[size]
+
+
 def logo(d: ImageDraw.ImageDraw, x: int, y: int, s: int = 56) -> None:
-    d.ellipse([x, y, x + s, y + s], fill=(42, 120, 214))
-    pts = [(x + s * .2, y + s * .64), (x + s * .35, y + s * .52), (x + s * .46, y + s * .6),
-           (x + s * .6, y + s * .42), (x + s * .7, y + s * .48), (x + s * .82, y + s * .32)]
-    d.line(pts, fill=WHITE, width=max(3, s // 12), joint="curve")
-    d.ellipse([x + s * .76, y + s * .26, x + s * .9, y + s * .4], fill=GREEN)
+    icon = brand_icon(s)
+    d._image.paste(icon, (int(x), int(y)), icon)
 
 
 def header(d: ImageDraw.ImageDraw, site: str) -> None:
