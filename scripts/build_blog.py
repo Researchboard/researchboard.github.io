@@ -289,6 +289,12 @@ def build() -> None:
     urls = [(f"{SITE_URL}/", today, "daily", "1.0"), (f"{SITE_URL}/blog/", today, "daily", "0.8")]
     urls += [(f"{SITE_URL}/blog/{p['slug']}.html", p["date"].isoformat(), "monthly",
               "0.7" if p["kind"] == "article" else "0.5") for p in posts]
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import seo_pages
+        urls += seo_pages.build(ROOT, SITE_URL, page, OUT)
+    except Exception as e:  # noqa: BLE001 - SEO pages must never break the blog
+        print("WARN seo pages:", e)
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"<url><loc>{u}</loc><lastmod>{m}</lastmod><changefreq>{c}</changefreq><priority>{pr}</priority></url>\n"
