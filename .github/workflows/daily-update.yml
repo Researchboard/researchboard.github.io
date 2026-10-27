@@ -85,6 +85,9 @@ jobs:
           if [ -f _site/blog/_index.html ]; then mv _site/blog/_index.html _site/index.html; fi
           if [ -d country ]; then cp -r country _site/; fi
           if [ -d data ]; then cp -r data _site/; fi
+          if [ -d site_extra ]; then cp -r site_extra/* _site/; fi
+          mkdir -p _site/data
+          if [ -f _site/blog/_search-index.json ]; then mv _site/blog/_search-index.json _site/data/search-index.json; fi
           rm -f _site/data/*snapshot*.json
 
       - uses: actions/configure-pages@v5
