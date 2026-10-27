@@ -319,6 +319,9 @@ def post_bluesky(msg: dict) -> str:
 def main() -> int:
     mode = env("SOCIAL_MODE") or "both"          # market | report | spotlight | both
     jobs = []
+    if mode == "bd":                             # Bangladesh 24-hour post: Facebook only
+        import country_watch
+        jobs.append(("_bd", country_watch.compose()))
     if mode == "spotlight":
         import spotlight
         jobs.append(("_spotlight", spotlight.compose_spotlight()))
@@ -334,7 +337,10 @@ def main() -> int:
             print(f"{kind}: nothing to post")
             continue
         print(f"----- {kind} message -----\n" + msg["text"] + "\n-------------------")
-        for name, fn in (("facebook", post_facebook), ("linkedin", post_linkedin), ("bluesky", post_bluesky)):
+        platforms = (("facebook", post_facebook), ("linkedin", post_linkedin), ("bluesky", post_bluesky))
+        if suffix == "_bd":
+            platforms = platforms[:1]
+        for name, fn in platforms:
             key = name + suffix
             done = log.get(key, [])
             if msg["day"] in done:
