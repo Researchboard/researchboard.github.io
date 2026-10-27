@@ -19,335 +19,131 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="assets/blog.css">
+<link rel="stylesheet" href="assets/v2.css">
 <link rel="alternate" type="application/rss+xml" title="ResearchBoard blog" href="blog/feed.xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>
 <script src="assets/iso.js" defer></script>
-<script src="assets/app.js" defer></script>
+<script src="assets/site.js" defer></script>
+<script src="assets/home.js" defer></script>
 <script data-goatcounter="https://researchboard.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
-<body>
+<body data-root="./">
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="#overview" aria-label="ResearchBoard home">
-      <img src="assets/logo.svg" alt="" width="40" height="40">
+    <a class="brand" href="./" aria-label="ResearchBoard home">
+      <img src="assets/logo.svg" alt="" width="54" height="54">
       <span class="brand-text">
-        <span class="brand-name">ResearchBoard</span>
+        <span class="brand-name">Research<span class="b2">Board</span></span>
         <span class="brand-tag">Every Paper. Every Citation. Every Discovery.</span>
       </span>
     </a>
     <nav class="topnav" aria-label="Sections">
-      <a href="#overview" class="on">Home</a>
-      <a href="#countries">Countries</a>
-      <a href="#universities">Universities</a>
-      <a href="#journals">Journals</a>
-      <a href="#fields">Fields</a>
-      <a href="#articles">Articles</a>
-      <a href="#citations">Citations</a>
+      <a href="./" class="on">Home</a>
+      <a href="country/">Countries</a>
+      <a href="universities/">Universities</a>
+      <a href="journals/">Journals</a>
+      <a href="fields/">Fields</a>
+      <a href="market/">Market</a>
       <a href="blog/">Blog</a>
-      <a href="#about">About</a>
     </nav>
-    <div class="top-actions">
-      <form class="search" role="search" autocomplete="off">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="search" type="search" list="searchList" placeholder="Search countries, universities, journals…" aria-label="Search countries, universities and journals">
-        <datalist id="searchList"></datalist>
-      </form>
-      <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch light or dark theme" title="Light / dark">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-      </button>
+    <div class="gsearch" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Search a country or institution…" aria-label="Search a country or institution" autocomplete="off">
+      <div class="gdrop" hidden></div>
     </div>
+    <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch light or dark theme" title="Light / dark">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
   </div>
 </header>
 
-<div class="shell">
-  <aside class="sidebar" aria-label="Dashboard sections">
-    <nav class="side-nav">
-      <a href="#overview" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</a>
-      <a href="#map"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>World Map</a>
-      <a href="#countries"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>Countries</a>
-      <a href="#universities"><svg viewBox="0 0 24 24"><path d="M3 9 12 4l9 5-9 5z"/><path d="M7 11v5c3 2 7 2 10 0v-5"/></svg>Universities</a>
-      <a href="#journals"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Journals</a>
-      <a href="#fields"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="9" ry="4"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(120 12 12)"/></svg>Research Fields</a>
-      <a href="#articles"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M14 3v5h5"/></svg>Articles</a>
-      <a href="#scientists"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Scientists</a>
-      <a href="#citations"><svg viewBox="0 0 24 24"><path d="M10 7H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3M20 7h-4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3"/></svg>Citations</a>
-      <a href="blog/"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>Blog</a>
-      <a href="#country-view"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 16V9M11 16V5M16 16v-4M21 16v-8"/></svg>Country Deep-dive</a>
-      <a href="#download"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Download Data</a>
-    </nav>
-    <div class="side-foot">
-      <div class="muted small">Data sources</div>
-      <div><a href="https://openalex.org" rel="noopener" target="_blank">OpenAlex ↗</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/" rel="noopener" target="_blank">PubMed ↗</a></div>
-      <div class="muted small" style="margin-top:12px">Last updated</div>
-      <div id="sideUpdated">—</div>
-      <div class="status-pill" id="sideStatus"><span class="dot"></span><span>Loading…</span></div>
-      <p class="muted tiny">Counts come from OpenAlex and PubMed. Recent days keep rising as more records are indexed.</p>
+<main class="page" id="top">
+  <div id="emptyState" class="notice" hidden>
+    <strong>No data yet.</strong> The first daily update has not run. It fills in within a few minutes of running the workflow.
+  </div>
+
+  <!-- Research Market: last 24 hours -->
+  <section class="market" id="market" hidden aria-label="Research market, last 24 hours">
+    <div class="market-head">
+      <span class="market-tag"><span class="market-dot"></span>Research Market · Last 24 hours</span>
+      <span class="market-window" id="mWindow"></span>
     </div>
-  </aside>
+    <div class="ticker"><div class="ticker-track" id="mTrack"></div></div>
+    <p class="market-note" id="mNote"></p>
+  </section>
 
-  <main class="content" id="top">
-    <div id="emptyState" class="notice" hidden>
-      <strong>No data yet.</strong> The first daily update has not run. It fills in within a few minutes of running the workflow.
-    </div>
-
-    <!-- Research Market: last 24 hours -->
-    <section class="market" id="market" hidden aria-label="Research market, last 24 hours">
-      <div class="market-head">
-        <span class="market-tag"><span class="market-dot"></span>Research Market · Last 24 hours</span>
-        <span class="market-window" id="mWindow"></span>
-      </div>
-      <div class="ticker"><div class="ticker-track" id="mTrack"></div></div>
-      <p class="market-note" id="mNote"></p>
-    </section>
-
-    <!-- Hero -->
-    <section class="hero" id="overview">
-      <div>
-        <h1>Global Research Activity</h1>
-        <p>Track daily scientific publications and citations worldwide</p>
-      </div>
-      <label class="date-card">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-        <span class="date-text">
-          <span class="date-label" id="dayLabel">Latest complete day</span>
-          <select id="daySelect" aria-label="Day shown"></select>
-        </span>
-      </label>
-    </section>
-
-    <!-- KPI cards -->
-    <section class="kpis" aria-label="Key numbers for the selected day">
-      <article class="kpi" id="k-papers">
-        <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M14 3v5h5"/></svg></div>
-        <div class="kpi-body">
-          <div class="kpi-label">New papers published</div>
-          <div class="kpi-row"><span class="kpi-value">—</span><span class="kpi-delta"></span></div>
-          <div class="kpi-sub">Articles, reviews, preprints &amp; more</div>
+  <!-- Map + summary -->
+  <section class="hero2" id="overview">
+    <div class="mapcard">
+      <div class="mapcard-head">
+        <div>
+          <h1>Where the world's research came from</h1>
+          <p class="sub">Papers by country · <span id="mapDay">—</span> · click a country to open its page</p>
         </div>
-      </article>
-      <article class="kpi" id="k-pubmed">
-        <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M7.5 15h9"/></svg></div>
-        <div class="kpi-body">
-          <div class="kpi-label">Added to PubMed</div>
-          <div class="kpi-row"><span class="kpi-value">—</span><span class="kpi-delta"></span></div>
-          <div class="kpi-sub">Biomedical &amp; life-science records</div>
-        </div>
-      </article>
-      <article class="kpi" id="k-countries">
-        <div class="kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
-        <div class="kpi-body">
-          <div class="kpi-label">Countries publishing</div>
-          <div class="kpi-row"><span class="kpi-value">—</span><span class="kpi-delta"></span></div>
-          <div class="kpi-sub">Countries &amp; territories with ≥1 paper</div>
-        </div>
-      </article>
-      <article class="kpi" id="k-insts">
-        <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M3 10l9-6 9 6z"/></svg></div>
-        <div class="kpi-body">
-          <div class="kpi-label">Active institutions</div>
-          <div class="kpi-row"><span class="kpi-value">—</span><span class="kpi-delta"></span></div>
-          <div class="kpi-sub">Universities &amp; research organizations</div>
-        </div>
-      </article>
-      <article class="kpi" id="k-cites">
-        <div class="kpi-icon violet"><svg viewBox="0 0 24 24"><path d="M10 7H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3M20 7h-4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v3l-3 3"/></svg></div>
-        <div class="kpi-body">
-          <div class="kpi-label">New citations made</div>
-          <div class="kpi-row"><span class="kpi-value">—</span><span class="kpi-delta"></span></div>
-          <div class="kpi-sub">References in the day's new papers</div>
-        </div>
-      </article>
-    </section>
-
-    <!-- Trend + map -->
-    <section class="row two-wide">
-      <article class="card">
-        <header class="card-head">
-          <h2 id="trendTitle">Daily Publications Worldwide</h2>
-          <div class="controls">
-            <div class="seg" role="group" aria-label="Measure">
-              <button type="button" data-metric="papers" class="on">Papers</button>
-              <button type="button" data-metric="pubmed_added">PubMed</button>
-            </div>
-            <div class="seg" role="group" aria-label="Time range">
-              <button type="button" data-range="7">7 days</button>
-              <button type="button" data-range="30" class="on">30 days</button>
-              <button type="button" data-range="365">1 year</button>
-              <button type="button" data-range="0">All</button>
-            </div>
-          </div>
-        </header>
-        <div class="chart"><canvas id="c-trend" aria-label="Line chart of daily publications"></canvas></div>
-        <p class="foot" id="trendFoot">Recent days keep rising for about a week as papers are indexed.</p>
-      </article>
-      <article class="card" id="map">
-        <header class="card-head"><h2>Global Publication Distribution</h2><span class="muted small" id="mapDay"></span></header>
-        <div id="worldMap" class="map" role="img" aria-label="World map of papers by country"></div>
         <div class="legend" id="mapLegend"></div>
-      </article>
-    </section>
-
-    <!-- Rankings -->
-    <section class="row three">
-      <article class="card" id="countries">
-        <header class="card-head"><h2>Top 10 Publishing Countries</h2><button class="link-btn" type="button" data-more="countries">View all →</button></header>
-        <div class="table-wrap">
-          <table class="rank-table" id="tbl-countries">
-            <thead><tr><th>#</th><th>Country</th><th class="num">Papers</th><th class="num">Share</th><th>14-day trend</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="foot">Share = papers with ≥1 author from the country ÷ all papers that day. Click a country for details.</p>
-      </article>
-      <article class="card" id="universities">
-        <header class="card-head"><h2>Top 10 Publishing Universities</h2><button class="link-btn" type="button" data-more="universities">View all →</button></header>
-        <div class="table-wrap">
-          <table class="rank-table" id="tbl-insts">
-            <thead><tr><th>#</th><th>Institution</th><th class="num">Papers</th><th>Country</th><th>Trend</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="card" id="journals">
-        <header class="card-head"><h2>Top 10 Journals</h2><button class="link-btn" type="button" data-more="journals">View all →</button></header>
-        <div class="table-wrap">
-          <table class="rank-table" id="tbl-journals">
-            <thead><tr><th>#</th><th>Journal</th><th class="num">Papers</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <!-- Citations -->
-    <section class="row two-even" id="citations">
-      <article class="card">
-        <header class="card-head"><h2>Daily Citations Made</h2>
-          <div class="seg" role="group" aria-label="Citation chart range">
-            <button type="button" data-crange="7" class="on">7 days</button>
-            <button type="button" data-crange="30">30 days</button>
-          </div>
-        </header>
-        <div class="chart"><canvas id="c-cites" aria-label="Bar chart of citations made per day"></canvas></div>
-        <p class="foot">Total references listed in each day's new papers — the citations added to the literature that day.</p>
-      </article>
-      <article class="card" id="articles">
-        <header class="card-head"><h2>Most-Cited Articles <span class="muted">· largest increase</span></h2><span class="muted small" id="paperGainNote"></span></header>
-        <div class="table-wrap">
-          <table class="rank-table" id="tbl-paper-gains">
-            <thead><tr><th>#</th><th>Title</th><th>Journal</th><th class="num">Increase</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="foot" id="paperGainFoot">Among the 200 most-cited journal articles of the last two years, compared with the previous day's snapshot.</p>
-      </article>
-    </section>
-
-    <!-- Fields + scientists gain -->
-    <section class="row two-even">
-      <article class="card" id="fields">
-        <header class="card-head"><h2>Research Fields</h2><span class="muted small" id="fieldDay"></span></header>
-        <div class="chart tall"><canvas id="c-fields" aria-label="Bar chart of papers by research field"></canvas></div>
-        <p class="foot">Papers by main research field (OpenAlex topic classification).</p>
-      </article>
-      <article class="card" id="scientists">
-        <header class="card-head"><h2>Top 5 Scientists <span class="muted">· citations gained</span></h2><span class="muted small" id="gainNote"></span></header>
-        <div class="chart short"><canvas id="c-gainers" aria-label="Bar chart of citations gained by scientists"></canvas></div>
-        <p class="foot" id="gainFoot">Among the 200 most-cited scientists, compared with the previous day's snapshot.</p>
-        <h3 class="sub-head">Most-cited scientists (all time)</h3>
-        <div class="table-wrap scroll">
-          <table class="rank-table" id="tbl-authors">
-            <thead><tr><th>#</th><th>Scientist</th><th>Institution</th><th class="num">Citations</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <!-- Country deep-dive -->
-    <section class="card" id="country-view">
-      <header class="card-head">
-        <h2>Country Deep-dive</h2>
-        <select id="countrySelect" aria-label="Choose country"></select>
-      </header>
-      <div class="cv-grid">
-        <div>
-          <div class="mini-kpis">
-            <div class="mini"><div class="kpi-label">Papers</div><div class="mini-value" id="cv-papers">—</div></div>
-            <div class="mini"><div class="kpi-label">Added to PubMed</div><div class="mini-value" id="cv-pubmed">—</div></div>
-            <div class="mini"><div class="kpi-label">World rank</div><div class="mini-value" id="cv-rank">—</div></div>
-            <div class="mini"><div class="kpi-label">Share of papers</div><div class="mini-value" id="cv-share">—</div></div>
-          </div>
-          <div class="chart"><canvas id="c-country" aria-label="Line chart of the country's daily papers"></canvas></div>
-        </div>
-        <div>
-          <h3 class="sub-head">Top institutions</h3>
-          <ol id="cv-insts" class="rank-list"></ol>
-          <h3 class="sub-head">Most-cited scientists</h3>
-          <ol id="cv-authors" class="rank-list"></ol>
-        </div>
       </div>
-      <p class="foot" id="cv-note"></p>
-    </section>
+      <div id="worldMap" role="img" aria-label="World map of papers by country"></div>
+    </div>
+    <aside class="summary" aria-label="Global research summary">
+      <div class="lab">Global research today</div>
+      <select id="daySelect" aria-label="Day shown"></select>
+      <div class="daynote" id="dayLabel">Latest fully counted day</div>
+      <div class="sgrid">
+        <div class="sbox"><span>New papers</span><b id="s-papers">—</b><em id="d-papers"></em></div>
+        <div class="sbox"><span>Added to PubMed</span><b id="s-pubmed">—</b><em id="d-pubmed"></em></div>
+        <div class="sbox"><span>Citations made</span><b id="s-cites" style="color:#c3b6ff">—</b><em id="d-cites"></em></div>
+        <div class="sbox"><span>Countries</span><b id="s-countries" style="color:#6ef0aa">—</b><em id="d-countries"></em></div>
+      </div>
+      <div class="top3" id="top3"></div>
+      <p id="sumText"></p>
+      <div class="btns"><a id="reportLink" href="blog/">Full daily report</a><a class="ghost" href="country/">All countries →</a></div>
+    </aside>
+  </section>
 
-    <!-- Papers -->
-    <section class="row two-even">
-      <article class="card">
-        <header class="card-head"><h2>Hottest Papers <span class="muted">· last 2 years</span></h2></header>
-        <ol id="hotPapers" class="paper-list"></ol>
-      </article>
-      <article class="card">
-        <header class="card-head"><h2>Most-Cited Papers <span class="muted">· all time</span></h2></header>
-        <ol id="topPapers" class="paper-list"></ol>
-      </article>
-    </section>
+  <div class="sec-title"><h2>Explore the rankings</h2><span class="muted small" id="prevNote"></span></div>
+  <section class="prev" id="prev" aria-label="Ranking previews"></section>
 
-    <!-- Blog -->
-    <section class="card" id="blog" hidden>
-      <header class="card-head"><h2>From the Blog</h2><a class="link-btn" href="blog/">All posts →</a></header>
-      <div class="blog-strip" id="blogStrip"></div>
-    </section>
+  <div class="sec-title"><h2>Daily trend</h2></div>
+  <section class="trendcard">
+    <div class="card-head">
+      <h2 id="trendTitle">Daily Publications Worldwide</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="seg"><button data-metric="papers" class="on">Papers</button><button data-metric="pubmed_added">PubMed</button></div>
+        <div class="seg"><button data-range="7">7 days</button><button data-range="30" class="on">30 days</button><button data-range="365">1 year</button><button data-range="0">All</button></div>
+      </div>
+    </div>
+    <div class="chart"><canvas id="c-trend" aria-label="Trend chart"></canvas></div>
+    <p class="note" id="trendFoot"></p>
+  </section>
 
-    <!-- Download + about -->
-    <section class="row two-even">
-      <article class="card" id="download">
-        <header class="card-head"><h2>Download Data</h2></header>
-        <p class="muted">Free to reuse. OpenAlex data is CC0; PubMed counts come from NCBI.</p>
-        <div class="btn-row">
-          <button class="btn primary" type="button" id="dlCsv">Daily totals (CSV)</button>
-          <button class="btn" type="button" id="dlCountries">Countries by day (CSV)</button>
-          <a class="btn" href="data/history.json" download>Full history (JSON)</a>
-          <a class="btn" href="data/latest.json" download>Latest rankings (JSON)</a>
-        </div>
-      </article>
-      <article class="card" id="about">
-        <header class="card-head"><h2>About the numbers</h2></header>
-        <ul class="about-list">
-          <li><b>Papers</b> are OpenAlex works of type article, review, preprint, letter, conference paper or book chapter, by publication date. Datasets and other records are left out.</li>
-          <li><b>PubMed</b> counts records added that day. Country counts search author affiliations, so a paper with authors in two countries counts for both.</li>
-          <li><b>Two views of the same data.</b> The <b>Research Market</b> strip at the top shows what was <i>added</i> to the research record in the last 24 hours (between our two most recent updates), like a share-price change. The dashboard below shows the latest <i>fully counted</i> publication day, usually about 2 days back, because journals report papers to the databases over several days.</li>
-          <li><b>Rankings</b> use the newest day that is mostly indexed; the last day or two fill in over the following week.</li>
-          <li>Many journals give only a month, stored as the 1st — expect a spike on the 1st of each month.</li>
-          <li><b>Citation gains</b> compare today's totals with yesterday's snapshot. OpenAlex doesn't refresh every count daily, so a gain can span several days.</li>
-        </ul>
-      </article>
-    </section>
+  <section class="card" id="blog" hidden style="margin-top:16px">
+    <header class="card-head"><h2>Latest from the blog</h2><a class="link-btn" href="blog/">All posts →</a></header>
+    <div class="blog-strip" id="blogStrip"></div>
+  </section>
 
-    <footer class="site-foot">
-      <img src="assets/logo.svg" alt="" width="22" height="22">
-      <span><b>ResearchBoard</b> · Global Scientific Research &amp; Citation Analytics</span>
-      <span class="muted">Data: <a href="https://openalex.org" rel="noopener">OpenAlex</a> (CC0) · <a href="https://pubmed.ncbi.nlm.nih.gov/" rel="noopener">PubMed / NCBI</a> · updated daily</span>
-    </footer>
-  </main>
-</div>
+  <section class="home-foot">
+    <article class="card2" id="download">
+      <h2>Download data</h2>
+      <p>Free to reuse. OpenAlex data is CC0; PubMed counts come from NCBI.</p>
+      <button class="btn2" type="button" id="dlCsv">Daily totals (CSV)</button>
+      <button class="btn2" type="button" id="dlCountries">Countries by day (CSV)</button>
+      <a class="btn2" href="data/history.json" download>Full history (JSON)</a>
+    </article>
+    <article class="card2" id="about">
+      <h2>About the numbers</h2>
+      <p><b>Papers</b> are OpenAlex articles, reviews, preprints, letters, conference papers and book chapters, by publication date. <b>PubMed</b> counts records added that day.
+      The <b>Research Market</b> strip shows what was <i>added</i> in the last 24 hours; everything else shows the latest <i>fully counted</i> day (about 2 days back), because journals report papers over several days.</p>
+    </article>
+  </section>
 
-<!-- "View all" dialog -->
-<dialog id="moreDialog">
-  <div class="dlg-head"><h2 id="moreTitle">All</h2><button type="button" class="icon-btn" id="moreClose" aria-label="Close">✕</button></div>
-  <div class="table-wrap dlg-body"><table class="rank-table" id="moreTable"><thead></thead><tbody></tbody></table></div>
-</dialog>
+  <footer class="site-foot">
+    <img src="assets/logo.svg" alt="" width="22" height="22">
+    <span><b>ResearchBoard</b> · Global Scientific Research &amp; Citation Analytics</span>
+    <span class="muted">Data: <a href="https://openalex.org" rel="noopener">OpenAlex</a> (CC0) · <a href="https://pubmed.ncbi.nlm.nih.gov/" rel="noopener">PubMed / NCBI</a> · updated daily</span>
+  </footer>
+</main>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 </body>
 </html>
