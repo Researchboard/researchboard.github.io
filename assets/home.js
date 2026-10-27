@@ -97,6 +97,7 @@
     window.RB_SHARE_TEXT = `Today in global research (${longDate(S.day)}): ${fmt(r.papers)} new papers from ${fmt(r.countries_active)} countries. Where does your country rank? — via ResearchBoard`;
     $("#s-countries").textContent = fmt(r.countries_active); setDelta("#d-countries", r.countries_active, series("countries_active"), true);
     const ld = S.latest && S.latest.latest_day;
+    $("#dayTitle").textContent = longDate(S.day);
     $("#dayLabel").textContent = S.day === ld ? "Latest fully counted day" : S.day > ld ? "Still being counted — numbers will rise" : "Earlier day";
     const t3 = $("#top3"); t3.replaceChildren();
     countries(S.day).slice(0, 3).forEach((c, k) => {
@@ -290,10 +291,36 @@
     } catch (_) { $("#emptyState").hidden = false; return; }
     const all = keys();
     S.day = S.latest && all.includes(S.latest.latest_day) ? S.latest.latest_day : all[all.length - 1];
-    const sel = $("#daySelect");
-    all.slice().reverse().forEach((k) => { const o = el("option", null, longDate(k)); o.value = k; sel.appendChild(o); });
-    sel.value = S.day;
-    sel.addEventListener("change", () => { S.day = sel.value; renderDay(); });
+    const latestDay = S.day;
+    const fromURL = new URLSearchParams(location.search).get("day");
+    if (fromURL && all.includes(fromURL)) S.day = fromURL;
+    const pick = $("#dayPick");
+    pick.min = all[0]; pick.max = all[all.length - 1];
+    const setDay = (k, push) => {
+      if (!all.includes(k)) {                       // a date with no data: jump to the closest day we have
+        k = all.reduce((best, x) => (Math.abs(new Date(x) - new Date(k)) < Math.abs(new Date(best) - new Date(k)) ? x : best), all[0]);
+      }
+      S.day = k; pick.value = k;
+      $("#dPrev").disabled = all.indexOf(k) <= 0;
+      $("#dNext").disabled = all.indexOf(k) >= all.length - 1;
+      $("#dLatest").hidden = k === latestDay;
+      try {
+        const u = new URL(location.href);
+        if (k === latestDay) u.searchParams.delete("day"); else u.searchParams.set("day", k);
+        history[push ? "pushState" : "replaceState"]({ day: k }, "", u);
+      } catch (_) { /* file:// preview */ }
+      renderDay();
+    };
+    S.setDay = setDay;
+    pick.addEventListener("change", () => pick.value && setDay(pick.value, true));
+    $("#dPrev").addEventListener("click", () => setDay(all[Math.max(0, all.indexOf(S.day) - 1)], true));
+    $("#dNext").addEventListener("click", () => setDay(all[Math.min(all.length - 1, all.indexOf(S.day) + 1)], true));
+    $("#dLatest").addEventListener("click", () => setDay(latestDay, true));
+    addEventListener("popstate", () => setDay(new URLSearchParams(location.search).get("day") || latestDay, false));
+    pick.value = S.day;
+    $("#dPrev").disabled = all.indexOf(S.day) <= 0;
+    $("#dNext").disabled = all.indexOf(S.day) >= all.length - 1;
+    $("#dLatest").hidden = S.day === latestDay;
     document.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => {
       document.querySelectorAll("[data-range]").forEach((x) => x.classList.toggle("on", x === b)); S.range = Number(b.dataset.range); renderTrend();
     }));

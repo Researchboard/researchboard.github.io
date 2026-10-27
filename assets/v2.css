@@ -186,3 +186,14 @@
 .follow-wrap h2 { font-size: 16px; margin: 0 0 10px; }
 .follow-note { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
 @media (min-width: 900px) { .share-wrap, .follow-wrap { display: inline-block; vertical-align: top; width: calc(50% - 9px); box-sizing: border-box; } .share-wrap { margin-right: 14px; } .follow-wrap { margin-top: 18px; } }
+
+/* ---------- day picker ---------- */
+.summary .daytitle { color: #fff; font: 800 22px/1.2 var(--font); margin: 2px 0 8px; }
+.summary .daybar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+.summary .daybar button, .summary .daybar input { height: 34px; border-radius: 9px; border: 1px solid rgba(160,200,255,.35);
+  background: rgba(255,255,255,.08); color: #fff; font: 600 13.5px var(--font); }
+.summary .daybar button { min-width: 34px; padding: 0 10px; cursor: pointer; }
+.summary .daybar button:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+.summary .daybar button:disabled { opacity: .35; cursor: default; }
+.summary .daybar input { padding: 0 8px; color-scheme: dark; flex: 1 1 140px; min-width: 0; cursor: pointer; }
+.summary .daybar .dlatest { background: #6ef0aa; color: #0b2a1c; border-color: #6ef0aa; }
