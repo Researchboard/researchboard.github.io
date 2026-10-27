@@ -1,9 +1,11 @@
 {
  "facebook": [
-  "2026-10-23"
+  "2026-10-23",
+  "2026-10-24"
  ],
  "linkedin": [
-  "2026-10-23"
+  "2026-10-23",
+  "2026-10-24"
  ],
  "facebook_spotlight": [
   "2026-10-27-countries",
@@ -16,5 +18,8 @@
  "bluesky_spotlight": [
   "2026-10-27-countries",
   "2026-10-27-universities"
+ ],
+ "bluesky": [
+  "2026-10-24"
  ]
 }
