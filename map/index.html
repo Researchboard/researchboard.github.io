@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>World research map — tap your country · ResearchBoard</title>
+<meta name="description" content="Interactive world map of research papers published today. Tap any country to see its papers, world rank and top university. Updated daily.">
+<link rel="canonical" href="https://researchboard.net/map/">
+<meta property="og:title" content="Where did today's research come from? Tap your country">
+<meta property="og:description" content="Interactive world map of research papers, updated every day.">
+<meta property="og:image" content="https://researchboard.net/blog/images/cards/map-latest.png">
+<meta property="og:url" content="https://researchboard.net/map/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/logo.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>
+<script src="../assets/iso.js" defer></script>
+<script data-goatcounter="https://researchboard.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+  :root { --bg: #071026; --bg2: #0d1f45; --panel: #ffffff; --text: #0e1a2b; --muted: #5b6b85; --accent: #4f9bff; --green: #6ef0aa;
+          --m0: #3a445c; --m1: #cfe2ff; --m2: #a4c8ff; --m3: #6ea8ff; --m4: #3d86f5; --m5: #2366d6; --m6: #1a4aa8; --m7: #12307a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg)); color: #fff;
+               font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  .top { position: fixed; inset: 0 0 auto 0; z-index: 5; padding: 12px 16px 10px; display: flex; align-items: center; gap: 10px;
+         background: linear-gradient(180deg, rgba(7,16,38,.95), rgba(7,16,38,0)); }
+  .top a.brand { display: flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; font-weight: 800; font-size: 19px; }
+  .top a.brand img { width: 30px; height: 30px; }
+  .top a.brand b { color: #7cc0ff; }
+  .top .home { margin-left: auto; color: #b9cdee; font-size: 13px; text-decoration: none; border: 1px solid rgba(160,200,255,.3); padding: 6px 10px; border-radius: 9px; }
+  .shade { position: fixed; inset: 0 0 auto 0; height: 250px; z-index: 3; pointer-events: none;
+           background: linear-gradient(180deg, rgba(7,16,38,.97) 0%, rgba(7,16,38,.9) 60%, rgba(7,16,38,0) 100%); }
+  .head { position: fixed; top: 56px; left: 0; right: 0; z-index: 4; text-align: center; padding: 0 16px; pointer-events: none; }
+  .head h1 { margin: 6px 0 2px; font-size: clamp(20px, 5.4vw, 30px); font-weight: 800; letter-spacing: -.01em; }
+  .head p { margin: 0; color: #b9cdee; font-size: 14px; }
+  .head p b { color: var(--green); }
+  .find { pointer-events: auto; margin: 12px auto 0; max-width: 360px; position: relative; }
+  .find input { width: 100%; height: 40px; border-radius: 12px; border: 1px solid rgba(160,200,255,.35); background: rgba(255,255,255,.1);
+                color: #fff; padding: 0 14px 0 36px; font: 500 15px inherit; outline: none; }
+  .find input::placeholder { color: #9fb6dc; }
+  .find svg { position: absolute; left: 11px; top: 11px; width: 18px; height: 18px; stroke: #9fb6dc; fill: none; stroke-width: 2; }
+  .find ul { list-style: none; margin: 4px 0 0; padding: 4px; background: #fff; border-radius: 12px; color: var(--text); text-align: left; max-height: 220px; overflow: auto; }
+  .find li { padding: 8px 10px; border-radius: 8px; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+  .find li:hover, .find li.on { background: #eaf2ff; }
+  #map { position: fixed; inset: 0; }
+  #map svg { width: 100%; height: 100%; display: block; touch-action: none; }
+  path.c { stroke: #071026; stroke-width: .5; cursor: pointer; transition: fill .2s; vector-effect: non-scaling-stroke; }
+  path.c:hover { stroke: #fff; stroke-width: 1.2; }
+  path.c.sel { stroke: var(--green); stroke-width: 2.2; }
+  .legend { position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px; z-index: 3; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px;
+            width: max-content; max-width: 94vw; font-size: 11px; color: #b9cdee; background: rgba(7,16,38,.7); padding: 6px 10px; border-radius: 10px; }
+  .legend i { display: inline-block; width: 16px; height: 8px; border-radius: 2px; margin-right: 3px; vertical-align: middle; }
+  .zoom { position: fixed; right: 14px; bottom: 70px; z-index: 3; display: flex; flex-direction: column; gap: 6px; }
+  .zoom button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(160,200,255,.35); background: rgba(13,31,69,.85); color: #fff; font-size: 20px; cursor: pointer; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; transform: translateY(110%); transition: transform .35s cubic-bezier(.2,.8,.2,1);
+           display: flex; justify-content: center; padding: 0 10px 10px; }
+  .sheet.open { transform: translateY(0); }
+  .card { width: 100%; max-width: 440px; background: var(--panel); color: var(--text); border-radius: 20px; padding: 16px 18px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.4); position: relative; }
+  .card .x { position: absolute; right: 12px; top: 10px; border: 0; background: #eef2f8; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; color: var(--muted); }
+  .card h2 { margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px; }
+  .card h2 .fi { font-size: 26px; border-radius: 4px; }
+  .card .sub { color: var(--muted); font-size: 13px; margin: 2px 0 12px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stats div { background: #f2f6fc; border-radius: 12px; padding: 8px 10px; }
+  .stats span { display: block; font-size: 11px; color: var(--muted); }
+  .stats b { font-size: 21px; font-weight: 800; }
+  .stats .big b { color: #1a66e0; }
+  .spark { margin: 12px 0 4px; height: 46px; display: flex; align-items: flex-end; gap: 3px; }
+  .spark i { flex: 1; background: #a4c8ff; border-radius: 3px 3px 0 0; }
+  .spark i:last-child { background: #22c27a; }
+  .card .row { font-size: 13.5px; color: #33445f; margin: 8px 0 12px; }
+  .card .go { display: block; text-align: center; background: #1a66e0; color: #fff; text-decoration: none; font-weight: 700; padding: 12px; border-radius: 12px; }
+  .hint { position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 3; background: rgba(110,240,170,.95); color: #06281a;
+          font-weight: 700; font-size: 13px; padding: 7px 14px; border-radius: 20px; animation: pulse 1.6s infinite; white-space: nowrap; }
+  @keyframes pulse { 50% { transform: translateX(-50%) scale(1.06); } }
+  .og .find, .og .zoom, .og .top .home { display: none; }
+  .tip { position: fixed; z-index: 4; pointer-events: none; background: #fff; color: var(--text); font-size: 12.5px; padding: 6px 9px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.3); display: none; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="shade"></div>
+<div class="top">
+  <a class="brand" href="../"><img src="../assets/logo.svg" alt=""><span>Research<b>Board</b></span></a>
+  <a class="home" href="../">Full dashboard →</a>
+</div>
+<div class="head">
+  <h1>Where did today's research come from?</h1>
+  <p id="sub">Loading…</p>
+  <div class="find" role="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Find your country…" autocomplete="off" aria-label="Find your country">
+    <ul id="qs" hidden></ul>
+  </div>
+</div>
+<div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+<div class="hint" id="hint">👆 Tap your country</div>
+<div class="legend" id="legend"></div>
+<div class="tip" id="tip"></div>
+<div class="sheet" id="sheet"><div class="card" id="card"></div></div>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const fmt = (n) => Number(n || 0).toLocaleString("en-US");
+  const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const nice = (k) => new Date(k + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+  const [hist, latest, topo] = await Promise.all([
+    fetch("../data/history.json").then((r) => r.json()),
+    fetch("../data/latest.json").then((r) => r.json()),
+    fetch("../assets/countries-110m.json").then((r) => r.json())]);
+  const keys = Object.keys(hist.days).sort();
+  const q = new URLSearchParams(location.search);
+  if (q.get("og")) document.body.classList.add("og");
+  const day = q.get("day") && hist.days[q.get("day")] ? q.get("day") : latest.latest_day || keys[keys.length - 1];
+  const counts = hist.days[day].countries || {};
+  const names = latest.country_names || {};
+  const detail = latest.countries_detail || {};
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const rank = Object.fromEntries(ranked.map(([c], i) => [c, i + 1]));
+  const world = hist.days[day].papers || ranked.reduce((s, [, v]) => s + v, 0);
+  document.getElementById("sub").innerHTML = `${nice(day)} · <b>${fmt(world)}</b> papers from <b>${ranked.length}</b> countries`;
+  const steps = [1, 10, 50, 100, 250, 500, 1000], labels = ["1–9", "10–49", "50–99", "100–249", "250–499", "500–999", "1,000+"];
+  const colour = (v) => { if (!v) return "var(--m0)"; let i = 0; while (i < steps.length - 1 && v >= steps[i + 1]) i++; return `var(--m${i + 1})`; };
+  document.getElementById("legend").innerHTML = `<span><i style="background:var(--m0)"></i>none</span>` + labels.map((l, i) => `<span><i style="background:var(--m${i + 1})"></i>${l}</span>`).join("");
+
+  const feats = topojson.feature(topo, topo.objects.countries).features.filter((f) => f.id !== "010");
+  const codeOf = (f) => window.ISO_NUM_TO_A2[f.id] || (f.properties.name === "Kosovo" ? "XK" : null);
+  const box = document.getElementById("map");
+  const W = innerWidth, H = innerHeight;
+  const svg = d3.select(box).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
+  const g = svg.append("g");
+  const wide = W > H, top0 = wide ? H * 0.24 : 230;
+  const proj = d3.geoNaturalEarth1().fitExtent(wide ? [[8, top0], [W - 8, H - 70]] : [[-W * 0.18, top0], [W * 1.18, H - 110]], { type: "FeatureCollection", features: feats });
+  const path = d3.geoPath(proj);
+  const tip = document.getElementById("tip");
+  const paths = g.selectAll("path").data(feats).join("path").attr("class", "c").attr("d", path)
+    .attr("fill", (f) => colour(counts[codeOf(f)]))
+    .on("mousemove", (e, f) => { const c = codeOf(f); tip.style.display = "block"; tip.style.left = e.clientX + 12 + "px"; tip.style.top = e.clientY + 12 + "px";
+                                 tip.textContent = `${names[c] || f.properties.name}: ${fmt(counts[c])} papers`; })
+    .on("mouseleave", () => { tip.style.display = "none"; })
+    .on("click", (e, f) => select(codeOf(f), f));
+  const zoom = d3.zoom().scaleExtent([1, 12]).on("zoom", (e) => g.attr("transform", e.transform));
+  svg.call(zoom);
+  document.getElementById("zin").onclick = () => svg.transition().call(zoom.scaleBy, 1.8);
+  document.getElementById("zout").onclick = () => svg.transition().call(zoom.scaleBy, 1 / 1.8);
+
+  const sheet = document.getElementById("sheet"), card = document.getElementById("card");
+  function zoomTo(f) {
+    const [[x0, y0], [x1, y1]] = path.bounds(f);
+    const k = Math.min(wide ? 4 : 7, 0.5 / Math.max((x1 - x0) / W, (y1 - y0) / (H * 0.45)));
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    svg.transition().duration(900).call(zoom.transform, d3.zoomIdentity.translate(W / 2, H * 0.42).scale(Math.max(1.4, k)).translate(-cx, -cy));
+  }
+  function select(c, f) {
+    document.getElementById("hint").style.display = "none";
+    paths.classed("sel", (x) => x === f);
+    if (f) zoomTo(f);
+    const nm = names[c] || (f && f.properties.name) || c, n = counts[c] || 0;
+    const series = keys.filter((k) => k <= day).slice(-14).map((k) => (hist.days[k].countries || {})[c] || 0);
+    const mx = Math.max(1, ...series);
+    const det = detail[c] || {};
+    const inst = (det.top_institutions || [])[0];
+    card.innerHTML = `<button class="x" aria-label="Close">✕</button>
+      <h2>${c && c.length === 2 ? `<span class="fi fi-${c.toLowerCase()}"></span>` : ""}${nm}</h2>
+      <div class="sub">${nice(day)}</div>
+      <div class="stats"><div class="big"><span>Papers</span><b>${fmt(n)}</b></div>
+        <div><span>World rank</span><b>${rank[c] ? "#" + rank[c] : "—"}</b></div>
+        <div><span>Share</span><b>${n ? (n / world * 100).toFixed(1) + "%" : "—"}</b></div></div>
+      <div class="spark" title="Last 14 days">${series.map((v) => `<i style="height:${Math.max(4, v / mx * 100)}%"></i>`).join("")}</div>
+      <div class="row">${inst ? `🏛️ Most active: <b>${inst.name}</b> (${fmt(inst.count)} papers)` : `Last 14 days: <b>${fmt(series.reduce((a, b) => a + b, 0))}</b> papers`}</div>
+      <a class="go" href="../country/${slug(nm)}.html">See ${nm}'s full research page →</a>`;
+    card.querySelector(".x").onclick = () => { sheet.classList.remove("open"); paths.classed("sel", false); svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity); };
+    sheet.classList.add("open");
+    try { history.replaceState(null, "", "?c=" + c + (q.get("day") ? "&day=" + day : "")); } catch (_) {}
+  }
+  window.RBMapSelect = (c) => select(c, feats.find((f) => codeOf(f) === c));
+
+  const qi = document.getElementById("q"), qs = document.getElementById("qs");
+  const all = Object.keys(names).map((c) => [c, names[c]]).sort((a, b) => a[1].localeCompare(b[1]));
+  qi.addEventListener("input", () => {
+    const t = qi.value.trim().toLowerCase();
+    if (!t) { qs.hidden = true; return; }
+    const hits = all.filter(([, n]) => n.toLowerCase().includes(t)).slice(0, 6);
+    qs.innerHTML = hits.map(([c, n]) => `<li data-c="${c}"><span class="fi fi-${c.toLowerCase()}"></span>${n}</li>`).join("") || "<li>No match</li>";
+    qs.hidden = false;
+  });
+  qs.addEventListener("click", (e) => { const li = e.target.closest("[data-c]"); if (!li) return; qs.hidden = true; qi.value = ""; qi.blur(); window.RBMapSelect(li.dataset.c); });
+  if (q.get("c")) window.RBMapSelect(q.get("c").toUpperCase());
+});
+</script>
+</body>
+</html>
