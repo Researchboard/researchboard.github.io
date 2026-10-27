@@ -77,6 +77,80 @@
   }
   document.querySelectorAll(".gsearch").forEach(setup);
 
+
+  // ------------------------------------------------------------ share (no trackers: plain share links)
+  const NETS = [
+    ["Facebook", "#1877f2", (u, t) => `https://www.facebook.com/sharer/sharer.php?u=${u}`],
+    ["LinkedIn", "#0a66c2", (u, t) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}`],
+    ["Bluesky", "#1185fe", (u, t) => `https://bsky.app/intent/compose?text=${t}%20${u}`],
+    ["X", "#000000", (u, t) => `https://twitter.com/intent/tweet?text=${t}&url=${u}`],
+    ["WhatsApp", "#25d366", (u, t) => `https://wa.me/?text=${t}%20${u}`],
+    ["Telegram", "#229ed9", (u, t) => `https://t.me/share/url?url=${u}&text=${t}`],
+    ["Reddit", "#ff4500", (u, t) => `https://www.reddit.com/submit?url=${u}&title=${t}`],
+    ["Email", "#5b6b85", (u, t) => `mailto:?subject=${t}&body=${t}%0A%0A${u}`],
+  ];
+  function shareText() {
+    if (window.RB_SHARE_TEXT) return window.RB_SHARE_TEXT;
+    const h1 = $("main h1");
+    const base = (h1 && h1.textContent.trim()) || document.title.replace(/\s*[·|—-]\s*ResearchBoard.*$/, "");
+    return base + " — via ResearchBoard";
+  }
+  function shareBar(compact) {
+    const bar = el("div", compact ? "sharebar compact" : "sharebar");
+    if (!compact) bar.appendChild(el("span", "share-lbl", "Share:"));
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+      const n = el("button", "share-btn native", "Share…"); n.type = "button";
+      n.addEventListener("click", () => navigator.share({ title: document.title, text: shareText(), url: location.href }).catch(() => {}));
+      bar.appendChild(n);
+    }
+    NETS.forEach(([name, color, make]) => {
+      const a = el("a", "share-btn", name);
+      a.style.setProperty("--c", color);
+      a.target = "_blank"; a.rel = "noopener";
+      a.addEventListener("pointerdown", () => {     // build the link when used, so it carries the latest text
+        a.href = make(encodeURIComponent(location.href.split("#")[0]), encodeURIComponent(shareText()));
+      });
+      a.addEventListener("focus", () => a.dispatchEvent(new Event("pointerdown")));
+      a.href = make(encodeURIComponent(location.href.split("#")[0]), encodeURIComponent(shareText()));
+      bar.appendChild(a);
+    });
+    const c = el("button", "share-btn copy", "Copy link"); c.type = "button";
+    c.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(location.href.split("#")[0]); c.textContent = "Copied ✓"; }
+      catch (_) { c.textContent = location.href; }
+      setTimeout(() => { c.textContent = "Copy link"; }, 1800);
+    });
+    bar.appendChild(c);
+    return bar;
+  }
+  // a bar at the end of every page's content
+  const main = $("main");
+  if (main && !$(".sharebar")) {
+    const foot = main.querySelector(".site-foot");
+    const wrap = el("section", "share-wrap");
+    wrap.appendChild(el("h2", null, "Share this page"));
+    wrap.appendChild(shareBar(false));
+    if (foot) foot.before(wrap); else main.appendChild(wrap);
+  }
+  // a Share button in the header with a small menu
+  if (btn && !$("#shareBtn")) {
+    const sb = el("button", "icon-btn share-hd"); sb.id = "shareBtn"; sb.type = "button";
+    sb.setAttribute("aria-label", "Share this page"); sb.title = "Share";
+    sb.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+    const menu = el("div", "share-menu"); menu.hidden = true;
+    menu.appendChild(el("div", "share-menu-t", "Share this page"));
+    menu.appendChild(shareBar(true));
+    btn.before(sb); sb.after(menu);
+    sb.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+        navigator.share({ title: document.title, text: shareText(), url: location.href }).catch(() => {}); return;
+      }
+      menu.hidden = !menu.hidden;
+    });
+    document.addEventListener("click", (e) => { if (!menu.contains(e.target) && e.target !== sb) menu.hidden = true; });
+  }
+
   // ------------------------------------------------------------ period tabs + CSV on static pages
   document.querySelectorAll("[data-tabs]").forEach((tabs) => {
     const scope = tabs.closest("section, article, main") || document;

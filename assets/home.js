@@ -94,6 +94,7 @@
     $("#s-papers").textContent = fmt(r.papers); setDelta("#d-papers", r.papers, series("papers"));
     $("#s-pubmed").textContent = fmt(r.pubmed_added); setDelta("#d-pubmed", r.pubmed_added, series("pubmed_added"));
     $("#s-cites").textContent = fmt(r.citations_made); setDelta("#d-cites", r.citations_made, series("citations_made"));
+    window.RB_SHARE_TEXT = `Today in global research (${longDate(S.day)}): ${fmt(r.papers)} new papers from ${fmt(r.countries_active)} countries. Where does your country rank? — via ResearchBoard`;
     $("#s-countries").textContent = fmt(r.countries_active); setDelta("#d-countries", r.countries_active, series("countries_active"), true);
     const ld = S.latest && S.latest.latest_day;
     $("#dayLabel").textContent = S.day === ld ? "Latest fully counted day" : S.day > ld ? "Still being counted — numbers will rise" : "Earlier day";
