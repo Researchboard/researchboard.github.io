@@ -20,6 +20,8 @@
 .kind { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 99px; }
 .kind.article { background: var(--accent-soft); color: var(--accent-strong); }
 .kind.daily { background: var(--violet-soft); color: var(--violet); }
+.kind.guide { background: rgba(34,197,94,.14); color: #15803d; }
+[data-theme="dark"] .kind.guide { color: #6ef0aa; }
 .post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
 .chip { background: var(--panel-2); border: 1px solid var(--line); color: var(--text-2); border-radius: 99px; padding: 1px 9px; font-size: 12px; }
 

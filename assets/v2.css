@@ -197,3 +197,6 @@
 .summary .daybar button:disabled { opacity: .35; cursor: default; }
 .summary .daybar input { padding: 0 8px; color-scheme: dark; flex: 1 1 140px; min-width: 0; cursor: pointer; }
 .summary .daybar .dlatest { background: #6ef0aa; color: #0b2a1c; border-color: #6ef0aa; }
+@media (max-width: 1560px) { .gsearch { width: 270px; } .topbar-inner { gap: 14px; } .share-hd { margin-right: 0; } }
+@media (max-width: 1320px) and (min-width: 1001px) { .gsearch { width: 200px; } .topnav a { padding: 8px 8px; } }
+@media (max-width: 1180px) and (min-width: 1001px) { .brand-tag { display: none; } .gsearch { width: 170px; } .topnav a { padding: 8px 7px; font-size: 14px; } .brand img { width: 44px; height: 44px; } }
