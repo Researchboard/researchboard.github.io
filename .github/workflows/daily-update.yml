@@ -97,6 +97,7 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
           python scripts/guides.py || true
+          python scripts/map_card.py || true
           python scripts/build_blog.py
 
       - name: Save the new data to the repository
@@ -122,6 +123,7 @@ jobs:
           if [ -d country ]; then cp -r country _site/; fi
           if [ -d data ]; then cp -r data _site/; fi
           if [ -d site_extra ]; then cp -r site_extra/* _site/; fi
+          if [ ! -d _site/map ] && [ -d map ]; then cp -r map _site/; fi
           mkdir -p _site/data
           if [ -f _site/blog/_search-index.json ]; then mv _site/blog/_search-index.json _site/data/search-index.json; fi
           rm -f _site/data/*snapshot*.json
