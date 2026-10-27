@@ -118,8 +118,15 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-def page(title: str, description: str, body: str, canonical: str, extra_head: str = "", image: str = "") -> str:
+NAV = [("Home", "../"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Journals", "../journals/"),
+       ("Fields", "../fields/"), ("Market", "../market/"), ("Blog", "../blog/")]
+
+
+def page(title: str, description: str, body: str, canonical: str, extra_head: str = "", image: str = "",
+         active: str = "Blog", main_class: str = "blog-main") -> str:
     image = image or f"{SITE_URL}/assets/og-card.png"
+    on = ' class="on"'
+    nav = "\n      ".join(f'<a href="{h}"{on if n == active else ""}>{n}</a>' for n, h in NAV)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -143,30 +150,32 @@ def page(title: str, description: str, body: str, canonical: str, extra_head: st
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="../assets/blog.css">
+<link rel="stylesheet" href="../assets/v2.css">
 {extra_head}
 <script>try{{var t=localStorage.getItem("researchboard-theme");if(t)document.documentElement.setAttribute("data-theme",t)}}catch(e){{}}</script>
 <script data-goatcounter="https://researchboard.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
-<body>
+<body data-root="../">
 <header class="topbar">
   <div class="topbar-inner">
     <a class="brand" href="../" aria-label="{SITE_NAME} home">
-      <img src="{LOGO}" alt="" width="40" height="40">
-      <span class="brand-text"><span class="brand-name">{SITE_NAME}</span><span class="brand-tag">{TAGLINE}</span></span>
+      <img src="{LOGO}" alt="" width="54" height="54">
+      <span class="brand-text"><span class="brand-name">Research<span class="b2">Board</span></span><span class="brand-tag">{TAGLINE}</span></span>
     </a>
     <nav class="topnav" aria-label="Sections">
-      <a href="../">Home</a>
-      <a href="../#countries">Countries</a>
-      <a href="../#universities">Universities</a>
-      <a href="../#journals">Journals</a>
-      <a href="../#fields">Fields</a>
-      <a href="../#citations">Citations</a>
-      <a href="./" class="on">Blog</a>
-      <a href="../#about">About</a>
+      {nav}
     </nav>
+    <div class="gsearch" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Search a country or institution…" aria-label="Search a country or institution" autocomplete="off">
+      <div class="gdrop" hidden></div>
+    </div>
+    <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch light or dark theme" title="Light / dark">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
   </div>
 </header>
-<main class="blog-main">
+<main class="{main_class}">
 {body}
 </main>
 <footer class="blog-foot">
@@ -174,6 +183,7 @@ def page(title: str, description: str, body: str, canonical: str, extra_head: st
   <span><b>{SITE_NAME}</b> · Global Scientific Research &amp; Citation Analytics</span>
   <span class="muted"><a href="feed.xml">RSS feed</a> · Data: <a href="https://openalex.org" rel="noopener">OpenAlex</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/" rel="noopener">PubMed</a></span>
 </footer>
+<script src="../assets/site.js" defer></script>
 <script src="../assets/blog.js" defer></script>
 </body>
 </html>
@@ -295,6 +305,12 @@ def build() -> None:
         urls += seo_pages.build(ROOT, SITE_URL, page, OUT)
     except Exception as e:  # noqa: BLE001 - SEO pages must never break the blog
         print("WARN seo pages:", e)
+    try:
+        import site_pages
+        urls += site_pages.build(ROOT, SITE_URL, page, OUT)
+    except Exception as e:  # noqa: BLE001 - category pages must never break the blog
+        import traceback; traceback.print_exc()
+        print("WARN site pages:", e)
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"<url><loc>{u}</loc><lastmod>{m}</lastmod><changefreq>{c}</changefreq><priority>{pr}</priority></url>\n"

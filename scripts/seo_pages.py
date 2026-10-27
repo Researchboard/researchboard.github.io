@@ -169,7 +169,7 @@ Recent days keep rising for a week as journals report their papers.</p>
         title = f"{name} research output today: papers, universities and scientists · ResearchBoard"
         desc = (f"{name}: {n:,} research papers published on {nice(d)}" + (f" (#{rank} worldwide)" if rank else "") +
                 f". Daily research statistics for {name}: papers, top universities and most-cited scientists, updated every day.")
-        htm = page(title, desc, body, f"{site_url}/country/{slug}.html",
+        htm = page(title, desc, body, f"{site_url}/country/{slug}.html", active="Countries", extra_head=
                    f'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">'
                    f'<script type="application/ld+json">{ld}</script>')
         (out / f"{slug}.html").write_text(fix_nav(htm), encoding="utf-8")
@@ -189,8 +189,8 @@ with their share of world output and the total for the last 30 days. Updated eve
 </article>"""
     htm = page("Research output by country, updated daily · ResearchBoard",
                f"Which countries publish the most research? Daily ranking of {len(rows)} countries by papers published, "
-               f"with share of world output. Latest: {nice(d)}.", body, f"{site_url}/country/",
-               '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">')
+               f"with share of world output. Latest: {nice(d)}.", body, f"{site_url}/country/", active="Countries",
+               extra_head='<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">')
     (out / "index.html").write_text(fix_nav(htm), encoding="utf-8")
 
     # homepage with a plain-text summary and a Dataset description
@@ -203,9 +203,7 @@ with their share of world output and the total for the last 30 days. Updated eve
                + (f" and {rec['citations_made']:,} new citations were made" if rec.get("citations_made") else "")
                + f". Leading countries: {top3}."
                + (f" Most active institution: {inst['name']} ({inst['count']:,} papers)." if inst.get("name") else ""))
-    block = (f'\n    <p class="day-summary" id="daySummary">{esc(summary)} '
-             f'<a href="country/">Research output by country →</a></p>\n')
-    idx = idx.replace("    <!-- KPI cards -->", block + "    <!-- KPI cards -->", 1)
+    idx = idx.replace('<p id="sumText"></p>', f'<p id="sumText">{esc(summary)}</p>', 1)
     dataset = {
         "@context": "https://schema.org", "@type": "Dataset",
         "name": "ResearchBoard: daily global research output",

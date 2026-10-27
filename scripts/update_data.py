@@ -44,6 +44,8 @@ LATEST_FILE = DATA / "latest.json"
 AUTHOR_SNAPSHOT = DATA / "authors_snapshot.json"
 WORK_SNAPSHOT = DATA / "works_snapshot.json"
 TOTALS_SNAPSHOT = DATA / "totals_snapshot.json"
+INST_FILE = DATA / "institutions.json"   # top 200 institutions per day, for search
+INST_KEEP_DAYS = 120
 
 SCHEMA = 2  # bump when the meaning of stored numbers changes; triggers a rebuild
 
@@ -90,6 +92,8 @@ PUBMED_COUNTRY_TERMS = {
 USER_AGENT = "ResearchBoard/2.0 (daily stats dashboard" + (f"; mailto:{CONTACT}" if CONTACT else "") + ")"
 
 calls = {"openalex": 0, "pubmed": 0}
+INST_DAYS: dict = {}    # day -> {institution id: papers} (top 200), filled while collecting
+INST_NAMES: dict = {}
 warnings: list[str] = []
 
 
@@ -283,7 +287,12 @@ def collect_day(day: dt.date, include_pubmed: bool, names: dict, deep: bool) -> 
         rec["countries"], n = got
         names.update(n)
         rec["countries_active"] = len(rec["countries"])
-    rec["institutions"] = safe(f"institutions {day}", lambda: top_institutions(day), [])
+    groups = safe(f"institutions {day}", lambda: group(day_filter(day), "authorships.institutions.lineage"), []) or []
+    rec["institutions"] = ranked(groups, INSTITUTIONS_PER_DAY)
+    full = ranked(groups, 200)
+    if full:
+        INST_DAYS[iso(day)] = {x["id"]: x["count"] for x in full}
+        INST_NAMES.update({x["id"]: x["name"] for x in full})
     rec["journals"] = safe(f"journals {day}", lambda: top_journals(day), [])
     rec["fields"] = safe(f"fields {day}", lambda: fields(day), [])
     if deep:
@@ -604,6 +613,23 @@ def main() -> int:
         if not prev_totals or market or (dt.datetime.fromisoformat(now_totals["at"]) -
                                          dt.datetime.fromisoformat(prev_totals["at"])).total_seconds() > 36 * 3600:
             save_json(TOTALS_SNAPSHOT, now_totals)
+
+    # 7) Top-200 institutions per day (used by the site search).
+    def save_institutions():
+        inst = load_json(INST_FILE, {"days": {}, "names": {}, "country": {}})
+        inst["days"].update(INST_DAYS)
+        keep = sorted(inst["days"])[-INST_KEEP_DAYS:]
+        inst["days"] = {k: inst["days"][k] for k in keep}
+        inst["names"].update(INST_NAMES)
+        live = {i for d in inst["days"].values() for i in d}
+        inst["names"] = {i: n for i, n in inst["names"].items() if i in live}
+        cc = dict(inst.get("country", {}))
+        cc.update({k: v for k, v in inst_country.items() if k in live and v})
+        cc = institution_countries([i for i in live if i not in cc], cc)
+        inst["country"] = {i: c for i, c in cc.items() if i in live and c}
+        save_json(INST_FILE, inst)
+    if INST_DAYS:
+        safe("institutions file", save_institutions)
 
     latest = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
