@@ -169,6 +169,8 @@ jobs:
           LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
         run: |
           python scripts/post_social.py
+          git config user.name  "researchboard-bot"
+          git config user.email "researchboard-bot@users.noreply.github.com"
           if [ -n "$(git status --porcelain -- data/social_log.json)" ]; then
             git add data/social_log.json
             git commit -m "Social posts $(date -u +%F)"
