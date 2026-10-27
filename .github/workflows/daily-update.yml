@@ -6,6 +6,7 @@ on:
     - cron: "7 2 * * *"    # 02:07, 05:07, 08:07 UTC (overnight US Eastern; daytime Asia, morning Europe):
     - cron: "7 5 * * *"    #   three themed "Spotlight" leaderboard posts, 5+ hours from the two main posts
     - cron: "7 8 * * *"
+    - cron: "37 3 * * *"   # 03:37 UTC = 9:37 am Dhaka: Bangladesh last-24-hours post (Facebook only)
     - cron: "7 21 * * *"   # 21:07 UTC (~4-5 pm US Eastern): full "Today in Research" report post
   workflow_dispatch:         # "Run workflow" button in the Actions tab
     inputs:
@@ -47,7 +48,7 @@ jobs:
         run: pip install markdown==3.7 pillow==11.3.0
 
       - name: Collect the latest numbers
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.inputs.mode != 'totals-only'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
         env:
           OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
@@ -56,7 +57,7 @@ jobs:
         run: python scripts/update_data.py
 
       - name: Write today's automatic blog post and image card
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.inputs.mode != 'totals-only'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
@@ -76,13 +77,28 @@ jobs:
           git pull --rebase --autostash origin main || true
           git push || true
 
+      - name: Bangladesh 24-hour snapshot and card
+        if: github.event.schedule == '37 3 * * *'
+        env:
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          python scripts/country_watch.py
+          git config user.name  "researchboard-bot"
+          git config user.email "researchboard-bot@users.noreply.github.com"
+          git add data/ posts/images/cards/
+          git commit -m "Bangladesh 24-hour snapshot $(date -u +%F)" || true
+          git pull --rebase --autostash origin main || true
+          git push || true
+
       - name: Build the blog
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/build_blog.py
 
       - name: Save the new data to the repository
-        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.inputs.mode != 'totals-only'
+        if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
         run: |
           git config user.name  "researchboard-bot"
           git config user.email "researchboard-bot@users.noreply.github.com"
@@ -133,7 +149,7 @@ jobs:
         if: github.event_name != 'push' && github.event.inputs.mode != 'totals-only'
         continue-on-error: true
         env:
-          SOCIAL_MODE: ${{ github.event.schedule == '7 21 * * *' && 'report' || (env.SPOTLIGHT_SLOT != '' && 'spotlight' || (github.event_name == 'schedule' && 'market' || 'both')) }}
+          SOCIAL_MODE: ${{ github.event.schedule == '37 3 * * *' && 'bd' || (github.event.schedule == '7 21 * * *' && 'report' || (env.SPOTLIGHT_SLOT != '' && 'spotlight' || (github.event_name == 'schedule' && 'market' || 'both'))) }}
           SITE_URL: ${{ vars.SITE_URL }}
           FB_GRAPH_VERSION: ${{ vars.FB_GRAPH_VERSION }}
           LINKEDIN_VERSION: ${{ vars.LINKEDIN_VERSION }}
