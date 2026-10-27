@@ -317,8 +317,11 @@ def post_bluesky(msg: dict) -> str:
 # --------------------------------------------------------------------------- main
 
 def main() -> int:
-    mode = env("SOCIAL_MODE") or "both"          # market | report | both
+    mode = env("SOCIAL_MODE") or "both"          # market | report | spotlight | both
     jobs = []
+    if mode == "spotlight":
+        import spotlight
+        jobs.append(("_spotlight", spotlight.compose_spotlight()))
     if mode in ("market", "both"):
         jobs.append(("_market", compose_market()))
     if mode in ("report", "both"):
@@ -326,7 +329,7 @@ def main() -> int:
     log = json.loads(LOG.read_text(encoding="utf-8")) if LOG.exists() else {}
     changed = False
     for suffix, msg in jobs:
-        kind = "market" if suffix else "report"
+        kind = suffix.strip("_") or "report"
         if not msg:
             print(f"{kind}: nothing to post")
             continue
