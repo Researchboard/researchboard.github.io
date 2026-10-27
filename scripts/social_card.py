@@ -149,7 +149,7 @@ def make_daily_card(site: str = "researchboard.net") -> Path | None:
     img = background()
     d = ImageDraw.Draw(img, "RGBA")
     header(d, site)
-    d.text((64, 162), "TODAY IN RESEARCH", font=font("b", 20), fill=ACCENT)
+    d.text((64, 162), "RESEARCH REPORT  ·  FULLY COUNTED", font=font("b", 20), fill=ACCENT)
     d.text((64, 190), f"{d_:%A}, {d_:%B} {d_.day}, {d_.year}", font=font("x", 44), fill=WHITE)
 
     stats = [(fmt(rec.get("papers")), "New papers", WHITE),

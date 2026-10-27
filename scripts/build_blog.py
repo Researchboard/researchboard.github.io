@@ -367,7 +367,7 @@ def write_daily() -> Path | None:
     top_c = list(countries.items())[:5]
     lines = [
         "---",
-        f"title: Today in Research — {nice}",
+        f"title: Research Report: {d:%A}, {d:%B} {d.day}, {d.year} — fully counted",
         f"date: {day}",
         "author: ResearchBoard",
         f"summary: {f(papers)} new papers from {len(countries)} countries"
@@ -376,10 +376,11 @@ def write_daily() -> Path | None:
         "tags: daily report",
         "---",
         "",
-        f"![Today in Research — {nice}](images/cards/daily-{day}.png)",
+        f"![Research Report — {nice}](images/cards/daily-{day}.png)",
         "",
-        f"Here is the research world on **{nice}**, the newest day that is mostly indexed. "
-        "All numbers come straight from OpenAlex and PubMed and will keep rising slightly as late records arrive.",
+        f"Here is the research world on **{d:%A}, {d:%B} {d.day}, {d.year}**, now fully counted. "
+        "Journals report new papers over several days, so we publish each day once all its papers are counted. "
+        "All numbers come straight from OpenAlex and PubMed and may still rise slightly as late records arrive.",
         "",
         "## The day in numbers",
         "",

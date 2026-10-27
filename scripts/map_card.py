@@ -125,7 +125,7 @@ def main() -> int:
     d.text((96, 30), "Research", font=F("x", 28), fill=(255, 255, 255))
     w = d.textlength("Research", font=F("x", 28)); d.text((96 + w, 30), "Board", font=F("x", 28), fill=(124, 192, 255))
     d.text((W - 40, 40), "researchboard.net/map", font=F("b", 20), fill=(185, 205, 238), anchor="ra")
-    d.text((W // 2, 104), "Where did today's research come from?", font=F("x", 42), fill=(255, 255, 255), anchor="mm")
+    d.text((W // 2, 104), "Where does the world's research come from?", font=F("x", 42), fill=(255, 255, 255), anchor="mm")
     x = dt.date.fromisoformat(day)
     world = rec.get("papers") or sum(counts.values())
     d.text((W // 2, 146), f"{x:%A, %B} {x.day}, {x.year}  ·  {world:,} papers from {len(counts)} countries",

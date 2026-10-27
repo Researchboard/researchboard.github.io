@@ -91,7 +91,8 @@ def compose() -> dict | None:
     top = list((rec.get("countries") or {}).items())[:3]
     medals = ["🥇", "🥈", "🥉"]
     lines = [
-        f"📊 Today in Research — {d:%B} {d.day}, {d.year}",
+        f"📊 Research Report: {d:%A}, {d:%B} {d.day}, {d.year} — fully counted",
+        "Journals report new papers over several days, so we publish each day once all its papers are counted.",
         "",
         f"📄 {f(rec.get('papers'))} new papers from {f(rec.get('countries_active'))} countries",
         f"🧬 {f(rec.get('pubmed_added'))} records added to PubMed",
@@ -106,14 +107,14 @@ def compose() -> dict | None:
     url = f"{SITE}/blog/daily-{day}.html"
     lines += ["", f"Full daily report 👉 {url}", "", "#Research #Science #OpenScience #Bibliometrics #PubMed #ResearchBoard"]
     card = ROOT / "posts" / "images" / "cards" / f"daily-{day}.png"
-    short = [f"📊 Today in Research — {d:%b} {d.day}, {d.year}",
+    short = [f"📊 Research Report: {d:%a}, {d:%b} {d.day}, {d.year} — fully counted",
              f"📄 {f(rec.get('papers'))} papers · 🌍 {f(rec.get('countries_active'))} countries",
              f"🧬 {f(rec.get('pubmed_added'))} PubMed · 🔗 {f(rec.get('citations_made'))} citations"]
     if top:
         short.append(" ".join(f"{medals[i]} {names.get(c, c)}" for i, (c, _) in enumerate(top)))
     short += [f"Report: {url.split('://', 1)[-1]}", "#Science #Research"]
     return {"day": day, "text": "\n".join(lines), "url": url, "short": "\n".join(short),
-            "title": f"Today in Research — {d:%B} {d.day}, {d.year}",
+            "title": f"Research Report: {d:%A}, {d:%B} {d.day}, {d.year} — fully counted",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/daily-{day}.png" if card.exists() else None}
 
