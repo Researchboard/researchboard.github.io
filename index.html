@@ -88,7 +88,13 @@
     </div>
     <aside class="summary" aria-label="Global research summary">
       <div class="lab">Global research today</div>
-      <select id="daySelect" aria-label="Day shown"></select>
+      <div class="daytitle" id="dayTitle">—</div>
+      <div class="daybar" role="group" aria-label="Choose a day">
+        <button type="button" id="dPrev" aria-label="Previous day" title="Previous day">◀</button>
+        <input type="date" id="dayPick" aria-label="Pick a date">
+        <button type="button" id="dNext" aria-label="Next day" title="Next day">▶</button>
+        <button type="button" id="dLatest" class="dlatest" title="Back to the latest fully counted day">Latest</button>
+      </div>
       <div class="daynote" id="dayLabel">Latest fully counted day</div>
       <div class="sgrid">
         <div class="sbox"><span>New papers</span><b id="s-papers">—</b><em id="d-papers"></em></div>
