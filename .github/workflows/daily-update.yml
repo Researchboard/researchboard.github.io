@@ -95,7 +95,9 @@ jobs:
       - name: Build the blog
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-        run: python scripts/build_blog.py
+        run: |
+          python scripts/guides.py || true
+          python scripts/build_blog.py
 
       - name: Save the new data to the repository
         if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
