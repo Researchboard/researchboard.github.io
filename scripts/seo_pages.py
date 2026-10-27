@@ -153,7 +153,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
             {"@type": "ListItem", "position": 3, "name": name, "item": f"{site_url}/country/{slug}.html"}]})
         body = f"""<article class="post c-page">
 <p class="post-meta"><a href="./">All countries</a> · Updated daily · Latest fully counted day: {nice(d)}</p>
-<h1><span class="fi fi-{code.lower()}"></span> {esc(name)}: research output today</h1>
+<h1><span class="fi fi-{code.lower()}"></span> {esc(name)}: research output {d.year}</h1>
 <p class="lead">{lead}</p>
 <div class="c-stats">{stat_html}</div>
 <h2>Last 30 days</h2>
@@ -166,7 +166,7 @@ affiliated with an institution in {esc(name)}, by publication date, from <a href
 Recent days keep rising for a week as journals report their papers.</p>
 <p><a class="btn" href="../">Open the live dashboard</a> {('· Nearby in the ranking: ' + neigh_html) if neigh_html else ''}</p>
 </article>"""
-        title = f"{name} research output today: papers, universities and scientists · ResearchBoard"
+        title = f"{name} research output {d.year}: papers per day, universities and scientists · ResearchBoard"
         desc = (f"{name}: {n:,} research papers published on {nice(d)}" + (f" (#{rank} worldwide)" if rank else "") +
                 f". Daily research statistics for {name}: papers, top universities and most-cited scientists, updated every day.")
         htm = page(title, desc, body, f"{site_url}/country/{slug}.html", active="Countries", extra_head=

@@ -99,6 +99,11 @@ def load_posts() -> list[dict]:
         r = parse(p, "article")
         if r:
             posts.append(r)
+    guides = POSTS / "guides"
+    for p in sorted(guides.glob("*.md")) if guides.exists() else []:
+        r = parse(p, "guide")
+        if r:
+            posts.append(r)
     for p in sorted(DAILY.glob("*.md")) if DAILY.exists() else []:
         r = parse(p, "daily")
         if r:
@@ -195,7 +200,7 @@ def nice_date(d: dt.date) -> str:
 
 
 def card(p: dict) -> str:
-    kind_label = "Daily report" if p["kind"] == "daily" else "Article"
+    kind_label = {"daily": "Daily report", "guide": "Data guide"}.get(p["kind"], "Article")
     img = f'<img class="post-thumb" src="{esc(p["image"])}" alt="" loading="lazy">' if p["image"] else ""
     tags = "".join(f'<span class="chip">{esc(t)}</span>' for t in p["tags"][:3])
     return f"""<a class="post-card {p['kind']}" href="{esc(p['slug'])}.html" data-kind="{p['kind']}">
@@ -211,7 +216,8 @@ def card(p: dict) -> str:
 
 def build_index(posts: list[dict]) -> str:
     n_art = sum(1 for p in posts if p["kind"] == "article")
-    n_daily = len(posts) - n_art
+    n_guide = sum(1 for p in posts if p["kind"] == "guide")
+    n_daily = len(posts) - n_art - n_guide
     cards = "\n".join(card(p) for p in posts) or '<p class="muted">No posts yet.</p>'
     body = f"""
 <section class="blog-hero">
@@ -219,6 +225,7 @@ def build_index(posts: list[dict]) -> str:
   <p>Analysis, stories and daily reports on the world's research output.</p>
   <div class="seg blog-filter" role="group" aria-label="Filter posts">
     <button type="button" class="on" data-filter="all">All <span>{len(posts)}</span></button>
+    <button type="button" data-filter="guide">Data guides <span>{n_guide}</span></button>
     <button type="button" data-filter="article">Articles <span>{n_art}</span></button>
     <button type="button" data-filter="daily">Daily reports <span>{n_daily}</span></button>
   </div>
@@ -231,7 +238,7 @@ def build_index(posts: list[dict]) -> str:
 
 def build_post(p: dict, prev: dict | None, nxt: dict | None) -> str:
     url = f"{SITE_URL}/blog/{p['slug']}.html"
-    kind_label = "Daily report" if p["kind"] == "daily" else "Article"
+    kind_label = {"daily": "Daily report", "guide": "Data guide"}.get(p["kind"], "Article")
     tags = "".join(f'<span class="chip">{esc(t)}</span>' for t in p["tags"])
     hero = f'<img class="post-hero-img" src="{esc(p["image"])}" alt="">' if p["image"] else ""
     share_text = esc(p["title"])
@@ -298,7 +305,7 @@ def build() -> None:
     today = dt.date.today().isoformat()
     urls = [(f"{SITE_URL}/", today, "daily", "1.0"), (f"{SITE_URL}/blog/", today, "daily", "0.8")]
     urls += [(f"{SITE_URL}/blog/{p['slug']}.html", p["date"].isoformat(), "monthly",
-              "0.7" if p["kind"] == "article" else "0.5") for p in posts]
+              {"guide": "0.9", "article": "0.7"}.get(p["kind"], "0.5")) for p in posts]
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import seo_pages
