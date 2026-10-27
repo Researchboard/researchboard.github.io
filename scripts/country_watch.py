@@ -29,7 +29,7 @@ CC = (os.environ.get("FOCUS_COUNTRY") or "BD").upper()
 SNAP = DATA / f"{CC.lower()}_snapshot.json"
 HIST = DATA / f"{CC.lower()}_history.json"
 SITE = os.environ.get("SITE_URL", "https://researchboard.net").rstrip("/")
-NAMES = {"BD": ("Bangladesh", "বাংলাদেশের")}
+NAMES = {"BD": ("Bangladesh", "")}
 
 
 def snapshot(today: dt.date) -> dict:
@@ -132,8 +132,8 @@ def compose() -> dict | None:
     bd = dt.timezone(dt.timedelta(hours=6))
     a, b = dt.datetime.fromisoformat(m["from"]).astimezone(bd), t1.astimezone(bd)
     slug = name.lower().replace(" ", "-")
-    lines = [f"🇧🇩 {local} গবেষণা — গত ২৪ ঘণ্টা" if CC == "BD" else f"{name} research — last 24 hours",
-             f"{name} research — last 24 hours ({a:%b} {a.day}, {a:%I:%M %p} → {b:%b} {b.day}, {b:%I:%M %p}, Dhaka time)", "",
+    lines = [f"{'🇧🇩 ' if CC == 'BD' else ''}{name} research — last 24 hours",
+             f"⏱️ {a:%b} {a.day}, {a:%I:%M %p} → {b:%b} {b.day}, {b:%I:%M %p} (Dhaka time)", "",
              f"📄 +{m['papers_added']:,} new papers with {name}-based authors",
              f"📰 {m['articles_added']:,} of them journal articles",
              f"🏛️ {m['institutions_added']:,} {name} institutions contributed"]
