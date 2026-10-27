@@ -123,7 +123,7 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-NAV = [("Home", "../"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Journals", "../journals/"),
+NAV = [("Home", "../"), ("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Journals", "../journals/"),
        ("Fields", "../fields/"), ("Market", "../market/"), ("Blog", "../blog/")]
 
 
@@ -315,6 +315,7 @@ def build() -> None:
     try:
         import site_pages
         urls += site_pages.build(ROOT, SITE_URL, page, OUT)
+        urls.append((f"{SITE_URL}/map/", today, "daily", "0.9"))
     except Exception as e:  # noqa: BLE001 - category pages must never break the blog
         import traceback; traceback.print_exc()
         print("WARN site pages:", e)
