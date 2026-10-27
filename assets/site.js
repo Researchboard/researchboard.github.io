@@ -131,6 +131,22 @@
     wrap.appendChild(el("h2", null, "Share this page"));
     wrap.appendChild(shareBar(false));
     if (foot) foot.before(wrap); else main.appendChild(wrap);
+    // follow + contact
+    const fc = el("section", "follow-wrap");
+    fc.appendChild(el("h2", null, "Follow ResearchBoard"));
+    const row = el("div", "sharebar");
+    [["Facebook", "#1877f2", "https://www.facebook.com/profile.php?id=61595916720173"],
+     ["LinkedIn", "#0a66c2", "https://www.linkedin.com/company/146886149/"],
+     ["Bluesky", "#1185fe", "https://bsky.app/profile/researchboard.bsky.social"]].forEach(([n, c, h]) => {
+      const a = el("a", "share-btn", n); a.style.setProperty("--c", c); a.href = h; a.target = "_blank"; a.rel = "noopener me"; row.appendChild(a);
+    });
+    // e-mail is assembled here so simple spam bots reading the page source don't see it
+    const em = ["researchboardlive", "gmail.com"].join("@");
+    const m = el("a", "share-btn mail", "✉ " + em); m.style.setProperty("--c", "#5b6b85");
+    m.href = "mailto:" + em + "?subject=" + encodeURIComponent("ResearchBoard"); row.appendChild(m);
+    fc.appendChild(row);
+    fc.appendChild(el("p", "follow-note", "Questions, ideas, corrections or data requests? Email us any time."));
+    wrap.after(fc);
   }
   // a Share button in the header with a small menu
   if (btn && !$("#shareBtn")) {

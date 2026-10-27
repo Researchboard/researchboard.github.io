@@ -182,3 +182,7 @@
 .share-menu-t { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
 .sharebar.compact .share-btn { height: 30px; padding: 0 11px; font-size: 12.5px; }
 @media (max-width: 640px) { .share-menu { right: 8px; left: 8px; width: auto; top: 120px; } }
+.follow-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; margin: 0 0 18px; box-shadow: var(--shadow); }
+.follow-wrap h2 { font-size: 16px; margin: 0 0 10px; }
+.follow-note { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+@media (min-width: 900px) { .share-wrap, .follow-wrap { display: inline-block; vertical-align: top; width: calc(50% - 9px); box-sizing: border-box; } .share-wrap { margin-right: 14px; } .follow-wrap { margin-top: 18px; } }
