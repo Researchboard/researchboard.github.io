@@ -243,14 +243,18 @@
     try { data = await getJSON("blog/posts.json"); } catch (_) { return; }
     const posts = (data && data.posts) || [];
     if (!posts.length) return;
-    const firstArticle = posts.find((p) => p.kind === "article");
-    const pick = [...new Set([...posts.slice(0, 2), firstArticle].filter(Boolean))].slice(0, 3);
+    // newest daily report + two guides/articles that change every day
+    const daily = posts.find((p) => p.kind === "daily");
+    const others = posts.filter((p) => p.kind !== "daily" && p.slug !== "welcome");
+    const off = others.length ? Math.floor(Date.now() / 864e5) % others.length : 0;
+    const pick = [daily, others[off], others[(off + 1) % Math.max(1, others.length)]]
+      .filter((p, i, arr) => p && arr.indexOf(p) === i).slice(0, 3);
     const strip = $("#blogStrip"); strip.replaceChildren();
     pick.forEach((p) => {
       const a = el("a", "post-card " + p.kind); a.href = "blog/" + encodeURIComponent(p.slug) + ".html";
       const body = el("div", "post-card-body");
       const kick = el("div", "post-kicker");
-      kick.append(el("span", "kind " + p.kind, p.kind === "daily" ? "Daily report" : "Article"),
+      kick.append(el("span", "kind " + p.kind, p.kind === "daily" ? "Research report" : p.kind === "guide" ? "Data guide" : "Article"),
         el("time", null, new Date(p.date + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })));
       body.append(kick, el("h2", null, p.title), el("p", null, p.summary));
       a.appendChild(body); strip.appendChild(a);
