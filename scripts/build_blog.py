@@ -316,6 +316,7 @@ def build() -> None:
         import site_pages
         urls += site_pages.build(ROOT, SITE_URL, page, OUT)
         urls.append((f"{SITE_URL}/map/", today, "daily", "0.9"))
+        urls.append((f"{SITE_URL}/quiz/", today, "monthly", "0.8"))
     except Exception as e:  # noqa: BLE001 - category pages must never break the blog
         import traceback; traceback.print_exc()
         print("WARN site pages:", e)
