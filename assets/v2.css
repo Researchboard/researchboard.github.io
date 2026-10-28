@@ -200,3 +200,18 @@
 @media (max-width: 1560px) { .gsearch { width: 270px; } .topbar-inner { gap: 14px; } .share-hd { margin-right: 0; } }
 @media (max-width: 1320px) and (min-width: 1001px) { .gsearch { width: 200px; } .topnav a { padding: 8px 8px; } }
 @media (max-width: 1180px) and (min-width: 1001px) { .brand-tag { display: none; } .gsearch { width: 170px; } .topnav a { padding: 8px 7px; font-size: 14px; } .brand img { width: 44px; height: 44px; } }
+/* about page */
+.about .panel2 { margin-bottom: 14px; }
+.about .panel2 p, .about .panel2 li { font-size: 15px; line-height: 1.6; color: var(--text); }
+.about .panel2 ul { padding-left: 20px; margin: 6px 0; }
+.about .panel2 li { margin: 4px 0; }
+.about h2 { font-size: 18px; margin: 0 0 8px; }
+/* header: let the search box shrink so the menu always fits */
+@media (min-width: 1001px) {
+  .topbar-inner .gsearch { width: auto; flex: 0 1 340px; min-width: 140px; margin-left: auto; }
+  .topnav { flex: none; }
+}
+@media (max-width: 1500px) and (min-width: 1001px) { .brand-tag { display: none; } .topnav a { padding: 8px 9px; font-size: 14.5px; } }
+@media (max-width: 1240px) and (min-width: 1001px) { .topnav a { padding: 8px 6px; font-size: 13.5px; } .brand-name { font-size: 22px; } .brand img { width: 40px; height: 40px; } }
+@media (max-width: 1070px) and (min-width: 1001px) { .brand-name { font-size: 19px; } .topnav a { padding: 8px 5px; font-size: 13px; } .topbar-inner { gap: 10px; } }
+.about { max-width: 920px; }
