@@ -215,3 +215,10 @@
 @media (max-width: 1240px) and (min-width: 1001px) { .topnav a { padding: 8px 6px; font-size: 13.5px; } .brand-name { font-size: 22px; } .brand img { width: 40px; height: 40px; } }
 @media (max-width: 1070px) and (min-width: 1001px) { .brand-name { font-size: 19px; } .topnav a { padding: 8px 5px; font-size: 13px; } .topbar-inner { gap: 10px; } }
 .about { max-width: 920px; }
+
+/* quiz promo */
+.quizpromo{display:flex;align-items:center;gap:12px;margin:14px 0;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#1d3b8a,#0e7490);color:#fff;text-decoration:none}
+.quizpromo .qp-e{font-size:30px;line-height:1}
+.quizpromo .qp-t{flex:1;font-size:14.5px;line-height:1.4}
+.quizpromo .qp-b{background:#6ef0aa;color:#06281a;font-weight:800;padding:8px 14px;border-radius:10px;white-space:nowrap}
+.quizpromo:hover{filter:brightness(1.08)}
