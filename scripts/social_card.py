@@ -228,7 +228,7 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
 
     hrs = round(m.get("hours") or 24)
     span = "LAST 24 HOURS" if abs(hrs - 24) <= 2 else f"LAST {hrs} HOURS"
-    d.text((64, 156), f"RESEARCH MARKET  ·  {span}", font=font("b", 20), fill=up)
+    d.text((64, 156), f"RESEARCH TRENDS  ·  {span}", font=font("b", 20), fill=up)
     d.text((64, 184), f"{t0:%b} {t0.day}, {t0:%H:%M}  →  {t1:%b} {t1.day}, {t1:%H:%M} UTC",
            font=font("x", 34), fill=WHITE)
 

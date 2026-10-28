@@ -278,7 +278,9 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
                  ranked_table([{"n": n, "name": esc(i["name"]), "v": f'<b class="up">▲ +{i["added"]:,}</b>'}
                                for n, i in enumerate(m.get("institutions", []), 1)], mi) + '</section></aside></div>')
     else:
-        why = (f"Today's 24-hour change is not shown: {esc(m['flagged'])}. It will return with the next update."
+        why = (("No change to show yet: our data source (OpenAlex) has not added new papers since the last update. "
+                "It will return with the next update.") if "no growth" in (m or {}).get("flagged", "") else
+               f"Today's 24-hour change is not shown ({esc(m['flagged'])}). It will return with the next update."
                if m and m.get("flagged") else "The first 24-hour comparison appears after the next daily update.")
         body += f'<section class="panel2"><p>{why}</p></section>'
     if hist_m:

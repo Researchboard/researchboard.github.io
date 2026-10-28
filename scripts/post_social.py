@@ -129,7 +129,7 @@ def compose_market() -> dict | None:
     window = f"{t0:%b} {t0.day}, {t0:%H:%M} → {t1:%b} {t1.day}, {t1:%H:%M} UTC"
     hrs = round(m.get("hours") or 24)
     span = "last 24 hours" if abs(hrs - 24) <= 2 else f"last {hrs} hours"
-    lines = [f"📈 Research Market — {span}", f"⏱️ {window}", "",
+    lines = [f"📈 Research trends — {span}", f"⏱️ {window}", "",
              f"▲ +{m['papers_added']:,} new papers added to the global research record"]
     if m.get("pubmed_yesterday"):
         lines.append(f"🧬 +{m['pubmed_yesterday']:,} records added to PubMed")
@@ -141,17 +141,17 @@ def compose_market() -> dict | None:
     inst = (m.get("institutions") or [])[:1]
     if inst:
         lines += ["", f"🏛️ Top institution: {inst[0]['name']} +{inst[0]['added']:,}"]
-    lines += ["", f"Live dashboard 👉 {SITE}", "", "#Research #Science #OpenScience #ResearchMarket #ResearchBoard"]
+    lines += ["", f"Live dashboard 👉 {SITE}", "", "#Research #Science #OpenScience #ResearchTrends #ResearchBoard"]
     day = t1.date().isoformat()
     card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
-    short = [f"📈 Research Market — {span}", f"▲ +{m['papers_added']:,} new papers added"]
+    short = [f"📈 Research trends — {span}", f"▲ +{m['papers_added']:,} new papers added"]
     if m.get("pubmed_yesterday"):
         short.append(f"🧬 +{m['pubmed_yesterday']:,} PubMed records")
     if movers:
         short.append("Top: " + " · ".join(f"{names.get(c['code'], c['code'])} +{c['added']:,}" for c in movers[:3]))
     short += [f"Live: {SITE.split('://', 1)[-1]}", "#Science #Research"]
     return {"day": day, "text": "\n".join(lines), "url": SITE + "/", "short": "\n".join(short),
-            "title": f"Research Market — {span} to {t1:%b} {t1.day}",
+            "title": f"Research trends — {span} to {t1:%b} {t1.day}",
             "card_path": card if card.exists() else None,
             "card_url": f"{SITE}/blog/images/cards/market-{day}.png" if card.exists() else None}
 
