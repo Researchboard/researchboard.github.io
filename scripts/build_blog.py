@@ -200,7 +200,7 @@ def nice_date(d: dt.date) -> str:
 
 
 def card(p: dict) -> str:
-    kind_label = {"daily": "Daily report", "guide": "Data guide"}.get(p["kind"], "Article")
+    kind_label = {"daily": "Research report", "guide": "Data guide"}.get(p["kind"], "Article")
     img = f'<img class="post-thumb" src="{esc(p["image"])}" alt="" loading="lazy">' if p["image"] else ""
     tags = "".join(f'<span class="chip">{esc(t)}</span>' for t in p["tags"][:3])
     return f"""<a class="post-card {p['kind']}" href="{esc(p['slug'])}.html" data-kind="{p['kind']}">
@@ -227,7 +227,7 @@ def build_index(posts: list[dict]) -> str:
     <button type="button" class="on" data-filter="all">All <span>{len(posts)}</span></button>
     <button type="button" data-filter="guide">Data guides <span>{n_guide}</span></button>
     <button type="button" data-filter="article">Articles <span>{n_art}</span></button>
-    <button type="button" data-filter="daily">Daily reports <span>{n_daily}</span></button>
+    <button type="button" data-filter="daily">Research reports <span>{n_daily}</span></button>
   </div>
 </section>
 <section class="post-grid" id="postGrid">
@@ -238,7 +238,7 @@ def build_index(posts: list[dict]) -> str:
 
 def build_post(p: dict, prev: dict | None, nxt: dict | None) -> str:
     url = f"{SITE_URL}/blog/{p['slug']}.html"
-    kind_label = {"daily": "Daily report", "guide": "Data guide"}.get(p["kind"], "Article")
+    kind_label = {"daily": "Research report", "guide": "Data guide"}.get(p["kind"], "Article")
     tags = "".join(f'<span class="chip">{esc(t)}</span>' for t in p["tags"])
     hero = f'<img class="post-hero-img" src="{esc(p["image"])}" alt="">' if p["image"] else ""
     share_text = esc(p["title"])
