@@ -123,8 +123,8 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-NAV = [("Home", "../"), ("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Journals", "../journals/"),
-       ("Fields", "../fields/"), ("Market", "../market/"), ("Blog", "../blog/")]
+NAV = [("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Journals", "../journals/"),
+       ("Research fields", "../fields/"), ("Trends", "../market/"), ("Blog", "../blog/"), ("About", "../about/")]
 
 
 def page(title: str, description: str, body: str, canonical: str, extra_head: str = "", image: str = "",

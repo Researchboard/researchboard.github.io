@@ -217,7 +217,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
              f'{hbars([(fnames.get(i, i), v) for i, v in pf[:10]])}<p class="note">Each paper counts once, under its main field (OpenAlex topics).</p>'
              f'</section></aside></div>')
     write("fields", "Research fields: papers published by field today · ResearchBoard",
-          f"Daily papers by research field: medicine, engineering, computer science and more. Latest {nice(day)}.", body, "Fields")
+          f"Daily papers by research field: medicine, engineering, computer science and more. Latest {nice(day)}.", body, "Research fields")
 
     # ------------------------------------------------------------------ papers
     def prow(p, n, key="citations", plus=False):
@@ -261,7 +261,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
     # ------------------------------------------------------------------ market
     hist_m = [m for m in hist.get("market", []) if not m.get("flagged")]
     m = latest.get("market")
-    body = head_block("Market", "Research Market", "What was added to the global research record in the last 24 hours, "
+    body = head_block("Trends", "Research trends", "What was added to the global research record in the last 24 hours, "
                       "like a share-price change, and how it has moved day by day.")
     if m and not m.get("flagged"):
         t1 = dt.datetime.fromisoformat(m["to"])
@@ -278,7 +278,9 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
                  ranked_table([{"n": n, "name": esc(i["name"]), "v": f'<b class="up">▲ +{i["added"]:,}</b>'}
                                for n, i in enumerate(m.get("institutions", []), 1)], mi) + '</section></aside></div>')
     else:
-        body += '<section class="panel2"><p>The first 24-hour comparison appears after the next daily update.</p></section>'
+        why = (f"Today's 24-hour change is not shown: {esc(m['flagged'])}. It will return with the next update."
+               if m and m.get("flagged") else "The first 24-hour comparison appears after the next daily update.")
+        body += f'<section class="panel2"><p>{why}</p></section>'
     if hist_m:
         labels = [dt.datetime.fromisoformat(x["to"]).date().isoformat() for x in hist_m[-60:]]
         body += (f'<section class="panel2"><h2>New papers added per day</h2>{vbars([x["papers_added"] for x in hist_m[-60:]], labels)}'
@@ -288,8 +290,8 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
                                  for x in reversed(hist_m[-30:])],
                                 [("Day", "d", False), ("Papers added", "v", True), ("PubMed", "p", True), ("Countries", "c", True), ("Top mover", "t", False)])
                  + '</section>')
-    write("market", "Research Market: papers added in the last 24 hours · ResearchBoard",
-          "How much research was added to the global record in the last 24 hours, by country and institution.", body, "Market")
+    write("market", "Research trends: papers added in the last 24 hours · ResearchBoard",
+          "How much research was added to the global record in the last 24 hours, by country and institution.", body, "Trends")
 
     # ------------------------------------------------------------------ explore (search result page)
     body = '''<div class="crumb"><a href="../">Home</a> › Search</div>
@@ -357,4 +359,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     (out_blog / "_search-index.json").write_text(
         json.dumps({"dates": dates, "countries": crow, "inst": irow}, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
     print(f"Site pages: 7 category pages; search index {len(crow)} countries, {len(irow)} institutions, {len(dates)} days")
+    # ------------------------------------------------------------------ about
+    about = head_block("About", "About ResearchBoard", "A free daily board of the world's research output — "
+                       "how much is published, where, by whom, and what is being cited.")
+    about += """
+<div class="about">
+<section class="panel2"><h2>What ResearchBoard is</h2>
+<p>ResearchBoard follows global science the way a stock-market board follows prices. Every day it counts the research papers published worldwide and shows them by
+country, university, journal and field, together with citations and the most-cited papers and scientists. It is free, has no adverts, and is built entirely on open data.</p>
+<p>It is made for researchers, students, librarians, journalists, universities and anyone curious about where science happens.</p></section>
+
+<section class="panel2"><h2>Where the numbers come from</h2>
+<ul>
+<li><b><a href="https://openalex.org" rel="noopener">OpenAlex</a></b> — a free, open catalogue of the world's research (papers, authors, institutions, journals and topics), run by the non-profit OurResearch. Papers, countries, institutions, journals, fields and citations come from OpenAlex.</li>
+<li><b><a href="https://pubmed.ncbi.nlm.nih.gov" rel="noopener">PubMed</a></b> — the database of medical and life-science literature run by the US National Library of Medicine. We count the records added to PubMed each day (by entry date).</li>
+</ul>
+<p>Both sources are public. We collect from them automatically once a day; nothing is typed in by hand.</p></section>
+
+<section class="panel2"><h2>What we count</h2>
+<ul>
+<li><b>Papers:</b> journal articles, reviews, preprints, letters, conference papers and book chapters, by their <b>publication date</b>. Datasets, errata, peer reviews and similar records are left out.</li>
+<li><b>Countries and institutions:</b> a paper counts for a country or university when at least one of its authors works there. A paper by an international team therefore counts for every country involved, so country totals add up to more than the world total.</li>
+<li><b>Fields:</b> each paper is counted once, under its main field (OpenAlex topics).</li>
+<li><b>Citations made:</b> the number of references listed in the day's new papers — how many times new research cited earlier work.</li>
+<li><b>Most-cited papers and scientists:</b> total citations in OpenAlex; daily gains compare today's totals with the previous day's.</li>
+</ul></section>
+
+<section class="panel2"><h2>Why the daily report is about 3 days behind</h2>
+<p>Journals and databases keep reporting papers for several days after they are published, so a day's count keeps rising for a while. To avoid showing half-finished numbers,
+each <b>Research Report</b> covers the newest day that is <b>fully counted</b> — usually about three days ago. A day counts as complete once it has reached the level that
+the same weekday normally reaches. Weekends always have fewer papers than weekdays.</p>
+<p>For what happened in the last day, see <a href="../market/">Research trends</a>: it compares the running total of recent papers between two updates about 24 hours apart.
+If the source database has not been refreshed, or makes an unusually large correction, that day's change is not shown rather than shown wrongly.</p></section>
+
+<section class="panel2"><h2>What we publish</h2>
+<ul>
+<li><b>Daily Research Report</b> — papers, PubMed records, citations and top countries for the latest fully counted day (website and social media).</li>
+<li><b>Research trends</b> — papers added to the global record in the last 24 hours.</li>
+<li><b>Spotlights</b> — themed top-10 rankings: countries, universities, journals, fields, rising countries, papers and scientists.</li>
+<li><b>Country and university pages</b>, the <a href="../map/">world research map</a> and site search — papers per day for 200+ countries and hundreds of universities and institutes.</li>
+<li><b>Bangladesh daily update</b> on Facebook — the last 24 hours of Bangladeshi research.</li>
+<li><b><a href="../blog/">Blog</a></b> — data guides that update every day, and practical guides for researchers and students.</li>
+</ul></section>
+
+<section class="panel2"><h2>Limits to keep in mind</h2>
+<ul>
+<li>Numbers can change slightly after publication as late records arrive or the source data is corrected.</li>
+<li>Matching authors to institutions and countries is automatic and can occasionally be wrong; some papers have no affiliation at all.</li>
+<li>Papers known only by their month or year are dated the 1st, so the first day of a month can look unusually large.</li>
+<li>Counting papers says nothing about their quality. Use these numbers to see where research happens, not to judge individual work.</li>
+</ul></section>
+
+<section class="panel2"><h2>Use and cite the data</h2>
+<p>You are welcome to use ResearchBoard's numbers and charts. Please credit <b>ResearchBoard (researchboard.net), data from OpenAlex and PubMed</b>.
+Daily totals and country data can be downloaded as CSV from the <a href="../">homepage</a>. OpenAlex data is released under CC0.</p></section>
+
+<section class="panel2"><h2>Contact and follow</h2>
+<p>Questions, corrections, ideas or data requests are welcome. Use the email and social links below — we read everything.</p></section>
+</div>"""
+    write("about", "About ResearchBoard: data sources, methods and what we publish",
+          "How ResearchBoard counts the world's research every day: data from OpenAlex and PubMed, what counts as a paper, why reports are fully counted, and how to cite.",
+          about, "About")
+
     return urls
