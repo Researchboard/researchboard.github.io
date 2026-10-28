@@ -124,6 +124,7 @@ jobs:
           if [ -d data ]; then cp -r data _site/; fi
           if [ -d site_extra ]; then cp -r site_extra/* _site/; fi
           if [ ! -d _site/map ] && [ -d map ]; then cp -r map _site/; fi
+          if [ -d quiz ]; then cp -r quiz _site/; fi
           mkdir -p _site/data
           if [ -f _site/blog/_search-index.json ]; then mv _site/blog/_search-index.json _site/data/search-index.json; fi
           rm -f _site/data/*snapshot*.json
