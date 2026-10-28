@@ -222,3 +222,13 @@
 .quizpromo .qp-t{flex:1;font-size:14.5px;line-height:1.4}
 .quizpromo .qp-b{background:#6ef0aa;color:#06281a;font-weight:800;padding:8px 14px;border-radius:10px;white-space:nowrap}
 .quizpromo:hover{filter:brightness(1.08)}
+.quizpromo .qp-e{display:inline-block;animation:qpneedle 4s ease-in-out infinite}
+@keyframes qpneedle{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+.quizpromo .qp-flip{position:relative;width:46px;height:46px;flex:0 0 46px;border-radius:12px;background:linear-gradient(135deg,#7b2ff7,#0ea5e9);overflow:hidden}
+.quizpromo .qp-flip i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-style:normal;opacity:0;animation:qpflip 19.2s infinite}
+.quizpromo .qp-flip i:nth-child(2){animation-delay:2.4s}.quizpromo .qp-flip i:nth-child(3){animation-delay:4.8s}.quizpromo .qp-flip i:nth-child(4){animation-delay:7.2s}
+.quizpromo .qp-flip i:nth-child(5){animation-delay:9.6s}.quizpromo .qp-flip i:nth-child(6){animation-delay:12s}.quizpromo .qp-flip i:nth-child(7){animation-delay:14.4s}.quizpromo .qp-flip i:nth-child(8){animation-delay:16.8s}
+@keyframes qpflip{0%{opacity:0;transform:rotateY(90deg)}3%{opacity:1;transform:rotateY(0)}11%{opacity:1;transform:rotateY(0)}13.5%{opacity:0;transform:rotateY(-90deg)}100%{opacity:0}}
+.quizpromo .qp-b{animation:qppulse 3s ease-in-out infinite}
+@keyframes qppulse{0%,100%{box-shadow:0 0 0 0 rgba(110,240,170,.55)}50%{box-shadow:0 0 0 9px rgba(110,240,170,0)}}
+@media (prefers-reduced-motion:reduce){.quizpromo *{animation:none!important}.quizpromo .qp-flip i:first-child{opacity:1}}
