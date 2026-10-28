@@ -49,11 +49,11 @@
     const hrs = Math.round(m.hours || 24);
     const span = Math.abs(hrs - 24) <= 2 ? "Last 24 hours" : `Last ${hrs} hours`;
     const tag = document.querySelector("#market .market-tag");
-    if (tag) tag.lastChild.textContent = "Research Market · " + span;
+    if (tag) tag.lastChild.textContent = "Research trends · " + span;
     const track = $("#mTrack"); track.textContent = "";
     if (m.flagged) {
       box.classList.add("flagged");
-      track.appendChild(el("span", "tk", "Today's 24-hour change is not shown: " + m.flagged + "."));
+      track.appendChild(el("span", "tk", /no growth/.test(m.flagged) ? "No change to show yet — our data source (OpenAlex) has not added new papers since the last update. Check back after the next update." : "Today's 24-hour change is not shown (" + m.flagged + ")."));
     } else {
       box.classList.remove("flagged");
       const items = [];
