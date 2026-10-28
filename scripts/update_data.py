@@ -276,6 +276,29 @@ def citations_made(day: dt.date) -> int:
     return total
 
 
+FRACTIONAL_COUNTRIES = 30   # fractional counts for the day's top 30 countries (+ EXTRA_COUNTRIES, + Bangladesh)
+
+
+def fractional(day: dt.date, counts: dict) -> dict:
+    """
+    Fractional count per country: a paper with authors from k countries adds 1/k
+    to each of them (instead of 1 to each), so international papers are not
+    counted several times. Uses one group_by per country on countries_distinct_count.
+    """
+    codes = list(counts)[:FRACTIONAL_COUNTRIES] + [c for c in EXTRA_COUNTRIES + ["BD"] if c in counts]
+    out = {}
+    for code in dict.fromkeys(codes):
+        total = 0.0
+        for g in group(day_filter(day, f"authorships.countries:{code}"), "countries_distinct_count"):
+            try:
+                k = int(float(g["key"]))
+                total += g["count"] / k if k > 0 else g["count"]
+            except (TypeError, ValueError):
+                pass
+        out[code] = round(total, 1)
+    return out
+
+
 def collect_day(day: dt.date, include_pubmed: bool, names: dict, deep: bool) -> dict:
     rec: dict = {}
     if include_pubmed:
@@ -287,6 +310,8 @@ def collect_day(day: dt.date, include_pubmed: bool, names: dict, deep: bool) -> 
         rec["countries"], n = got
         names.update(n)
         rec["countries_active"] = len(rec["countries"])
+    if rec.get("countries"):
+        rec["countries_frac"] = safe(f"fractional {day}", lambda: fractional(day, rec["countries"]), {}) or {}
     groups = safe(f"institutions {day}", lambda: group(day_filter(day), "authorships.institutions.lineage"), []) or []
     rec["institutions"] = ranked(groups, INSTITUTIONS_PER_DAY)
     full = ranked(groups, 200)

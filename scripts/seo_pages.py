@@ -120,7 +120,9 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
                 f"<b>{n:,}</b> research papers, {rank_txt} and <b>{share:.1f}%</b> of the world's output that day.")
         if pm:
             lead += f" <b>{pm:,}</b> records with a {esc(name)} affiliation were added to PubMed."
-        stats = [("Papers on " + f"{d:%b} {d.day}", f"{n:,}"), ("World rank", f"#{rank}" if rank else "—"),
+        frac = (rec.get("countries_frac") or {}).get(code)
+        stats = [("Papers on " + f"{d:%b} {d.day}", f"{n:,}"), ("Fractional count", f"{frac:,.0f}" if frac is not None else "—"),
+                 ("World rank", f"#{rank}" if rank else "—"),
                  ("Share of world output", f"{share:.1f}%"), ("Last 7 days", f"{last7:,}"),
                  ("Last 30 days", f"{total30:,}"), ("Daily average (30 days)", f"{avg30:,.0f}")]
         stat_html = "".join(f'<div class="c-stat"><span>{esc(k)}</span><b>{esc(v)}</b></div>' for k, v in stats)
@@ -163,7 +165,9 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
 {table}
 <p class="muted small">Counts are papers (articles, reviews, preprints, letters, conference papers and book chapters) with at least one author
 affiliated with an institution in {esc(name)}, by publication date, from <a href="https://openalex.org" rel="noopener">OpenAlex</a>.
-Recent days keep rising for a week as journals report their papers.</p>
+Recent days keep rising for a week as journals report their papers.
+The <b>fractional count</b> gives each country an equal share of papers written with other countries (a paper by authors from 2 countries counts ½ for each), so it is not inflated by international co-authorship.
+<a href="../about/methods.html">How we count</a>.</p>
 <p><a class="btn" href="../">Open the live dashboard</a> {('· Nearby in the ranking: ' + neigh_html) if neigh_html else ''}</p>
 </article>"""
         title = f"{name} research output {d.year}: papers per day, universities and scientists · ResearchBoard"
@@ -176,15 +180,18 @@ Recent days keep rising for a week as journals report their papers.</p>
         urls.append((f"{site_url}/country/{slug}.html", day, "daily", "0.6"))
 
     # index of all countries
+    fracs = rec.get("countries_frac") or {}
+    fr = lambda c: f"{fracs[c]:,.0f}" if c in fracs else "—"  # noqa: E731
     trs = "".join(
         f'<tr><td>{r or "—"}</td><td><span class="fi fi-{c.lower()}"></span> <a href="{s}.html">{esc(nm)}</a></td>'
-        f'<td>{n:,}</td><td>{sh:.1f}%</td><td>{t30:,}</td></tr>'
+        f'<td>{n:,}</td><td>{fr(c)}</td><td>{sh:.1f}%</td><td>{t30:,}</td></tr>'
         for c, nm, s, n, r, sh, t30 in sorted(rows, key=lambda x: (x[4] or 9999, x[1])))
     body = f"""<article class="post c-page">
 <h1>Research output by country</h1>
 <p class="lead">Papers published by researchers in each country on <b>{nice(d)}</b>, the latest fully counted day,
-with their share of world output and the total for the last 30 days. Updated every day from open data.</p>
-<table class="c-table c-all"><thead><tr><th>#</th><th>Country</th><th>Papers</th><th>Share</th><th>Last 30 days</th></tr></thead>
+with their fractional count, share of world output and the total for the last 30 days. Updated every day from open data.
+<a href="../about/methods.html">How we count</a>.</p>
+<table class="c-table c-all"><thead><tr><th>#</th><th>Country</th><th>Papers</th><th title="Papers shared with other countries are split equally between them">Fractional</th><th>Share</th><th>Last 30 days</th></tr></thead>
 <tbody>{trs}</tbody></table>
 </article>"""
     htm = page("Research output by country, updated daily · ResearchBoard",

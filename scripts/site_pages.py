@@ -404,6 +404,8 @@ If the source database has not been refreshed, or makes an unusually large corre
 <li><b><a href="../blog/">Blog</a></b> — data guides that update every day, and practical guides for researchers and students.</li>
 </ul></section>
 
+<section class="panel2"><h2>Full methods</h2><p>Exact definitions, rules, whole and fractional counting, limitations and a change log are on the <a href="methods.html"><b>Methods page</b></a>.</p></section>
+
 <section class="panel2"><h2>Limits to keep in mind</h2>
 <ul>
 <li>Numbers can change slightly after publication as late records arrive or the source data is corrected.</li>
@@ -422,5 +424,91 @@ Daily totals and country data can be downloaded as CSV from the <a href="../">ho
     write("about", "About ResearchBoard: data sources, methods and what we publish",
           "How ResearchBoard counts the world's research every day: data from OpenAlex and PubMed, what counts as a paper, why reports are fully counted, and how to cite.",
           about, "About")
+
+    # ------------------------------------------------------------------ methods (detailed)
+    m_body = head_block("Methods", "Methods: how ResearchBoard counts research",
+                        "Exact definitions, sources and rules behind every number on ResearchBoard. "
+                        "The code that collects the data is public on <a href=\"https://github.com/Researchboard/researchboard.github.io\" rel=\"noopener\">GitHub</a>.")
+    m_body += """
+<div class="about">
+<section class="panel2"><h2>1. Sources</h2>
+<ul>
+<li><b>OpenAlex</b> (<a href="https://openalex.org" rel="noopener">openalex.org</a>, CC0 licence) — all counts of papers, countries, institutions, journals, fields and citations, through its public API.</li>
+<li><b>PubMed</b> (US National Library of Medicine, via the NCBI E-utilities API) — records added to PubMed per day, by <i>entry date</i>.</li>
+</ul>
+<p>Data is collected automatically once a day at about 13:07 UTC. Each run re-checks the last 7 days, because counts for recent days keep growing.</p></section>
+
+<section class="panel2"><h2>2. What counts as a paper</h2>
+<p>Works of type <b>article, review, preprint, letter, conference paper or book chapter</b>, by <b>publication date</b>. Other record types
+(datasets, errata, editorials, peer reviews, etc.) are excluded; on some days a single repository adds tens of thousands of dataset records, which would distort the totals.
+Papers known only by their month or year are dated the 1st by the source, so the 1st of a month can show a spike.</p></section>
+
+<section class="panel2"><h2>3. Countries and institutions</h2>
+<ul>
+<li><b>Whole counting (default):</b> a paper counts once for every country (or institution) of its authors' affiliations. A paper by authors in Bangladesh and Japan counts 1 for each. This answers "how many papers did researchers in this country take part in?". Because of international co-authorship, country totals add up to more than the world total.</li>
+<li><b>Fractional counting:</b> a paper with authors from <i>k</i> different countries adds <b>1/<i>k</i></b> to each of them (2 countries: ½ each; 3 countries: ⅓ each). Country fractional counts add up to the number of papers with a known country, so nothing is counted twice. We calculate it for the 30 most active countries each day (plus Bangladesh), from OpenAlex's count of distinct countries per paper. Shown on country pages and in the country ranking from October 28, 2026.</li>
+<li><b>Institutions</b> are OpenAlex institutions, including their parent organisations: a paper from an institute that belongs to a larger organisation (for example a national academy of sciences) also counts for the parent. We list the day's top institutions and keep the 200 most active per day for search.</li>
+<li>Country and institution are taken from the authors' affiliations as matched by OpenAlex. Papers with no affiliation information cannot be assigned to a country.</li>
+</ul></section>
+
+<section class="panel2"><h2>4. Journals, fields and citations</h2>
+<ul>
+<li><b>Journals:</b> papers whose main location is a journal, grouped by that journal (top 15 per day).</li>
+<li><b>Fields:</b> each paper counted once, under the field of its primary topic (OpenAlex topic classification, 26 fields).</li>
+<li><b>Citations made:</b> the sum of the reference counts of the day's papers — how many times the day's new research cited earlier work.</li>
+<li><b>Most-cited papers:</b> all-time leaders, and the most-cited papers published in the last two years, by total citations in OpenAlex.</li>
+<li><b>Most-cited scientists:</b> the 200 authors with the most citations in OpenAlex. <b>Daily gains</b> compare each paper's or author's citation total with the previous day's snapshot.</li>
+<li><b>Active institutions:</b> the number of distinct institutions with at least one paper that day.</li>
+</ul></section>
+
+<section class="panel2"><h2>5. When a day is "fully counted"</h2>
+<p>A day is treated as complete when its paper count has reached at least <b>40% of the usual count for the same weekday</b>
+(the median of the same weekday in the previous five weeks, using only days that are at least a week old). The daily Research Report moves forward
+one complete day per run, so it is usually about three days behind. Weekends are naturally lower than weekdays.</p></section>
+
+<section class="panel2"><h2>6. Research trends (last 24 hours)</h2>
+<p>Each run records the running total of papers published this year and last year — overall, by country and by institution. Research trends shows the
+<b>difference between two runs 12 to 36 hours apart</b>, i.e. what was added to the database in between, labelled with the actual time window.
+The change is <b>not shown</b> when nothing was added (the source has not refreshed yet) or when the change is more than 4 times or less than a quarter of the usual
+daily change (a sign of a bulk import or a database clean-up). The Bangladesh daily update uses the same method for Bangladeshi papers and institutions.</p></section>
+
+<section class="panel2"><h2>7. Known limitations</h2>
+<ul>
+<li>Counts can change after publication as late records arrive or the source corrects its data.</li>
+<li>Automatic affiliation matching can be wrong or missing, especially for small institutions and some regions.</li>
+<li>Author name disambiguation is automatic: a few author totals may merge or split different people.</li>
+<li>Paper counts measure volume, not quality or impact.</li>
+<li>Coverage follows OpenAlex; some journals, languages and regions are better covered than others.</li>
+</ul></section>
+
+<section class="panel2"><h2>8. Related resources</h2>
+<p>Other open or widely used views of research output, with different aims and update cycles:</p>
+<ul>
+<li><a href="https://www.leidenranking.com" rel="noopener">CWTS Leiden Ranking Open Edition</a> — yearly, transparent university indicators built on OpenAlex.</li>
+<li><a href="https://openknowledge.community/dashboards/coki-open-access-dashboard/" rel="noopener">COKI Open Access Dashboard</a> — open-access status by country and institution.</li>
+<li><a href="https://www.scimagojr.com" rel="noopener">SCImago Journal &amp; Country Rank</a> — yearly journal and country indicators (Scopus data).</li>
+<li><a href="https://www.nature.com/nature-index" rel="noopener">Nature Index</a> — output in a selected group of high-quality journals, with fractional counting.</li>
+<li><a href="https://www.crossref.org" rel="noopener">Crossref</a> and <a href="https://datacite.org" rel="noopener">DataCite</a> — DOI registries for papers and for data and software.</li>
+</ul>
+<p>ResearchBoard differs by being <b>daily</b>, counting <b>all</b> published research, and being written for a general audience.</p></section>
+
+<section class="panel2"><h2>9. Change log</h2>
+<ul>
+<li><b>Oct 28, 2026</b> — fractional counting for the top countries; this Methods page.</li>
+<li><b>Oct 27, 2026</b> — daily reports renamed "Research Report — fully counted"; Research trends; world research map; top-200 institutions per day; Bangladesh daily update; data guides.</li>
+<li><b>Oct 26, 2026</b> — 24-hour change ("Research trends") added; reports move forward one complete day per run.</li>
+</ul></section>
+
+<section class="panel2"><h2>10. Cite and reuse</h2>
+<p>Please cite as: <i>ResearchBoard (researchboard.net). Daily global research statistics, data from OpenAlex and PubMed. Accessed [date].</i>
+Corrections and questions are welcome by email.</p></section>
+</div>"""
+    md = out / "about"
+    md.mkdir(exist_ok=True)
+    (md / "methods.html").write_text(page("Methods: how ResearchBoard counts research · ResearchBoard",
+        "Exact definitions behind ResearchBoard: sources, what counts as a paper, whole and fractional counting, fully counted days, the 24-hour trend, limitations and change log.",
+        f'<div class="page">{m_body}</div>', f"{site_url}/about/methods.html", extra_head=FLAGS, active="About", main_class="cat-main"),
+        encoding="utf-8")
+    urls.append((f"{site_url}/about/methods.html", day, "weekly", "0.6"))
 
     return urls

@@ -136,7 +136,20 @@ See today's numbers live on the [ResearchBoard dashboard](../).
             tot[c] = tot.get(c, 0) + v
     ranked = sorted(tot.items(), key=lambda kv: -kv[1])
     world = sum(papers) or 1
-    rows = "\n".join(f"| {i} | {ctry(c)} | {v:,} | {v / n:,.0f} | {v / world * 100:.1f}% |" for i, (c, v) in enumerate(ranked[:50], 1))
+    fdays = [k for k in keys if days[k].get("countries_frac")]
+    ftot = {}
+    for k in fdays:
+        for c, v in days[k]["countries_frac"].items():
+            ftot[c] = ftot.get(c, 0) + v
+    fw = sum(days[k].get("papers") or 0 for k in fdays) or 1
+    dlab = f"{len(fdays)} day" + ("s" if len(fdays) != 1 else "")
+    fcol = f" Fractional share (last {dlab}) |" if fdays else ""
+    fsep = " ---: |" if fdays else ""
+    rows = "\n".join(f"| {i} | {ctry(c)} | {v:,} | {v / n:,.0f} | {v / world * 100:.1f}% |" + (f" {ftot[c] / fw * 100:.1f}% |" if c in ftot else (" — |" if fdays else ""))
+                     for i, (c, v) in enumerate(ranked[:50], 1))
+    fnote = (f"\n\n**Fractional** counts split papers written by authors from several countries equally between them (2 countries: ½ each), "
+             f"so international co-authorship is not counted twice and the shares never add up to more than 100%. Available for the top countries over the last {dlab}. "
+             f"[How we count](../about/methods.html)") if fdays else ""
     t1, t2, t3 = (names.get(c, c) for c, _ in ranked[:3])
     write(f"countries-that-publish-the-most-research",
           f"Which countries publish the most research papers? {year} ranking",
@@ -150,9 +163,9 @@ See today's numbers live on the [ResearchBoard dashboard](../).
 
 A paper counts for a country when at least one author works at an institution there, so papers written by international teams count for every country involved.
 
-| Rank | Country | Papers ({n} days) | Per day | Share |
-| ---: | --- | ---: | ---: | ---: |
-{rows}
+| Rank | Country | Papers ({n} days) | Per day | Share |{fcol}
+| ---: | --- | ---: | ---: | ---: |{fsep}
+{rows}{fnote}
 
 ## How many countries publish research?
 
