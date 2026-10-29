@@ -10,7 +10,7 @@
   const doy = (() => { const n = new Date(), s = Date.UTC(n.getUTCFullYear(), 0, 1); return Math.max(1, (Date.now() - s) / 864e5); })();
   // row: [id, name, city, now, last, total, cites, h, oa, spike, typical] (+cc in front for world rows)
   const norm = (r, c) => ({ id: r[0], name: r[1], city: r[2], now: r[3], last: r[4], total: r[5], cites: r[6], h: r[7], oa: r[8],
-    spike: r[9], typical: r[10], cc: c, pace: r[4] && !r[9] ? ((r[3] / doy * 365) / r[4] - 1) * 100 : null });
+    spike: r[9], typical: r[10], web: r[11] || "", cc: c, pace: r[4] && !r[9] ? ((r[3] / doy * 365) / r[4] - 1) * 100 : null });
   const flag = (c) => c ? `<span class="fi fi-${c.toLowerCase()}"></span>` : "";
 
   async function get(p) { const r = await fetch(BASE + p, { cache: "no-cache" }); if (!r.ok) throw new Error(p); return r.json(); }
@@ -29,7 +29,7 @@
     tb.innerHTML = view.slice(0, shown).map((r, i) => {
       const pace = r.pace == null ? "—" : `<span class="${r.pace >= 0 ? "up" : "down"}">${r.pace >= 0 ? "▲" : "▼"} ${Math.abs(r.pace).toFixed(0)}%</span>`;
       const warn = r.spike ? ` <span class="ud-warn" title="OpenAlex shows a sudden jump for this university (usually a bulk upload of old records). We rank it by a typical year (${fmt(r.typical)}).">⚠</span>` : "";
-      return `<tr><td>${i + 1}</td><td class="nm">${cc ? "" : flag(r.cc)}<a href="../university/?id=${r.id}">${esc(r.name)}</a>${warn}<div class="ud-city">${esc(r.city || "")}${cc ? "" : (r.city ? ", " : "") + esc(cname[r.cc] || r.cc || "")}</div></td>` +
+      return `<tr><td>${i + 1}</td><td class="nm">${cc ? "" : flag(r.cc)}<a href="../university/?id=${r.id}">${esc(r.name)}</a>${warn}${r.web && /^https?:\/\//.test(r.web) ? ` <a class="ud-web" href="${esc(r.web)}" target="_blank" rel="nofollow noopener" title="University website">🌐 website</a>` : ""}<div class="ud-city">${esc(r.city || "")}${cc ? "" : (r.city ? ", " : "") + esc(cname[r.cc] || r.cc || "")}</div></td>` +
         `<td class="r"><b>${fmt(r.now)}</b></td><td class="r">${fmt(r.last)}</td><td class="r">${pace}</td>` +
         `<td class="r hm">${fmt(r.cites)}</td><td class="r hm">${fmt(r.h)}</td><td class="r hm">${r.oa == null ? "—" : r.oa + "%"}</td></tr>`;
     }).join("") || `<tr><td colspan="8">No university matches “${esc(q)}”.</td></tr>`;

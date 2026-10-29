@@ -276,3 +276,4 @@ table.ud th[data-k]::after { content: " ↕"; opacity: .4; }
 @media (max-width: 900px) { .u-grid3, .u-grid2 { grid-template-columns: 1fr; } .ud-ctl select, .ud-ctl input { min-width: 0; flex: 1; } }
 .ud-more[hidden] { display: none; }
 @media (max-width: 600px) { .u-head h1 { font-size: 23px; } .u-logo { width: 46px; height: 46px; flex-basis: 46px; font-size: 24px; } }
+.ud-web { font-size: 12px; margin-left: 6px; white-space: nowrap; opacity: .85; }
