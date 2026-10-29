@@ -265,8 +265,7 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
                 "cc": f'{flag(a.get("country"))}{esc(a.get("country") or "")}',
                 "v": f'<b class="{"up" if plus else ""}">{"+" if plus else ""}{f(a.get(key))}</b>'}
     ac = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("Citations", "v", True)]
-    body = head_block("Scientists", "Find scientists", "Search active researchers worldwide by name, research topic, country, "
-                      "field or university — or find a supervisor for your research interest.")
+    body = '<div class="crumb"><a href="../">Home</a> › Scientists</div><h1 class="sr-only">Scientist rankings and search</h1>'
     body += '<div id="sci"><p class="note">Loading…</p></div><script src="../assets/sci.js" defer></script>'
     body += '<h2 class="mv-h">Citation leaders</h2>'
     g = latest.get("gainers") or []
