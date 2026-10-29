@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div><span>World rank</span><b>${rank[c] ? "#" + rank[c] : "—"}</b></div>
         <div><span>Share</span><b>${n ? (n / world * 100).toFixed(1) + "%" : "—"}</b></div></div>
       <div class="spark" title="Last 14 days">${series.map((v) => `<i style="height:${Math.max(4, v / mx * 100)}%"></i>`).join("")}</div>
-      <div class="row">${inst ? `🏛️ Most active: <b>${inst.name}</b> (${fmt(inst.count)} papers)` : `Last 14 days: <b>${fmt(series.reduce((a, b) => a + b, 0))}</b> papers`}</div>
+      <div class="row">${inst ? `🏛️ Most active: <b>${inst.name}</b> (${fmt(inst.count)} papers${det.inst_days === 7 ? " in 7 days" : ""})` : `Last 14 days: <b>${fmt(series.reduce((a, b) => a + b, 0))}</b> papers`}</div>
       <a class="go" href="../country/${slug(nm)}.html">See ${nm}'s full research page →</a>`;
     card.querySelector(".x").onclick = () => { sheet.classList.remove("open"); paths.classed("sel", false); svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity); };
     sheet.classList.add("open");
