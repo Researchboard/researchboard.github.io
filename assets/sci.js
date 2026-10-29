@@ -200,7 +200,8 @@
     const r = await get(`authors?filter=openalex:${slice.map((x) => x[0]).join("|")}&per_page=50&select=${SEL}`);
     if (my !== token) return;
     const byId = Object.fromEntries((r.results || []).map((a) => [sid(a.id), a]));
-    const html = slice.map(([id, n]) => byId[id] && (byId[id].last_known_institutions || []).length <= 8 ? row(byId[id], n) : "").join("");
+    const inCountry = (a) => !st.c || (a.last_known_institutions || []).some((i) => (i.country_code || "").toUpperCase() === st.c && !BLOCK_INST.has(sid(i.id)));
+    const html = slice.map(([id, n]) => { const a = byId[id]; return a && (a.last_known_institutions || []).length <= 8 && inCountry(a) ? row(a, n) : ""; }).join("");
     if (more) $("#sBody").insertAdjacentHTML("beforeend", html); else $("#sBody").innerHTML = html;
     $("#sMore").hidden = st.page * 40 >= topicIds.length;
   }
@@ -226,6 +227,15 @@
         const [gf, gi] = await Promise.all([get(`authors?filter=${f.join(",")}&group_by=topics.field.id`),
           st.i ? Promise.resolve(null) : get(`authors?filter=${f.concat(st.f ? [`topics.field.id:fields/${st.f}`] : []).join(",")}&group_by=last_known_institutions.id`)]);
         if (my !== token) return;
+        if (gi && st.c) {   // keep institutions that are really in the chosen country
+          const ids = (gi.group_by || []).slice(0, 16).map((x) => sid(x.key)).filter(Boolean);
+          try {
+            const r = await get(`institutions?filter=openalex:${ids.join("|")}&per_page=50&select=id,country_code`);
+            const ok = new Set((r.results || []).filter((x) => (x.country_code || "").toUpperCase() === st.c).map((x) => sid(x.id)));
+            gi.group_by = gi.group_by.filter((x) => ok.has(sid(x.key)));
+          } catch (_) {}
+          if (my !== token) return;
+        }
         const fl = (gf.group_by || []).slice(0, 10), mx = Math.max(1, ...fl.map((x) => x.count));
         S.innerHTML = `<section class="panel2"><h2>Fields${st.i ? " here" : st.c ? " in " + esc(cname(st.c)) : ""}</h2>${fl.map((x) =>
           `<a class="sb" href="#" data-f="${sid(x.key)}"><span>${esc(x.key_display_name)}</span><i style="width:${x.count / mx * 90}px"></i><b>${fmt(x.count)}</b></a>`).join("")}
