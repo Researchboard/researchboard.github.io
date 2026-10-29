@@ -52,7 +52,7 @@
         <section class="panel2"><h2>Most-cited papers</h2><div id="pTop" class="note">Loading…</div></section>
       </div>
       <p class="note">Numbers come live from OpenAlex. Papers are matched to people automatically, so a profile can now and then miss a paper or include someone else's.
-      <a href="../scientists/?c=${esc((L[0] || {}).country_code || "")}">More scientists${L[0] ? " in " + esc(L[0].country_code) : ""} →</a></p>`;
+      <a href="../scientists/?c=${esc((L[0] || {}).country_code || "")}">More scientists${L[0] ? " in " + esc((() => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(L[0].country_code); } catch (_) { return L[0].country_code; } })()) : ""} →</a></p>`;
 
     const fill = (sel, html) => { const e = box.querySelector(sel); if (e) { e.classList.remove("note"); e.innerHTML = html; } };
     const paper = (w) => `<tr><td><a href="${esc(w.doi || "https://openalex.org/" + sid(w.id))}" target="_blank" rel="noopener">${esc(w.display_name)}</a>

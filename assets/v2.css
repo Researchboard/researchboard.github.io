@@ -308,3 +308,6 @@ a.sb:hover span { text-decoration: underline; }
 .p-av { font-weight: 800; font-size: 22px; color: #fff; }
 .warnbox { background: #fff7e6; border-radius: 10px; padding: 8px 12px; }
 @media (max-width: 900px) { .sci-grid { grid-template-columns: 1fr; } .sf-row > select { flex: 1 1 45%; } }
+/* header fits 9 menu items */
+@media (max-width: 1360px) and (min-width: 1001px) { .gsearch { min-width: 110px !important; } .topnav a { padding: 8px 5px; font-size: 13.5px; } }
+@media (max-width: 1180px) and (min-width: 1001px) { .topnav a { padding: 7px 4px; font-size: 12.5px; } .brand-name { font-size: 18px; } .brand img { width: 34px; height: 34px; } .topbar-inner { gap: 8px; } }
