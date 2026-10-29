@@ -69,7 +69,7 @@
     }, "#uFields");
     safe(async () => {
       const a = await get(`authors?filter=last_known_institutions.id:${id}&sort=cited_by_count:desc&per_page=5&select=id,display_name,cited_by_count,summary_stats,works_count`);
-      fill("#uAuth", table(a.results.map((x) => `<tr><td><a href="https://openalex.org/${sid(x.id)}" target="_blank" rel="noopener">${esc(x.display_name)}</a><div class="muted">${fmt(x.works_count)} papers · h-index ${fmt((x.summary_stats || {}).h_index)}</div></td><td class="r">${fmt(x.cited_by_count)}<div class="muted">citations</div></td></tr>`)));
+      fill("#uAuth", table(a.results.map((x) => `<tr><td><a href="https://openalex.org/${sid(x.id)}" target="_blank" rel="noopener">${esc(x.display_name)}</a><div class="muted">${fmt(x.works_count)} papers · h-index ${fmt((x.summary_stats || {}).h_index)}</div></td><td class="r">${fmt(x.cited_by_count)}<div class="muted">OpenAlex citations</div></td></tr>`)));
     }, "#uAuth");
     safe(async () => {
       const t = await get(`${W}&group_by=primary_topic.id`);

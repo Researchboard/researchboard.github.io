@@ -30,8 +30,8 @@
     f: P.get("f") || "", i: P.get("i") || "", iname: P.get("in") || "", s: P.get("s") || "cited_by_count", page: 1 };
   if (!["cited_by_count", "c5", "summary_stats.h_index", "summary_stats.i10_index"].includes(st.s)) st.s = "cited_by_count";
   const METRICS = [
-    ["cited_by_count", "Citations", "total influence", "How many times other research papers have cited this scientist's work, across the whole career."],
-    ["c5", `Citations ${YEAR - 4}–${YEAR}`, "recent impact", `Citations received in ${YEAR - 4}–${YEAR} only. Shows who is influential now, and is fairer to younger researchers.`],
+    ["cited_by_count", "OpenAlex citations", "total influence", "How many times other research papers indexed in OpenAlex have cited this scientist's work, across the whole career."],
+    ["c5", `OpenAlex citations ${YEAR - 4}–${YEAR}`, "recent impact", `OpenAlex citations received in ${YEAR - 4}–${YEAR} only. Shows who is influential now, and is fairer to younger researchers.`],
     ["summary_stats.h_index", "h-index", "impact depth", "A scientist has an h-index of 40 when 40 of their papers have each been cited at least 40 times."],
     ["summary_stats.i10_index", "i10-index", "consistent output", "The number of papers that have each been cited at least 10 times."]];
   function pushURL() {
@@ -50,7 +50,7 @@
   const loadedAt = new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   box.innerHTML = `
     <div class="sh">
-      <h2 class="sh-t"><span id="hWhere">World</span> <em id="hN">…</em> Scientists <span class="sh-m" id="hMetric">Citations</span> Rankings</h2>
+      <h2 class="sh-t"><span id="hWhere">World</span> <em id="hN">…</em> Scientists <span class="sh-m" id="hMetric">OpenAlex Citations</span> Rankings</h2>
       <div class="sh-badges"><span class="sh-live">● Live · data loaded ${esc(loadedAt)}</span><span class="sh-pill">Career &amp; last 5 years</span></div>
       <p class="sh-p">Live rankings of researchers <span id="hScope">worldwide</span>, built from <b>OpenAlex</b> — the free, open index of over 250 million
         research papers, which also covers PubMed. <b>Career totals and the last 5 years are shown side by side, never mixed.</b>
@@ -73,7 +73,7 @@
     </div>
     <div class="sci-grid"><section class="panel2"><h2 id="sTitle">Scientists</h2><p class="note" id="sInfo"></p>
       <div class="sci-wrap"><table class="rt sci"><thead><tr><th>#</th><th>Scientist</th><th class="hm">Main topic</th>
-        <th class="r" id="sCol5">Papers (5 yrs)</th><th class="r" data-col="cited_by_count">Citations</th><th class="r" data-col="c5">Citations<br>${YEAR - 4}–${String(YEAR).slice(2)}</th><th class="r" data-col="summary_stats.h_index">h-index</th><th class="r hm" data-col="summary_stats.i10_index">i10</th></tr></thead><tbody id="sBody"></tbody></table></div>
+        <th class="r" id="sCol5">Papers (5 yrs)</th><th class="r" data-col="cited_by_count">OpenAlex<br>citations</th><th class="r" data-col="c5">OpenAlex citations<br>${YEAR - 4}–${String(YEAR).slice(2)}</th><th class="r" data-col="summary_stats.h_index">h-index</th><th class="r hm" data-col="summary_stats.i10_index">i10</th></tr></thead><tbody id="sBody"></tbody></table></div>
       <button class="ud-more" id="sMore" hidden>Load more</button>
       <p class="note">Data: OpenAlex, live. Only scientists with a paper in ${YEAR - 4}–${YEAR} are shown. A few profiles in OpenAlex mix up two people with the same name or list an old university.</p></section>
       <aside id="sSide"></aside></div>`;
@@ -91,7 +91,7 @@
     const m = METRICS.find((x) => x[0] === k);
     box.querySelectorAll(".sh-tabs button").forEach((b) => b.classList.toggle("on", b.dataset.s === k));
     box.querySelectorAll("th[data-col]").forEach((th) => th.classList.toggle("on", th.dataset.col === k));
-    $("#hMetric").textContent = m[1].startsWith("Citations ") ? "Recent Citations" : m[1];
+    $("#hMetric").textContent = m[0] === "c5" ? "Recent OpenAlex Citations" : m[0] === "cited_by_count" ? "OpenAlex Citations" : m[1];
     $("#hExplain").innerHTML = `<b>${esc(m[1])}:</b> ${esc(m[3])}`;
   }
   setMetric(st.s);

@@ -38,8 +38,8 @@
         ${a.orcid ? ` · <a class="orc" href="${esc(a.orcid)}" target="_blank" rel="noopener">iD</a> <a href="${esc(a.orcid)}" target="_blank" rel="noopener">ORCID</a>` : ""}
         · <a href="https://openalex.org/${id}" target="_blank" rel="noopener">OpenAlex ↗</a></div></div></div>
       ${many ? `<p class="note warnbox">⚠ This OpenAlex profile lists ${L.length} institutions, so it may combine several people with the same name.</p>` : ""}
-      <div class="xstats x6"><div><span>Citations (career)</span><b>${fmt(a.cited_by_count)}</b></div>
-        <div><span>Citations ${YEAR - 4}–${YEAR}</span><b>${fmt(c5)}</b></div>
+      <div class="xstats x6"><div><span>OpenAlex citations (career)</span><b>${fmt(a.cited_by_count)}</b></div>
+        <div><span>OpenAlex citations ${YEAR - 4}–${YEAR}</span><b>${fmt(c5)}</b></div>
         <div><span>h-index</span><b>${fmt((a.summary_stats || {}).h_index)}</b></div>
         <div><span>i10-index</span><b>${fmt((a.summary_stats || {}).i10_index)}</b></div>
         <div><span>Papers (career)</span><b>${fmt(a.works_count)}</b></div>
