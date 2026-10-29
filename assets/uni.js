@@ -46,7 +46,7 @@
         <section class="panel2"><h2>Rank in ${esc(geo.country || cc)}</h2><div id="uRankT" class="note">Loading…</div></section>
       </div>
       <div class="u-grid3">
-        <section class="panel2"><h2>Most-cited researchers here</h2><div id="uAuth" class="note">Loading…</div></section>
+        <section class="panel2"><h2>Top 5 most-cited scientists</h2><div id="uAuth" class="note">Loading…</div></section>
         <section class="panel2"><h2>Hot topics here (12 months)</h2><div id="uTopics" class="note">Loading…</div></section>
         <section class="panel2"><h2>Works most with</h2><div id="uCo" class="note">Loading…</div></section>
       </div>
@@ -68,7 +68,7 @@
       document.getElementById("u12").textContent = fmt(f.meta && f.meta.count);
     }, "#uFields");
     safe(async () => {
-      const a = await get(`authors?filter=last_known_institutions.id:${id}&sort=cited_by_count:desc&per_page=6&select=id,display_name,cited_by_count,summary_stats,works_count`);
+      const a = await get(`authors?filter=last_known_institutions.id:${id}&sort=cited_by_count:desc&per_page=5&select=id,display_name,cited_by_count,summary_stats,works_count`);
       fill("#uAuth", table(a.results.map((x) => `<tr><td><a href="https://openalex.org/${sid(x.id)}" target="_blank" rel="noopener">${esc(x.display_name)}</a><div class="muted">${fmt(x.works_count)} papers · h-index ${fmt((x.summary_stats || {}).h_index)}</div></td><td class="r">${fmt(x.cited_by_count)}<div class="muted">citations</div></td></tr>`)));
     }, "#uAuth");
     safe(async () => {
