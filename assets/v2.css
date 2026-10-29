@@ -242,3 +242,37 @@
 .tk-sec { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b1220; background: #8fa0b8; border-radius: 6px; padding: 2px 8px; align-self: center; }
 .market-note a { color: #7cc0ff; font-weight: 700; }
 .cat-grid.mv { align-items: start; } .cat-grid.mv > .panel2 { margin-top: 0; } .mv-chart svg { max-height: 170px; width: 100%; }
+/* all-universities directory */
+.udir { margin-top: 16px; }
+.ud-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: flex-end; }
+.ud-head h2 { margin: 0 0 4px; }
+.ud-ctl { display: flex; gap: 8px; flex-wrap: wrap; }
+.ud-ctl select, .ud-ctl input { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line, #cfd8e6); background: var(--panel, #fff); color: inherit; min-width: 200px; }
+.ud-wrap { overflow-x: auto; }
+table.ud th[data-k] { cursor: pointer; user-select: none; }
+table.ud th[data-k].on { color: var(--accent, #2a6fdb); }
+table.ud th[data-k]::after { content: " ↕"; opacity: .4; }
+.ud-city { font-size: 12px; color: var(--muted); }
+.ud-warn { color: #d97706; cursor: help; }
+.ud-more { display: block; margin: 12px auto 4px; font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 10px; border: 0; background: var(--accent, #2a6fdb); color: #fff; cursor: pointer; }
+/* university profile */
+.u-head { display: flex; align-items: center; gap: 14px; margin: 6px 0 12px; }
+.u-head h1 { margin: 0; }
+.u-logo { width: 58px; height: 58px; border-radius: 14px; background: linear-gradient(135deg, #14306b, #2f7be0); display: flex; align-items: center; justify-content: center; font-size: 30px; flex: 0 0 58px; }
+.u-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.u-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.u-grid3 .panel2, .u-grid2 .panel2 { margin: 0; }
+.u-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 150px; }
+.u-bars div { flex: 1; text-align: center; font-size: 11.5px; color: var(--muted); }
+.u-bars i { display: block; background: #2f7be0; border-radius: 6px 6px 0 0; margin-bottom: 5px; }
+.u-bars div.cur i { background: #10b981; }
+.u-hb { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13.5px; }
+.u-hb span { flex: 1; } .u-hb i { display: block; height: 10px; border-radius: 5px; background: #7aa7f5; } .u-hb b { width: 46px; text-align: right; }
+.u-pill { display: inline-block; background: #e6eefc; color: #2a4fa8; border-radius: 10px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; margin: 2px 0; }
+.u-pill.g { background: #d9f7e8; color: #047857; }
+.u-oa { display: flex; align-items: center; gap: 16px; }
+.u-ring { --p: 50; width: 104px; height: 104px; flex: 0 0 104px; border-radius: 50%; background: conic-gradient(#10b981 calc(var(--p) * 1%), #e6edf7 0); display: flex; align-items: center; justify-content: center; }
+.u-ring div { width: 74px; height: 74px; border-radius: 50%; background: var(--panel, #fff); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; }
+@media (max-width: 900px) { .u-grid3, .u-grid2 { grid-template-columns: 1fr; } .ud-ctl select, .ud-ctl input { min-width: 0; flex: 1; } }
+.ud-more[hidden] { display: none; }
+@media (max-width: 600px) { .u-head h1 { font-size: 23px; } .u-logo { width: 46px; height: 46px; flex-basis: 46px; font-size: 24px; } }
