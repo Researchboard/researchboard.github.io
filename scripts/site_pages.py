@@ -168,10 +168,29 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
             f'{hbars([(names.get(c, c), n) for c, n in sorted(by_c.items(), key=lambda kv: -kv[1])[:8]])}</section>')
     body = head_block("Universities", "Most active universities & institutions",
                       f"Papers with at least one author from each institution · latest fully counted day: <b>{nice(day)}</b>. "
-                      f"Click an institution to see its papers day by day.", tabs_html("researchboard-universities"))
+                      f'Click an institution to see its papers day by day. <a href="#udir"><b>Browse all universities ↓</b></a>',
+                      tabs_html("researchboard-universities"))
     body += f'<div class="cat-grid"><section class="panel2">{panels}</section><aside>{side}</aside></div>'
+    body += ('''<section class="panel2 udir" id="udir"><div class="ud-head"><div><h2>🏛️ All universities</h2>
+<p class="note" id="udTotal">Every university with papers in OpenAlex · updated weekly</p></div>
+<div class="ud-ctl"><select id="udCountry" aria-label="Country"><option>Loading…</option></select>
+<input id="udSearch" type="search" placeholder="Search a university or city…" aria-label="Search universities"></div></div>
+<p class="note" id="udInfo"></p>
+<div class="ud-wrap"><table class="rt ud"><thead><tr><th>#</th><th data-k="name">University</th><th class="r" data-k="now" id="thNow">This year</th>
+<th class="r" data-k="last" id="thLast">Last year</th><th class="r" data-k="pace" title="This year's pace compared with last year">Pace</th>
+<th class="r hm" data-k="cites">Citations</th><th class="r hm" data-k="h">h-index</th><th class="r hm" data-k="oa" title="Share of recent papers free to read">Open access</th></tr></thead>
+<tbody id="udBody"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
+<button class="ud-more" id="udMore" hidden>Show more</button>
+<p class="note">Click a column to sort. “Pace” compares this year so far (scaled to a full year) with last year. ⚠ marks a university where
+OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it by a typical year. Data: OpenAlex.</p></section>
+<script src="../assets/unidir.js" defer></script>''')
     write("universities", "Most active universities and research institutions today · ResearchBoard",
           f"Daily ranking of universities and research institutions by papers published. Latest: {nice(day)}.", body, "Universities")
+
+    # ------------------------------------------------------------------ one university (loads live from OpenAlex)
+    write("university", "University research output · ResearchBoard",
+          "Research output of a university: papers per year, top research fields, researchers, partners and open access.",
+          '<div id="uni"><p class="note">Loading…</p></div><script src="../assets/uni.js" defer></script>', "Universities")
 
     # ------------------------------------------------------------------ journals
     jnames = {}
