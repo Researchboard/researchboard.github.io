@@ -120,7 +120,8 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html assets blog _site/
-          mv _site/blog/sitemap.xml _site/blog/robots.txt _site/ 2>/dev/null || true
+          mv _site/blog/sitemap.xml _site/blog/robots.txt _site/blog/llms.txt _site/ 2>/dev/null || true
+          mv _site/blog/[0-9a-f]*.txt _site/ 2>/dev/null || true
           if [ -f _site/blog/_index.html ]; then mv _site/blog/_index.html _site/index.html; fi
           if [ -d country ]; then cp -r country _site/; fi
           if [ -d data ]; then cp -r data _site/; fi
@@ -137,6 +138,11 @@ jobs:
           path: _site
       - id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Tell Bing and other search engines about new pages (IndexNow)
+        if: github.event_name != 'push' && github.event.schedule == '7 13 * * *'
+        continue-on-error: true
+        run: python scripts/indexnow.py _site/sitemap.xml
 
       - name: Save the 24-hour starting snapshot only
         if: github.event.inputs.mode == 'totals-only'
