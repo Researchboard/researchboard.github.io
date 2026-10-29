@@ -23,6 +23,7 @@
     const cby = (a.counts_by_year || []).slice().sort((x, y) => x.year - y.year).slice(-10);
     const mx = Math.max(1, ...cby.map((c) => c.works_count));
     const p5 = cby.filter((c) => c.year >= YEAR - 4).reduce((s, c) => s + c.works_count, 0);
+    const c5 = cby.filter((c) => c.year >= YEAR - 4).reduce((s, c) => s + (c.cited_by_count || 0), 0);
     const topics = (a.topics || []).slice(0, 8);
     const fields = {};
     (a.topics || []).forEach((t) => { const f = t.field && t.field.display_name; if (f) fields[f] = (fields[f] || 0) + (t.count || 1); });
@@ -37,10 +38,13 @@
         ${a.orcid ? ` · <a class="orc" href="${esc(a.orcid)}" target="_blank" rel="noopener">iD</a> <a href="${esc(a.orcid)}" target="_blank" rel="noopener">ORCID</a>` : ""}
         · <a href="https://openalex.org/${id}" target="_blank" rel="noopener">OpenAlex ↗</a></div></div></div>
       ${many ? `<p class="note warnbox">⚠ This OpenAlex profile lists ${L.length} institutions, so it may combine several people with the same name.</p>` : ""}
-      <div class="xstats"><div><span>Papers (all time)</span><b>${fmt(a.works_count)}</b></div>
-        <div><span>Papers ${YEAR - 4}–${YEAR}</span><b>${fmt(p5)}</b></div>
-        <div><span>Citations</span><b>${fmt(a.cited_by_count)}</b></div>
-        <div><span>h-index</span><b>${fmt((a.summary_stats || {}).h_index)}</b></div></div>
+      <div class="xstats x6"><div><span>Citations (career)</span><b>${fmt(a.cited_by_count)}</b></div>
+        <div><span>Citations ${YEAR - 4}–${YEAR}</span><b>${fmt(c5)}</b></div>
+        <div><span>h-index</span><b>${fmt((a.summary_stats || {}).h_index)}</b></div>
+        <div><span>i10-index</span><b>${fmt((a.summary_stats || {}).i10_index)}</b></div>
+        <div><span>Papers (career)</span><b>${fmt(a.works_count)}</b></div>
+        <div><span>Papers ${YEAR - 4}–${YEAR}</span><b>${fmt(p5)}</b></div></div>
+      <p class="note">Source: OpenAlex open data. Google Scholar-based sites usually show higher numbers (they also count theses, slides and duplicates); Scopus and Web of Science usually lower.</p>
       <div class="u-grid3">
         <section class="panel2"><h2>Papers per year</h2><div class="u-bars">${cby.map((c) => `<div class="${c.year === YEAR ? "cur" : ""}"><i style="height:${Math.max(3, c.works_count / mx * 110)}px"></i>${String(c.year).slice(2)}<br><b>${fmt(c.works_count)}</b></div>`).join("")}</div></section>
         <section class="panel2"><h2>Research fields</h2>${fl.map(([f, n]) => `<div class="u-hb"><span>${esc(f)}</span><i style="width:${n / fmx * 90}px"></i></div>`).join("") || "<p class='note'>—</p>"}

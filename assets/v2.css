@@ -311,3 +311,25 @@ a.sb:hover span { text-decoration: underline; }
 /* header fits 9 menu items */
 @media (max-width: 1360px) and (min-width: 1001px) { .gsearch { min-width: 110px !important; } .topnav a { padding: 8px 5px; font-size: 13.5px; } }
 @media (max-width: 1180px) and (min-width: 1001px) { .topnav a { padding: 7px 4px; font-size: 12.5px; } .brand-name { font-size: 18px; } .brand img { width: 34px; height: 34px; } .topbar-inner { gap: 8px; } }
+/* scientist rankings hero */
+.sh { background: radial-gradient(120% 140% at 0% 0%, #12395a 0%, #0b2233 45%, #0a1c2b 100%); color: #e8f1f8; border-radius: 18px; padding: 22px 24px 16px; margin-bottom: 14px; box-shadow: 0 10px 30px rgba(10,30,50,.25); }
+.sh-t { margin: 0; font-size: 30px; line-height: 1.2; font-weight: 800; color: #fff; }
+.sh-t em { font-style: normal; color: #f4d27a; font-variant-numeric: tabular-nums; }
+.sh-m { color: #f4d27a; }
+.sh-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; }
+.sh-live { background: rgba(63,220,130,.12); color: #8ff0b8; border: 1px solid rgba(63,220,130,.35); border-radius: 20px; padding: 4px 11px; font-size: 12.5px; font-weight: 700; }
+.sh-pill { border: 1px solid rgba(255,255,255,.25); border-radius: 20px; padding: 4px 11px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #cfe0ee; }
+.sh-p { margin: 0 0 14px; color: #cfdbe6; font-size: 14.5px; line-height: 1.6; max-width: 860px; }
+.sh-p b { color: #fff; }
+.sh-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 5px; }
+.sh-tabs button { font: inherit; background: none; border: 1px solid transparent; color: #cfdbe6; border-radius: 9px; padding: 9px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.sh-tabs button b { color: #fff; font-size: 14.5px; } .sh-tabs button span { font-size: 12px; opacity: .8; }
+.sh-tabs button i { font-style: normal; font-size: 10.5px; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.15); display: inline-flex; align-items: center; justify-content: center; }
+.sh-tabs button.on { background: rgba(244,210,122,.14); border-color: #f4d27a; } .sh-tabs button.on span { color: #f4d27a; opacity: 1; }
+.sh-explain { margin: 10px 2px 6px; font-size: 13.5px; color: #e8f1f8; }
+.sh-src { margin: 8px 2px 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); font-size: 12.5px; color: #a9bccc; line-height: 1.55; }
+.sh-src b { color: #f4d27a; font-weight: 700; } .sh-src a { color: #8fd0ff; }
+table.sci td.on, table.sci th.on { background: rgba(244,210,122,.14); font-weight: 700; }
+@media (max-width: 760px) { .sh { padding: 16px; } .sh-t { font-size: 22px; } .sh-tabs { grid-template-columns: 1fr 1fr; } }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.xstats.x6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } @media (max-width: 900px) { .xstats.x6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

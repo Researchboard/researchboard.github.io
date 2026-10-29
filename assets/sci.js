@@ -28,6 +28,12 @@
   const P = new URLSearchParams(location.search);
   const st = { mode: P.get("mode") === "topic" ? "topic" : "name", q: P.get("q") || "", c: (P.get("c") || "").toUpperCase(),
     f: P.get("f") || "", i: P.get("i") || "", iname: P.get("in") || "", s: P.get("s") || "cited_by_count", page: 1 };
+  if (!["cited_by_count", "c5", "summary_stats.h_index", "summary_stats.i10_index"].includes(st.s)) st.s = "cited_by_count";
+  const METRICS = [
+    ["cited_by_count", "Citations", "total influence", "How many times other research papers have cited this scientist's work, across the whole career."],
+    ["c5", `Citations ${YEAR - 4}–${YEAR}`, "recent impact", `Citations received in ${YEAR - 4}–${YEAR} only. Shows who is influential now, and is fairer to younger researchers.`],
+    ["summary_stats.h_index", "h-index", "impact depth", "A scientist has an h-index of 40 when 40 of their papers have each been cited at least 40 times."],
+    ["summary_stats.i10_index", "i10-index", "consistent output", "The number of papers that have each been cited at least 10 times."]];
   function pushURL() {
     const u = new URL(location.href);
     ["mode", "q", "c", "f", "i", "in", "s"].forEach((k) => u.searchParams.delete(k));
@@ -41,7 +47,19 @@
   }
 
   // ------------------------------------------------------------------ controls
+  const loadedAt = new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   box.innerHTML = `
+    <div class="sh">
+      <h2 class="sh-t"><span id="hWhere">World</span> <em id="hN">…</em> Scientists <span class="sh-m" id="hMetric">Citations</span> Rankings</h2>
+      <div class="sh-badges"><span class="sh-live">● Live · data loaded ${esc(loadedAt)}</span><span class="sh-pill">Career &amp; last 5 years</span></div>
+      <p class="sh-p">Live rankings of researchers <span id="hScope">worldwide</span>, built from <b>OpenAlex</b> — the free, open index of over 250 million
+        research papers, which also covers PubMed. <b>Career totals and the last 5 years are shown side by side, never mixed.</b>
+        Filter by country, research field or university, or search a name or topic.</p>
+      <div class="sh-tabs">${METRICS.map(([k, n, sub, tip]) => `<button data-s="${k}" title="${esc(tip)}"><b>${esc(n)}</b> <span>${esc(sub)}</span> <i aria-hidden="true">i</i></button>`).join("")}</div>
+      <p class="sh-explain" id="hExplain"></p>
+      <p class="sh-src"><b>Source &amp; scale:</b> OpenAlex open data, refreshed daily · scientists with 3+ papers and at least one paper since ${YEAR - 4} ·
+        numbers are usually <b>lower than Google Scholar-based rankings</b> (which also count theses, slides and duplicate copies) and <b>higher than Scopus or Web of Science</b> (which count selected journals only). <a href="../about/methods.html">How we count →</a></p>
+    </div>
     <div class="sf">
       <div class="sf-mode" role="tablist"><button data-m="name">👤 Name</button><button data-m="topic">🔎 Topic (find a supervisor)</button></div>
       <div class="sf-row">
@@ -49,14 +67,13 @@
         <select id="sC" aria-label="Country"><option value="">🌍 All countries</option></select>
         <select id="sF" aria-label="Research field"><option value="">All research fields</option>${FIELDS.slice().sort((a, b) => a[1].localeCompare(b[1])).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("")}</select>
         <div class="sf-q"><input id="sI" type="search" autocomplete="off" placeholder="University or institute…" aria-label="Institution"><div class="sf-drop" id="sId" hidden></div></div>
-        <select id="sS" aria-label="Sort"><option value="cited_by_count">Sort: citations</option><option value="summary_stats.h_index">Sort: h-index</option><option value="works_count">Sort: papers</option></select>
         <button class="sf-go" id="sGo">Search</button>
       </div>
       <div class="sf-chips" id="sChips"></div>
     </div>
     <div class="sci-grid"><section class="panel2"><h2 id="sTitle">Scientists</h2><p class="note" id="sInfo"></p>
       <div class="sci-wrap"><table class="rt sci"><thead><tr><th>#</th><th>Scientist</th><th class="hm">Main topic</th>
-        <th class="r" id="sCol5">Papers (5 yrs)</th><th class="r">Citations</th><th class="r">h-index</th></tr></thead><tbody id="sBody"></tbody></table></div>
+        <th class="r" id="sCol5">Papers (5 yrs)</th><th class="r" data-col="cited_by_count">Citations</th><th class="r" data-col="c5">Citations<br>${YEAR - 4}–${String(YEAR).slice(2)}</th><th class="r" data-col="summary_stats.h_index">h-index</th><th class="r hm" data-col="summary_stats.i10_index">i10</th></tr></thead><tbody id="sBody"></tbody></table></div>
       <button class="ud-more" id="sMore" hidden>Load more</button>
       <p class="note">Data: OpenAlex, live. Only scientists with a paper in ${YEAR - 4}–${YEAR} are shown. A few profiles in OpenAlex mix up two people with the same name or list an old university.</p></section>
       <aside id="sSide"></aside></div>`;
@@ -68,7 +85,17 @@
     C.innerHTML = `<option value="">🌍 All countries</option>` + all.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join("");
     C.value = st.c;
   }).catch(() => { if (st.c) C.innerHTML += `<option value="${st.c}">${esc(cname(st.c))}</option>`; C.value = st.c; });
-  $("#sQ").value = st.q; $("#sF").value = st.f; $("#sS").value = st.s; $("#sI").value = st.iname;
+  $("#sQ").value = st.q; $("#sF").value = st.f; $("#sI").value = st.iname;
+  function setMetric(k) {
+    st.s = k;
+    const m = METRICS.find((x) => x[0] === k);
+    box.querySelectorAll(".sh-tabs button").forEach((b) => b.classList.toggle("on", b.dataset.s === k));
+    box.querySelectorAll("th[data-col]").forEach((th) => th.classList.toggle("on", th.dataset.col === k));
+    $("#hMetric").textContent = m[1].startsWith("Citations ") ? "Recent Citations" : m[1];
+    $("#hExplain").innerHTML = `<b>${esc(m[1])}:</b> ${esc(m[3])}`;
+  }
+  setMetric(st.s);
+  box.querySelectorAll(".sh-tabs button").forEach((b) => b.addEventListener("click", () => { setMetric(b.dataset.s); run(); }));
   function setMode(m) {
     st.mode = m;
     box.querySelectorAll(".sf-mode button").forEach((b) => b.classList.toggle("on", b.dataset.m === m));
@@ -98,13 +125,14 @@
   }
   auto($("#sQ"), $("#sQd"), "authors", (id) => { location.href = `../scientist/?id=${id}`; });
   auto($("#sI"), $("#sId"), "institutions", (id, n) => { st.i = id; st.iname = n; $("#sI").value = n; run(); });
-  const go = () => { st.q = $("#sQ").value.trim(); st.c = C.value; st.f = $("#sF").value; st.s = $("#sS").value; if (!$("#sI").value.trim()) { st.i = ""; st.iname = ""; } run(); };
+  const go = () => { st.q = $("#sQ").value.trim(); st.c = C.value; st.f = $("#sF").value; if (!$("#sI").value.trim()) { st.i = ""; st.iname = ""; } run(); };
   $("#sGo").addEventListener("click", go);
   $("#sQ").addEventListener("keydown", (e) => { if (e.key === "Enter") { $("#sQd").hidden = true; go(); } });
-  [C, $("#sF"), $("#sS")].forEach((el) => el.addEventListener("change", go));
+  [C, $("#sF")].forEach((el) => el.addEventListener("change", go));
   $("#sMore").addEventListener("click", () => { st.page += 1; run(true); });
 
   // ------------------------------------------------------------------ search
+  const cites5 = (a) => { const c = Object.fromEntries((a.counts_by_year || []).map((z) => [z.year, z.cited_by_count])); return Y5.reduce((s, y) => s + (c[y] || 0), 0); };
   const recent5 = (a) => { const c = Object.fromEntries((a.counts_by_year || []).map((z) => [z.year, z.works_count])); return Y5.reduce((s, y) => s + (c[y] || 0), 0); };
   function okAuthor(a) {
     const L = (a.last_known_institutions || []).filter((i) => !BLOCK_INST.has(sid(i.id)));
@@ -119,12 +147,13 @@
     return pick ? `<a href="../university/?id=${sid(pick.id)}">${esc(pick.display_name)}</a>${st.c ? "" : " " + flag(pick.country_code)}` : "—";
   }
   const SEL = "id,display_name,orcid,last_known_institutions,topics,counts_by_year,summary_stats,works_count,cited_by_count";
-  let shownRows = 0;
+  let shownRows = 0, loaded = [];
   function row(a, extra) {
     const t = (a.topics || [])[0];
     return `<tr><td>${++shownRows}</td><td class="nm"><a href="../scientist/?id=${sid(a.id)}"><b>${esc(a.display_name)}</b></a>${a.orcid ? ` <a class="orc" href="${esc(a.orcid)}" target="_blank" rel="noopener" title="ORCID iD">iD</a>` : ""}
       <div class="ud-city">${instOf(a)}</div></td><td class="hm"><span class="muted">${t ? esc(t.display_name) : "—"}</span>${t ? `<div class="ud-city">${esc(t.field.display_name)}</div>` : ""}</td>
-      <td class="r">${extra != null ? `<b>${fmt(extra)}</b><div class="ud-city">on topic</div>` : fmt(recent5(a))}</td><td class="r"><b>${fmt(a.cited_by_count)}</b></td><td class="r">${fmt((a.summary_stats || {}).h_index)}</td></tr>`;
+      <td class="r">${extra != null ? `<b>${fmt(extra)}</b><div class="ud-city">on topic</div>` : fmt(recent5(a))}</td><td class="r${st.s === "cited_by_count" ? " on" : ""}">${fmt(a.cited_by_count)}</td><td class="r${st.s === "c5" ? " on" : ""}">${fmt(cites5(a))}</td>
+      <td class="r${st.s.includes("h_index") ? " on" : ""}">${fmt((a.summary_stats || {}).h_index)}</td><td class="r hm${st.s.includes("i10") ? " on" : ""}">${fmt((a.summary_stats || {}).i10_index)}</td></tr>`;
   }
   function chips() {
     const c = [];
@@ -151,15 +180,18 @@
   let token = 0;
   async function run(more) {
     const my = ++token;
-    if (!more) { st.page = 1; shownRows = 0; $("#sBody").innerHTML = `<tr><td colspan="6">Searching…</td></tr>`; }
+    if (!more) { st.page = 1; shownRows = 0; $("#sBody").innerHTML = `<tr><td colspan="8">Searching…</td></tr>`; }
     pushURL(); chips();
     $("#sTitle").textContent = title();
+    $("#hWhere").textContent = st.i ? st.iname : st.c ? cname(st.c) : "World";
+    $("#hScope").textContent = st.i ? "at " + st.iname : st.c ? "in " + cname(st.c) : "worldwide";
+    if (!more) $("#hN").textContent = "…";
     $("#sCol5").textContent = st.mode === "topic" && st.q ? "Papers on topic" : `Papers (${YEAR - 4}–${YEAR})`;
     try {
       if (st.mode === "topic" && st.q) await runTopic(my, more);
       else await runAuthors(my, more);
     } catch (e) {
-      if (my === token) $("#sBody").innerHTML = `<tr><td colspan="6">OpenAlex didn't answer just now. Please try again in a minute.</td></tr>`;
+      if (my === token) $("#sBody").innerHTML = `<tr><td colspan="8">OpenAlex didn't answer just now. Please try again in a minute.</td></tr>`;
     }
     if (!more) side(my);
   }
@@ -170,16 +202,23 @@
     if (st.i) f.push(`last_known_institutions.id:${st.i}`);
     if (st.f) f.push(`topics.field.id:fields/${st.f}`);
     const q = st.q && st.mode === "name" ? `&search=${encodeURIComponent(st.q)}` : "";
-    const sort = `&sort=${st.s}:desc`;
-    const r = await get(`authors?filter=${f.join(",")}${q}${sort}&per_page=50&page=${st.page}&select=${SEL}`);
+    // OpenAlex sorts by career citations, h-index and i10; "last 5 years" is sorted here among the most-cited loaded so far
+    const sort = `&sort=${st.s === "c5" ? "cited_by_count" : st.s}:desc`;
+    const per = st.s === "c5" ? 200 : 50;
+    const r = await get(`authors?filter=${f.join(",")}${q}${sort}&per_page=${per}&page=${st.page}&select=${SEL}`);
     if (my !== token) return;
-    const list = (r.results || []).filter(okAuthor);
-    const html = list.map((a) => row(a)).join("");
-    if (more) $("#sBody").insertAdjacentHTML("beforeend", html);
-    else $("#sBody").innerHTML = html || `<tr><td colspan="6">No active scientists found. Try fewer filters or another spelling.</td></tr>`;
+    if (!more) loaded = [];
+    loaded = loaded.concat((r.results || []).filter(okAuthor));
+    const list = st.s === "c5" ? loaded.slice().sort((x, y) => cites5(y) - cites5(x)) : loaded;
+    shownRows = 0;
+    $("#sBody").innerHTML = list.map((a) => row(a)).join("") || `<tr><td colspan="8">No active scientists found. Try fewer filters or another spelling.</td></tr>`;
     const total = (r.meta || {}).count || 0;
-    $("#sInfo").textContent = `${fmt(total)} profiles in OpenAlex match (3+ papers). Showing the active ones, ${st.s === "works_count" ? "most papers" : st.s.includes("h_index") ? "highest h-index" : "most cited"} first.`;
-    $("#sMore").hidden = st.page * 50 >= total || st.page >= 20;
+    $("#hN").textContent = fmt(total);
+    const mname = METRICS.find((x) => x[0] === st.s)[1];
+    $("#sInfo").textContent = st.s === "c5"
+      ? `${fmt(total)} scientist profiles match. Ranked by ${mname} among the ${fmt(st.page * per)} most-cited — load more to look deeper.`
+      : `${fmt(total)} scientist profiles match. Showing the active ones, ranked by ${mname}.`;
+    $("#sMore").hidden = st.page * per >= total || st.page >= (st.s === "c5" ? 5 : 20);
   }
 
   let topicIds = [];
@@ -192,11 +231,12 @@
       const g = await get(`works?search=${encodeURIComponent(st.q)}&filter=${f.join(",")}&group_by=authorships.author.id`);
       if (my !== token) return;
       topicIds = (g.group_by || []).filter((x) => x.key && x.count > 0).map((x) => [sid(x.key), x.count]);
+      $("#hN").textContent = fmt(topicIds.length) + (topicIds.length >= 200 ? "+" : "");
       const n = (g.meta || {}).count;
       $("#sInfo").textContent = `${fmt(n)} papers on this topic since ${YEAR - 4}${st.c ? " with an author in " + cname(st.c) : ""}. Researchers ranked by how many of them they wrote.`;
     }
     const slice = topicIds.slice((st.page - 1) * 40, st.page * 40);
-    if (!slice.length) { if (!more) $("#sBody").innerHTML = `<tr><td colspan="6">No papers found on this topic. Try a broader word.</td></tr>`; $("#sMore").hidden = true; return; }
+    if (!slice.length) { if (!more) $("#sBody").innerHTML = `<tr><td colspan="8">No papers found on this topic. Try a broader word.</td></tr>`; $("#sMore").hidden = true; return; }
     const r = await get(`authors?filter=openalex:${slice.map((x) => x[0]).join("|")}&per_page=50&select=${SEL}`);
     if (my !== token) return;
     const byId = Object.fromEntries((r.results || []).map((a) => [sid(a.id), a]));
