@@ -51,7 +51,8 @@
     const tag = document.querySelector("#market .market-tag");
     if (tag) tag.lastChild.textContent = "Research trends · " + span;
     const track = $("#mTrack"); track.textContent = "";
-    if (m.flagged) {
+    const cleanup = m.flagged && m.papers_added < 0 && (m.countries || []).length > 0;
+    if (m.flagged && !cleanup) {
       box.classList.add("flagged");
       track.appendChild(el("span", "tk", /no growth/.test(m.flagged) ? "No change to show yet — our data source (OpenAlex) has not added new papers since the last update. Check back after the next update." : "Today's 24-hour change is not shown (" + m.flagged + ")."));
     } else {
@@ -62,7 +63,8 @@
         if (code) s.appendChild(flag(code));
         s.appendChild(el("span", "lbl", label)); s.appendChild(el("span", "val", value)); return s;
       };
-      items.push(tk("New papers added", "▲ +" + fmt(m.papers_added), null, true));
+      if (cleanup) items.push(tk("World total (clean-up day)", "▼ −" + fmt(-m.papers_added), null, true));
+      else items.push(tk("New papers added", "▲ +" + fmt(m.papers_added), null, true));
       if (m.pubmed_yesterday) items.push(tk("PubMed records added", "▲ +" + fmt(m.pubmed_yesterday), null, true));
       if (m.countries_active) items.push(tk("Countries contributing", fmt(m.countries_active), null, true));
       (m.countries || []).slice(0, 10).forEach((c) => items.push(tk(countryName(c.code), "▲ +" + fmt(c.added), c.code)));
@@ -71,7 +73,8 @@
     }
     const ld = S.latest.latest_day;
     const note = $("#mNote"); note.textContent = "";
-    note.append(`Papers added to the global research record in the ${span.toLowerCase()}, between our two most recent updates. Everything below shows the latest `);
+    if (cleanup) note.append(`OpenAlex added new papers from ${fmt(m.countries_active)} countries, but also removed duplicate and withdrawn records, so the world total fell. Country and university numbers show papers added. Everything below shows the latest `);
+    else note.append(`Papers added to the global research record in the ${span.toLowerCase()}, between our two most recent updates. Everything below shows the latest `);
     note.appendChild(el("b", null, "fully counted day"));
     note.append(ld ? ` (${shortDate(ld)}), because journals report papers over several days.` : ".");
   }

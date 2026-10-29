@@ -232,3 +232,4 @@
 .quizpromo .qp-b{animation:qppulse 3s ease-in-out infinite}
 @keyframes qppulse{0%,100%{box-shadow:0 0 0 0 rgba(110,240,170,.55)}50%{box-shadow:0 0 0 9px rgba(110,240,170,0)}}
 @media (prefers-reduced-motion:reduce){.quizpromo *{animation:none!important}.quizpromo .qp-flip i:first-child{opacity:1}}
+.xstats b.up { color: var(--up); } .xstats b.down { color: var(--down); }
