@@ -68,6 +68,7 @@ PAPER_TYPES = "type:article|review|preprint|letter|conference-paper|book-chapter
 EXCLUDE_WORKS = {"W3038568908"}
 
 TOP_COUNTRIES_DETAIL = 25
+MORE_COUNTRIES_DETAIL = 160    # other countries get top institutions only (7-day window)
 INSTITUTIONS_PER_DAY = 25
 JOURNALS_PER_DAY = 15
 AUTHOR_SNAPSHOT_SIZE = 200
@@ -613,6 +614,24 @@ def main() -> int:
             "top_authors": safe(f"authors {code}", lambda: top_authors_in(code), []),
         }
     rec["pubmed_by_country"] = pubmed_by_country
+
+    # Smaller countries: just their most active institutions over the last 7 days
+    # (one OpenAlex call each), so every country page and map card can name some.
+    week_flt = (f"from_publication_date:{iso(rank_day - dt.timedelta(days=6))},"
+                f"to_publication_date:{iso(rank_day)},{PAPER_TYPES}")
+    old_detail = previous_latest.get("countries_detail", {})
+    week_tot: dict = {}
+    for k in range(7):
+        for c, n in days.get(iso(rank_day - dt.timedelta(days=k)), {}).get("countries", {}).items():
+            week_tot[c] = week_tot.get(c, 0) + n
+    more = [c for c, _ in sorted(week_tot.items(), key=lambda x: -x[1]) if c not in countries_detail]
+    for code in more[:MORE_COUNTRIES_DETAIL]:
+        insts = safe(f"institutions {code} (7 days)", lambda: ranked(group(
+            week_flt + f",authorships.institutions.country_code:{code}", "authorships.institutions.lineage"), 5), None)
+        if insts is None:
+            insts = (old_detail.get(code) or {}).get("top_institutions", [])
+        countries_detail[code] = {"name": names.get(code, code), "papers": country_counts.get(code, 0),
+                                  "top_institutions": insts or [], "inst_days": 7}
 
     # 4) Country of each institution shown on the board.
     inst_country = dict(previous_latest.get("inst_country", {}))

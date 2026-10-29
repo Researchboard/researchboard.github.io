@@ -130,7 +130,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
         insts = det.get("top_institutions") or []
         inst_html = ""
         if insts:
-            inst_html = ("<h2>Most active institutions</h2><ol class=\"c-list\">" +
+            inst_html = ("<h2>Most active institutions" + (" (last 7 days)" if det.get("inst_days") == 7 else "") + "</h2><ol class=\"c-list\">" +
                          "".join(f"<li>{esc(i.get('name', ''))} <span class=\"muted\">· {i.get('count', 0):,} papers</span></li>"
                                  for i in insts[:5]) + "</ol>")
         auth = det.get("top_authors") or []
