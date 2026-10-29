@@ -265,7 +265,10 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
                 "cc": f'{flag(a.get("country"))}{esc(a.get("country") or "")}',
                 "v": f'<b class="{"up" if plus else ""}">{"+" if plus else ""}{f(a.get(key))}</b>'}
     ac = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("Citations", "v", True)]
-    body = head_block("Scientists", "Scientists", "Scientists gaining the most citations since the previous day, and the most-cited scientists of all time.")
+    body = head_block("Scientists", "Find scientists", "Search active researchers worldwide by name, research topic, country, "
+                      "field or university — or find a supervisor for your research interest.")
+    body += '<div id="sci"><p class="note">Loading…</p></div><script src="../assets/sci.js" defer></script>'
+    body += '<h2 class="mv-h">Citation leaders</h2>'
     g = latest.get("gainers") or []
     if g:
         gc = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("Gained", "v", True)]
@@ -274,8 +277,12 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
     body += (f'<section class="panel2"><h2>🏆 Most-cited scientists of all time</h2>'
              f'{ranked_table([arow(a, n) for n, a in enumerate(latest.get("top_authors") or [], 1)], ac)}'
              f'<p class="note">Among the 200 most-cited scientists in OpenAlex; daily gains compare today\'s totals with the previous day\'s.</p></section>')
-    write("scientists", "Most-cited scientists and daily citation gains · ResearchBoard",
-          "Which scientists gained the most citations today? Plus the most-cited scientists of all time.", body, "")
+    write("scientists", "Find scientists by name, topic, country, field or university · ResearchBoard",
+          "Search active researchers worldwide by name, research topic, country, field or university, and find a supervisor. "
+          "Plus the scientists gaining the most citations today.", body, "Scientists")
+    write("scientist", "Scientist research profile · ResearchBoard",
+          "A scientist's papers per year, citations, h-index, research topics, co-authors and latest papers.",
+          '<div id="person"><p class="note">Loading…</p></div><script src="../assets/scientist.js" defer></script>', "Scientists")
 
     # ------------------------------------------------------------------ market = weekly movers
     import movers as _mv
