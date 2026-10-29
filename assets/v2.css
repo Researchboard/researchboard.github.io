@@ -233,3 +233,12 @@
 @keyframes qppulse{0%,100%{box-shadow:0 0 0 0 rgba(110,240,170,.55)}50%{box-shadow:0 0 0 9px rgba(110,240,170,0)}}
 @media (prefers-reduced-motion:reduce){.quizpromo *{animation:none!important}.quizpromo .qp-flip i:first-child{opacity:1}}
 .xstats b.up { color: var(--up); } .xstats b.down { color: var(--down); }
+/* weekly movers */
+.mv-h { margin: 22px 0 8px; font-size: 20px; }
+.cat-grid.mv { grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) { .cat-grid.mv { grid-template-columns: 1fr; } }
+.rt .up, .rt b.up { color: var(--up); } .rt b.down { color: var(--down); }
+.tk .val.down { color: #ff7b7b; }
+.tk-sec { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b1220; background: #8fa0b8; border-radius: 6px; padding: 2px 8px; align-self: center; }
+.market-note a { color: #7cc0ff; font-weight: 700; }
+.cat-grid.mv { align-items: start; } .cat-grid.mv > .panel2 { margin-top: 0; } .mv-chart svg { max-height: 170px; width: 100%; }

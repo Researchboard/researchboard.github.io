@@ -38,7 +38,49 @@
   const hideTip = () => { tip.hidden = true; };
 
   // ------------------------------------------------------------------ market ticker
+  const SHORT_FIELD = { "Economics, Econometrics and Finance": "Economics", "Agricultural and Biological Sciences": "Agriculture & Biology",
+    "Business, Management and Accounting": "Business", "Biochemistry, Genetics and Molecular Biology": "Biochemistry & Genetics",
+    "Pharmacology, Toxicology and Pharmaceutics": "Pharmacology", "Immunology and Microbiology": "Immunology",
+    "Earth and Planetary Sciences": "Earth sciences", "Physics and Astronomy": "Physics", "Arts and Humanities": "Arts & Humanities",
+    "Environmental Science": "Environment", "Materials Science": "Materials", "Computer Science": "Computer science",
+    "Chemical Engineering": "Chemical eng.", "Health Professions": "Health professions", "Decision Sciences": "Decision sciences",
+    "Social Sciences": "Social sciences" };
+  const sf = (n) => SHORT_FIELD[n] || n;
+  function renderMovers() {
+    const mv = S.movers, box = $("#market");
+    box.hidden = false; box.classList.remove("flagged");
+    const d = (k) => new Date(k + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    $("#mWindow").textContent = `${d(mv.week[0])}–${d(mv.week[1])} vs ${d(mv.prev_week[0])}–${d(mv.prev_week[1])}`;
+    const tag = document.querySelector("#market .market-tag");
+    if (tag) tag.lastChild.textContent = "Research trends · Weekly pulse";
+    const track = $("#mTrack"); track.textContent = "";
+    const items = [];
+    const tk = (label, value, down, code, big) => {
+      const s = el("span", "tk" + (big ? " big" : ""));
+      if (code) s.appendChild(flag(code));
+      s.appendChild(el("span", "lbl", label)); s.appendChild(el("span", "val" + (down ? " down" : ""), value)); return s;
+    };
+    const pc = (x) => (x > 0 ? "▲ +" : "▼ −") + Math.abs(x).toFixed(0) + "%";
+    const sec = (t) => el("span", "tk-sec", t);
+    const m = S.latest && S.latest.market;
+    if (m && !m.flagged && m.papers_added > 0) items.push(tk("Added in the last 24 h", "▲ +" + fmt(m.papers_added), false, null, true));
+    items.push(tk("Papers this week", fmt(mv.world.now) + "  " + pc(mv.world.pct), mv.world.pct < 0, null, true));
+    items.push(sec("Rising countries"));
+    mv.countries.up.slice(0, 6).forEach((r) => items.push(tk(r.name, pc(r.pct), false, r.id)));
+    items.push(sec("Rising fields"));
+    mv.fields.up.slice(0, 4).forEach((r) => items.push(tk(sf(r.name), pc(r.pct), false)));
+    if (mv.universities.up.length) { items.push(sec("Rising universities")); mv.universities.up.slice(0, 4).forEach((r) => items.push(tk(r.name, pc(r.pct), false))); }
+    items.push(sec("Falling"));
+    mv.countries.down.slice(0, 3).forEach((r) => items.push(tk(r.name, pc(r.pct), true, r.id)));
+    mv.fields.down.slice(0, 3).forEach((r) => items.push(tk(sf(r.name), pc(r.pct), true)));
+    [0, 1].forEach((copy) => items.forEach((n) => { const x = n.cloneNode(true); if (copy) x.setAttribute("aria-hidden", "true"); track.appendChild(x); }));
+    const note = $("#mNote"); note.textContent = "";
+    note.append("Change in each country's and field's share of world papers, this week vs last week (fully counted days). ");
+    const a = el("a", null, "See all movers →"); a.href = "market/"; note.appendChild(a);
+  }
+
   function renderMarket() {
+    if (S.movers && S.movers.week) return renderMovers();
     const m = S.latest && S.latest.market;
     const box = $("#market");
     if (!m) { box.hidden = true; return; }
@@ -295,6 +337,7 @@
       const [h, l] = await Promise.all([getJSON("data/history.json"), getJSON("data/latest.json").catch(() => null)]);
       if (!h || !h.days || !Object.keys(h.days).length) throw new Error("empty");
       S.history = h; S.latest = l;
+      S.movers = await getJSON("data/movers.json").catch(() => null);
     } catch (_) { $("#emptyState").hidden = false; return; }
     const all = keys();
     S.day = S.latest && all.includes(S.latest.latest_day) ? S.latest.latest_day : all[all.length - 1];
