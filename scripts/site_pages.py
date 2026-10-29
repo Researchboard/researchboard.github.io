@@ -267,6 +267,13 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
     ac = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("OpenAlex citations", "v", True)]
     body = '<div class="crumb"><a href="../">Home</a> › Scientists</div><h1 class="sr-only">Scientist rankings and search</h1>'
     body += '<div id="sci"><p class="note">Loading…</p></div><script src="../assets/sci.js" defer></script>'
+    body += ('<section class="panel2"><h2>How to use Find scientists</h2><p>Search active researchers worldwide by <b>name</b>, '
+             'by <b>research topic</b> (for example "arsenic groundwater", "dengue" or "machine learning in medicine"), by <b>country</b>, '
+             'by one of 26 <b>research fields</b> or by <b>university</b>. Rank them by OpenAlex citations (career or last 5 years), '
+             'h-index or i10-index, and open any profile to see papers per year, main topics, co-authors and latest papers. '
+             'Students can use the topic search to find a PhD or Master\'s supervisor — read our step-by-step guide: '
+             '<a href="../blog/find-a-research-supervisor.html">How to find a research supervisor in 5 minutes</a>. '
+             'Data: OpenAlex, an open index of over 250 million research papers that also covers PubMed.</p></section>')
     body += '<h2 class="mv-h">Citation leaders</h2>'
     g = latest.get("gainers") or []
     if g:

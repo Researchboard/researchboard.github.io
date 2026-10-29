@@ -325,11 +325,66 @@ def build() -> None:
         + "".join(f"<url><loc>{u}</loc><lastmod>{m}</lastmod><changefreq>{c}</changefreq><priority>{pr}</priority></url>\n"
                   for u, m, c, pr in urls) + "</urlset>\n", encoding="utf-8")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
+    (OUT / "llms.txt").write_text(build_llms(posts), encoding="utf-8")
+    try:
+        from indexnow import KEY as _INDEXNOW_KEY
+        (OUT / f"{_INDEXNOW_KEY}.txt").write_text(_INDEXNOW_KEY, encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
     summary =[{"title": p["title"], "slug": p["slug"], "date": p["date"].isoformat(), "kind": p["kind"],
                 "summary": p["summary"], "minutes": p["minutes"], "author": p["author"],
                 "image": ("blog/" + p["image"]) if p["image"] else ""} for p in posts[:12]]
     (OUT / "posts.json").write_text(json.dumps({"posts": summary}, ensure_ascii=False), encoding="utf-8")
     print(f"Blog built: {len(posts)} posts ({sum(p['kind'] == 'article' for p in posts)} articles)")
+
+
+def build_llms(posts: list[dict]) -> str:
+    """llms.txt: a plain-language map of the site for AI assistants and search tools."""
+    stats = ""
+    try:
+        hist = json.loads((ROOT / "data" / "history.json").read_text(encoding="utf-8"))
+        latest = json.loads((ROOT / "data" / "latest.json").read_text(encoding="utf-8"))
+        days = hist.get("days", {})
+        keys = [k for k in sorted(days) if k <= (latest.get("latest_day") or "9999")]
+        ks = [k for k in keys if not k.endswith("-01")][-30:]
+        if ks:
+            pp = sorted(days[k].get("papers") or 0 for k in ks)
+            cc = sorted(days[k].get("citations_made") or 0 for k in ks)
+            stats = (f"- On a typical day in the last 30 days, about {pp[len(pp) // 2]:,} new research papers were published "
+                     f"worldwide, citing earlier work about {cc[len(cc) // 2]:,} times.\n"
+                     f"- Latest fully counted day: {keys[-1]}.\n")
+    except Exception:  # noqa: BLE001
+        pass
+    guides = [p for p in posts if p["kind"] in ("guide", "article")][:40]
+    lines = "\n".join(f"- [{p['title']}]({SITE_URL}/blog/{p['slug']}.html): {p['summary']}" for p in guides)
+    return f"""# ResearchBoard
+
+> ResearchBoard ({SITE_URL}) is a free website that tracks the world's research output every day, like a stock-market board for science: papers published, PubMed additions, citations, and rankings of countries, universities, journals, research fields and scientists. It also helps students find a research supervisor. No sign-up. Data comes from OpenAlex (an open index of over 250 million research works) and PubMed.
+
+{stats}- Updated automatically every day. Daily figures are shown once a day is "fully counted", because journals report papers over several days.
+- Citations, h-index and i10-index shown on ResearchBoard are OpenAlex figures. Google Scholar usually reports higher numbers; Scopus and Web of Science usually lower.
+- Countries can be counted two ways: whole counting (a paper counts for every country of its authors) and fractional counting (a paper is shared between countries).
+
+## Main pages
+
+- [Live dashboard]({SITE_URL}/): today's papers, citations and the top countries, universities and journals, with a day picker.
+- [World research map]({SITE_URL}/map/): tap any country to see its papers, world rank and top university.
+- [Countries]({SITE_URL}/country/): a page for every country with daily papers, top universities and the top 5 most-cited scientists.
+- [Universities]({SITE_URL}/universities/): the most active universities each day, plus a searchable list of about 30,000 universities by country with papers, citations, h-index, open-access share and website.
+- [Scientists and "Find a supervisor"]({SITE_URL}/scientists/): search active researchers by name, research topic, country, field or university, ranked by OpenAlex citations (career and last 5 years), h-index or i10-index.
+- [Research trends (Weekly pulse)]({SITE_URL}/market/): countries, research fields and universities gaining or losing share of world research this week.
+- [Research fields]({SITE_URL}/fields/) and [Journals]({SITE_URL}/journals/): daily papers by field and by journal.
+- [Research Compass quiz]({SITE_URL}/quiz/): a free 2-minute picture quiz that suggests research fields that fit a student's interests.
+- [Methods]({SITE_URL}/about/methods.html): exactly how every number is counted.
+
+## Guides and articles
+
+{lines}
+
+## Contact
+
+Email: researchboardlive@gmail.com · Facebook, LinkedIn and Bluesky: ResearchBoard
+"""
 
 
 # --------------------------------------------------------------------------- automatic daily post
