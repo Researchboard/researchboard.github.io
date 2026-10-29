@@ -630,8 +630,11 @@ def main() -> int:
             week_flt + f",authorships.institutions.country_code:{code}", "authorships.institutions.lineage"), 5), None)
         if insts is None:
             insts = (old_detail.get(code) or {}).get("top_institutions", [])
+        auth = safe(f"authors {code}", lambda: top_authors_in(code), None)
+        if auth is None:
+            auth = (old_detail.get(code) or {}).get("top_authors", [])
         countries_detail[code] = {"name": names.get(code, code), "papers": country_counts.get(code, 0),
-                                  "top_institutions": insts or [], "inst_days": 7}
+                                  "top_institutions": insts or [], "inst_days": 7, "top_authors": auth or []}
 
     # 4) Country of each institution shown on the board.
     inst_country = dict(previous_latest.get("inst_country", {}))

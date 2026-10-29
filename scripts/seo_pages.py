@@ -131,14 +131,14 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
         inst_html = ""
         if insts:
             inst_html = ("<h2>Most active institutions" + (" (last 7 days)" if det.get("inst_days") == 7 else "") + "</h2><ol class=\"c-list\">" +
-                         "".join(f"<li>{esc(i.get('name', ''))} <span class=\"muted\">· {i.get('count', 0):,} papers</span></li>"
+                         "".join(f"<li><a href=\"../university/?id={esc(i.get('id', ''))}\">{esc(i.get('name', ''))}</a> <span class=\"muted\">· {i.get('count', 0):,} papers</span></li>"
                                  for i in insts[:5]) + "</ol>")
         inst_html += (f'<p><a href="../universities/?c={code}#udir"><b>See every university in {esc(name)} →</b></a></p>'
                       if len(code) == 2 else "")
         auth = det.get("top_authors") or []
         auth_html = ""
         if auth:
-            auth_html = ("<h2>Most-cited scientists</h2><ol class=\"c-list\">" +
+            auth_html = ("<h2>Top 5 most-cited scientists</h2><ol class=\"c-list\">" +
                          "".join(f"<li>{esc(a.get('name', ''))} <span class=\"muted\">· {esc(a.get('institution') or '')}"
                                  f" · {a.get('citations', 0):,} citations</span></li>" for a in auth[:5]) + "</ol>")
 
