@@ -258,49 +258,56 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
     write("scientists", "Most-cited scientists and daily citation gains · ResearchBoard",
           "Which scientists gained the most citations today? Plus the most-cited scientists of all time.", body, "")
 
-    # ------------------------------------------------------------------ market
-    hist_m = [m for m in hist.get("market", []) if not m.get("flagged")]
+    # ------------------------------------------------------------------ market = weekly movers
+    import movers as _mv
+    mv = _mv.compute(hist, latest, inst)
+    (out / "data").mkdir(exist_ok=True)
+    (out / "data" / "movers.json").write_text(json.dumps(mv or {}, ensure_ascii=False), encoding="utf-8")
     m = latest.get("market")
-    body = head_block("Trends", "Research trends", "What was added to the global research record in the last 24 hours, "
-                      "like a share-price change, and how it has moved day by day.")
-    cleanup = bool(m and m.get("flagged") and m.get("papers_added", 0) < 0 and m.get("countries"))
-    if m and (not m.get("flagged") or cleanup):
-        t1 = dt.datetime.fromisoformat(m["to"])
-        if cleanup:
-            body += ('<section class="panel2"><p><b>Clean-up day.</b> OpenAlex added new papers from '
-                     f'{f(m.get("countries_active"))} countries, but also removed duplicate and withdrawn records, so the '
-                     f'world total fell by {f(-m["papers_added"])}. The country and institution numbers below show papers added.</p></section>')
-        top = (f'<div><span>World total change</span><b class="down">▼ −{f(-m["papers_added"])}</b></div>' if cleanup else
-               f'<div><span>New papers added</span><b class="up">▲ +{f(m["papers_added"])}</b></div>')
-        body += (f'<div class="xstats">{top}'
-                 f'<div><span>PubMed records</span><b>+{f(m.get("pubmed_yesterday"))}</b></div>'
-                 f'<div><span>Countries contributing</span><b>{f(m.get("countries_active"))}</b></div>'
-                 f'<div><span>Window ends</span><b style="font-size:16px">{t1:%b} {t1.day}, {t1:%H:%M} UTC</b></div></div>')
-        mc = [("#", "n", False), ("Country", "name", False), ("Added", "v", True)]
-        mi = [("#", "n", False), ("Institution", "name", False), ("Added", "v", True)]
-        body += ('<div class="cat-grid"><section class="panel2"><h2>Top countries, last 24 hours</h2>' +
-                 ranked_table([{"n": n, "name": flag(c["code"]) + esc(names.get(c["code"], c["code"])), "v": f'<b class="up">▲ +{c["added"]:,}</b>'}
-                               for n, c in enumerate(m.get("countries", []), 1)], mc) +
-                 '</section><aside><section class="panel2"><h2>Top institutions, last 24 hours</h2>' +
-                 ranked_table([{"n": n, "name": esc(i["name"]), "v": f'<b class="up">▲ +{i["added"]:,}</b>'}
-                               for n, i in enumerate(m.get("institutions", []), 1)], mi) + '</section></aside></div>')
+    body = head_block("Trends", "Research trends · Weekly pulse", "Which countries, research fields and universities are gaining or "
+                      "losing share of the world's new papers this week, compared with last week.")
+    if mv:
+        wk = lambda w: f"{dt.date.fromisoformat(w[0]):%b} {dt.date.fromisoformat(w[0]).day}–{dt.date.fromisoformat(w[1]):%b} {dt.date.fromisoformat(w[1]).day}"
+        pct = lambda x: (f'<b class="up">▲ +{x:.1f}%</b>' if x > 0 else f'<b class="down">▼ −{abs(x):.1f}%</b>')
+        w = mv["world"]
+        cu, fu = (mv["countries"]["up"] or [{}])[0], (mv["fields"]["up"] or [{}])[0]
+        body += (f'<div class="xstats"><div><span>Papers this week</span><b>{f(w["now"])}</b></div>'
+                 f'<div><span>vs last week</span>{pct(w["pct"])}</div>'
+                 f'<div><span>Fastest-rising country</span><b style="font-size:16px">{flag(cu.get("id"))} {esc(cu.get("name", "—"))}</b></div>'
+                 f'<div><span>Fastest-rising field</span><b style="font-size:16px">{esc(fu.get("name", "—"))}</b></div></div>'
+                 f'<p class="note">This week: {wk(mv["week"])} · last week: {wk(mv["prev_week"])} · fully counted days only.</p>')
+        daily = mv["daily"]
+        body += (f'<section class="panel2 mv-chart"><h2>Papers per day, last two weeks</h2>{vbars([x[1] for x in daily], [nice(x[0]) for x in daily])}'
+                 '<p class="note">Weekends are always lower: many journals publish on weekdays.</p></section>')
+
+        def mtable(rows, kind):
+            def nm(r):
+                if kind == "countries":
+                    return f'{flag(r["id"])}<a href="../country/{slugify(r["name"])}.html">{esc(r["name"])}</a>'
+                if kind == "universities":
+                    return f'<a href="../explore/?id={esc(r["id"])}">{esc(r["name"])}</a>'
+                return esc(r["name"])
+            return ranked_table([{"n": n, "name": nm(r), "v": f(r["now"]), "c": pct(r["pct"])} for n, r in enumerate(rows, 1)],
+                                [("#", "n", False), ({"countries": "Country", "fields": "Field", "universities": "University"}[kind], "name", False),
+                                 ("Papers this week", "v", True), ("Share change", "c", True)])
+        for kind, title, n in (("countries", "Countries", 10), ("fields", "Research fields", 8), ("universities", "Universities", 10)):
+            up, down = mv[kind]["up"][:n], mv[kind]["down"][:n]
+            body += (f'<h2 class="mv-h">{title}</h2><div class="cat-grid mv"><section class="panel2"><h2>▲ Rising</h2>{mtable(up, kind)}</section>'
+                     f'<section class="panel2"><h2>▼ Falling</h2>{mtable(down, kind)}</section></div>')
+        body += ('<section class="panel2"><h2>How to read this</h2><p>We add up each country\'s, field\'s and university\'s papers over the '
+                 'last 7 fully counted days and compare their <b>share of world papers</b> with the 7 days before. Ranking by share means '
+                 'a quiet week for everyone does not look like a fall for everyone. Small producers are left out so a handful of papers '
+                 'cannot swing the list. Sudden large jumps are often a batch of journals being added to OpenAlex at once. '
+                 '<a href="../about/methods.html">Methods</a></p></section>')
     else:
-        why = (("No change to show yet: our data source (OpenAlex) has not added new papers since the last update. "
-                "It will return with the next update.") if "no growth" in (m or {}).get("flagged", "") else
-               f"Today's 24-hour change is not shown ({esc(m['flagged'])}). It will return with the next update."
-               if m and m.get("flagged") else "The first 24-hour comparison appears after the next daily update.")
-        body += f'<section class="panel2"><p>{why}</p></section>'
-    if hist_m:
-        labels = [dt.datetime.fromisoformat(x["to"]).date().isoformat() for x in hist_m[-60:]]
-        body += (f'<section class="panel2"><h2>New papers added per day</h2>{vbars([x["papers_added"] for x in hist_m[-60:]], labels)}'
-                 + ranked_table([{"d": esc(nice(dt.datetime.fromisoformat(x["to"]).date().isoformat())), "v": f'<b>+{x["papers_added"]:,}</b>',
-                                  "p": f(x.get("pubmed_yesterday")), "c": f(x.get("countries_active")),
-                                  "t": (flag((x.get("countries") or [{}])[0].get("code")) + esc(names.get((x.get("countries") or [{}])[0].get("code", ""), "")))}
-                                 for x in reversed(hist_m[-30:])],
-                                [("Day", "d", False), ("Papers added", "v", True), ("PubMed", "p", True), ("Countries", "c", True), ("Top mover", "t", False)])
-                 + '</section>')
-    write("market", "Research trends: papers added in the last 24 hours · ResearchBoard",
-          "How much research was added to the global record in the last 24 hours, by country and institution.", body, "Trends")
+        body += '<section class="panel2"><p>Weekly trends appear once we have two full weeks of data.</p></section>'
+    if m and not m.get("flagged"):
+        t1 = dt.datetime.fromisoformat(m["to"])
+        body += (f'<section class="panel2"><h2>Last 24 hours</h2><p>OpenAlex added <b>{f(m["papers_added"])}</b> papers to the '
+                 f'global record in the 24 hours to {t1:%b} {t1.day}, {t1:%H:%M} UTC, from {f(m.get("countries_active"))} countries.</p></section>')
+    write("market", "Research trends · Weekly pulse: rising and falling countries, fields and universities · ResearchBoard",
+          "This week's research movers: which countries, research fields and universities are gaining or losing share of the world's new papers.",
+          body, "Trends")
 
     # ------------------------------------------------------------------ explore (search result page)
     body = '''<div class="crumb"><a href="../">Home</a> › Search</div>
