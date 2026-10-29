@@ -178,7 +178,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
 <p class="note" id="udInfo"></p>
 <div class="ud-wrap"><table class="rt ud"><thead><tr><th>#</th><th data-k="name">University</th><th class="r" data-k="now" id="thNow">This year</th>
 <th class="r" data-k="last" id="thLast">Last year</th><th class="r" data-k="pace" title="This year's pace compared with last year">Pace</th>
-<th class="r hm" data-k="cites">Citations</th><th class="r hm" data-k="h">h-index</th><th class="r hm" data-k="oa" title="Share of recent papers free to read">Open access</th></tr></thead>
+<th class="r hm" data-k="cites">OpenAlex citations</th><th class="r hm" data-k="h">h-index</th><th class="r hm" data-k="oa" title="Share of recent papers free to read">Open access</th></tr></thead>
 <tbody id="udBody"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
 <button class="ud-more" id="udMore" hidden>Show more</button>
 <p class="note">Click a column to sort. “Pace” compares this year so far (scaled to a full year) with last year. ⚠ marks a university where
@@ -244,7 +244,7 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
         return {"n": n, "name": f'<a href="{esc(url)}" target="_blank" rel="noopener">{esc(p.get("title", ""))}</a>',
                 "j": esc(p.get("venue") or "—"), "y": esc(str(p.get("year") or "")),
                 "v": f'<b class="{"up" if plus else ""}">{"+" if plus else ""}{f(p.get(key))}</b>'}
-    pc = [("#", "n", False), ("Paper", "name", False), ("Journal", "j", False), ("Year", "y", False), ("Citations", "v", True)]
+    pc = [("#", "n", False), ("Paper", "name", False), ("Journal", "j", False), ("Year", "y", False), ("OpenAlex citations", "v", True)]
     gains = latest.get("paper_gainers") or []
     body = head_block("Papers", "Most-cited papers", "The most-cited new papers of the last two years, today's biggest citation gains, "
                       "and the most-cited papers of all time.")
@@ -264,7 +264,7 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
         return {"n": n, "name": esc(a.get("name", "")), "i": esc(a.get("institution") or "—"),
                 "cc": f'{flag(a.get("country"))}{esc(a.get("country") or "")}',
                 "v": f'<b class="{"up" if plus else ""}">{"+" if plus else ""}{f(a.get(key))}</b>'}
-    ac = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("Citations", "v", True)]
+    ac = [("#", "n", False), ("Scientist", "name", False), ("Institution", "i", False), ("Country", "cc", False), ("OpenAlex citations", "v", True)]
     body = '<div class="crumb"><a href="../">Home</a> › Scientists</div><h1 class="sr-only">Scientist rankings and search</h1>'
     body += '<div id="sci"><p class="note">Loading…</p></div><script src="../assets/sci.js" defer></script>'
     body += '<h2 class="mv-h">Citation leaders</h2>'

@@ -140,7 +140,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
         if auth:
             auth_html = ("<h2>Top 5 most-cited scientists</h2><ol class=\"c-list\">" +
                          "".join(f"<li>{esc(a.get('name', ''))} <span class=\"muted\">· {esc(a.get('institution') or '')}"
-                                 f" · {a.get('citations', 0):,} citations</span></li>" for a in auth[:5]) + "</ol>")
+                                 f" · {a.get('citations', 0):,} OpenAlex citations</span></li>" for a in auth[:5]) + "</ol>")
 
         last14 = list(zip(keys30, series))[-14:]
         table = ("<h2>Papers per day</h2><table class=\"c-table\"><thead><tr><th>Date</th><th>Papers</th></tr></thead><tbody>" +
