@@ -54,7 +54,9 @@ jobs:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           EXTRA_COUNTRIES: ${{ vars.EXTRA_COUNTRIES }}
-        run: python scripts/update_data.py
+        run: |
+          python scripts/update_data.py
+          python scripts/uni_directory.py || echo "university directory skipped"
 
       - name: Write today's automatic blog post and image card
         if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
