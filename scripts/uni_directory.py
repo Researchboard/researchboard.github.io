@@ -8,7 +8,7 @@ Directory of every university in OpenAlex that has published at least one paper
 
 Row format (kept short so country files stay small):
   [id, name, city, papers_this_year, papers_last_year, total_papers, citations, h_index, open_access_share,
-   spike_flag, typical_year]   spike_flag = 1 when OpenAlex shows a sudden 4x jump (usually a bulk upload)
+   spike_flag, typical_year, website]   spike_flag = 1 when OpenAlex shows a sudden 4x jump (usually a bulk upload)
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ def fresh() -> bool:
 
 def fetch_all() -> list[dict]:
     rows, cursor, pages = [], "*", 0
-    sel = "id,display_name,country_code,geo,works_count,cited_by_count,summary_stats,counts_by_year"
+    sel = "id,display_name,country_code,geo,works_count,cited_by_count,summary_stats,counts_by_year,homepage_url"
     while cursor and pages < 400:
         data = openalex("institutions", filter="type:education,works_count:>0", per_page=200,
                         cursor=cursor, select=sel)
@@ -74,7 +74,7 @@ def main() -> None:
             r["id"].rsplit("/", 1)[-1], r.get("display_name") or "", (r.get("geo") or {}).get("city") or "",
             now.get("works_count", 0), last.get("works_count", 0), r.get("works_count", 0),
             r.get("cited_by_count", 0), (r.get("summary_stats") or {}).get("h_index", 0),
-            round(oa / recent * 100) if recent else None, spike, prior])
+            round(oa / recent * 100) if recent else None, spike, prior, r.get("homepage_url") or ""])
     OUT.mkdir(parents=True, exist_ok=True)
     countries, world = [], []
     for cc, rows in by_cc.items():
