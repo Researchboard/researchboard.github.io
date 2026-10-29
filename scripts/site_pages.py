@@ -263,9 +263,16 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
     m = latest.get("market")
     body = head_block("Trends", "Research trends", "What was added to the global research record in the last 24 hours, "
                       "like a share-price change, and how it has moved day by day.")
-    if m and not m.get("flagged"):
+    cleanup = bool(m and m.get("flagged") and m.get("papers_added", 0) < 0 and m.get("countries"))
+    if m and (not m.get("flagged") or cleanup):
         t1 = dt.datetime.fromisoformat(m["to"])
-        body += (f'<div class="xstats"><div><span>New papers added</span><b class="up">▲ +{f(m["papers_added"])}</b></div>'
+        if cleanup:
+            body += ('<section class="panel2"><p><b>Clean-up day.</b> OpenAlex added new papers from '
+                     f'{f(m.get("countries_active"))} countries, but also removed duplicate and withdrawn records, so the '
+                     f'world total fell by {f(-m["papers_added"])}. The country and institution numbers below show papers added.</p></section>')
+        top = (f'<div><span>World total change</span><b class="down">▼ −{f(-m["papers_added"])}</b></div>' if cleanup else
+               f'<div><span>New papers added</span><b class="up">▲ +{f(m["papers_added"])}</b></div>')
+        body += (f'<div class="xstats">{top}'
                  f'<div><span>PubMed records</span><b>+{f(m.get("pubmed_yesterday"))}</b></div>'
                  f'<div><span>Countries contributing</span><b>{f(m.get("countries_active"))}</b></div>'
                  f'<div><span>Window ends</span><b style="font-size:16px">{t1:%b} {t1.day}, {t1:%H:%M} UTC</b></div></div>')

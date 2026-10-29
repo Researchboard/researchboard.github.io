@@ -403,11 +403,14 @@ def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_d
     added = now["total"] - prev["total"]
     flagged = ""
     usual = sorted(history_deltas)[len(history_deltas) // 2] if len(history_deltas) >= 3 else None
-    if added <= 0:
+    c_delta = {c: n - prev["countries"].get(c, 0) for c, n in now["countries"].items() if c in prev["countries"]}
+    if added < 0 and any(d > 0 for d in c_delta.values()):
+        # OpenAlex refreshed, but removed more duplicate/withdrawn records than it added
+        flagged = "clean-up (OpenAlex removed more old records than it added)"
+    elif added <= 0:
         flagged = "no growth (database update pending)"
     elif usual and (added > 4 * usual or added < usual / 4):
         flagged = f"unusual jump ({added:,} vs usual {usual:,}) - likely a database clean-up or bulk import"
-    c_delta = {c: n - prev["countries"].get(c, 0) for c, n in now["countries"].items() if c in prev["countries"]}
     c_top = sorted(((c, d) for c, d in c_delta.items() if d > 0), key=lambda x: -x[1])[:10]
     i_top = []
     for iid, (name, n) in now["institutions"].items():
