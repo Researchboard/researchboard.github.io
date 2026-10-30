@@ -51,7 +51,7 @@ KEEP_PROG = re.compile(r"Discovery Grants|Discovery Horizons|Alliance|Canada Res
 DROP_PROG = re.compile(r"Scholarship|Fellowship|Supplement|Tools and Instruments|Undergraduate|Postdoctoral|Connect|Engage|"
                        r"Award|Prize|Science Promotion|PromoScience|Launch", re.I)
 TRAIN_PROG = re.compile(r"CREATE", re.I)
-CENTER_PROG = re.compile(r"Network|Synergy|Subatomic|Chair|Alliance Missions", re.I)
+CENTER_PROG = re.compile(r"Network|Synergy|Subatomic|Alliance Missions", re.I)
 
 T0 = time.time()
 
