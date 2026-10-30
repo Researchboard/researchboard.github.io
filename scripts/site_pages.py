@@ -195,9 +195,9 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
                     f'Master\'s and PhD students, with links to the official websites. Last checked {esc(sch["updated"])}.</p><ul>{rows}</ul></section>')
     except Exception:  # noqa: BLE001
         sch_html = ""
-    write("study", "Study abroad: fully funded scholarships, funded MS & PhD positions and US research grants · ResearchBoard",
+    write("study", "Study abroad: fully funded scholarships, funded MS & PhD positions and US and Canada research grants · ResearchBoard",
           "Free list of fully funded scholarships for international students (Chevening, DAAD, MEXT, GKS, CSC, Erasmus Mundus and more), "
-          "professors with funded research in 10 countries, and US professors with active NIH and NSF grants.",
+          "professors with funded research in 10 countries, and US and Canadian professors with active NIH, NSF, NSERC and CIHR grants.",
           '<div class="crumb"><a href="../">Home</a> › Study abroad</div><div id="study"><p class="note">Loading…</p></div>'
           '<script src="../assets/study.js" defer></script>' + sch_html, "Study Abroad")
 

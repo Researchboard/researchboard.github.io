@@ -5,6 +5,7 @@ NIH RePORTER does not allow searches from a web browser, so this runs in the wor
 
   data/grants/nih-index.json        topics with counts and refresh date
   data/grants/nih-<slug>.json       up to 80 active grants per topic, largest first
+  data/grants/nih-latest.json       newest grants (awarded in the last 60 days), shown before anyone searches
 """
 from __future__ import annotations
 
@@ -68,6 +69,45 @@ def fresh() -> bool:
         return False
 
 
+def rows_from(results: list, limit: int) -> list:
+    seen, rows = set(), []
+    for p in results:
+        pis = p.get("principal_investigators") or []
+        if not pis:
+            continue
+        pi = next((x for x in pis if x.get("is_contact_pi")), pis[0])
+        key = (pi.get("full_name") or "").lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        org = p.get("organization") or {}
+        name = " ".join(w.capitalize() if w.isupper() else w for w in (pi.get("full_name") or "").split())
+        rows.append({"pi": name, "org": (org.get("org_name") or "").title(), "st": org.get("org_state") or "",
+                     "amt": p.get("award_amount") or 0, "end": (p.get("project_end_date") or "")[:10],
+                     "code": p.get("activity_code") or "", "kind": kind(p.get("activity_code") or "R"),
+                     "title": p.get("project_title") or "", "appl": p.get("appl_id")})
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+FIELDS = ["ApplId", "ProjectNum", "ProjectTitle", "PrincipalInvestigators", "Organization",
+          "AwardAmount", "ProjectEndDate", "ActivityCode", "FiscalYear"]
+
+
+def latest(today: dt.date, fy: int) -> None:
+    body = {"criteria": {"fiscal_years": [fy, fy - 1], "include_active_projects": True,
+                         "activity_codes": [c for c in CODES if c[0] in "RKTD"],      # lab and training grants only
+                         "award_notice_date": {"from_date": (today - dt.timedelta(days=60)).isoformat(), "to_date": today.isoformat()},
+                         "project_end_date": {"from_date": today.isoformat(), "to_date": "2040-12-31"}},
+            "include_fields": FIELDS, "offset": 0, "limit": 300, "sort_field": "award_amount", "sort_order": "desc"}
+    r = post(body)
+    rows = rows_from(r.get("results", []), 60)
+    (OUT / "nih-latest.json").write_text(json.dumps({"total": (r.get("meta") or {}).get("total", 0), "days": 60, "rows": rows},
+                                                    ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"NIH latest: {len(rows)} newest grants")
+
+
 def main() -> None:
     if fresh() and "--force" not in sys.argv:
         print("NIH topics are less than a week old, skipping")
@@ -88,30 +128,17 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001
             print("NIH failed for", t, e)
             continue
-        seen, rows = set(), []
-        for p in r.get("results", []):
-            pis = p.get("principal_investigators") or []
-            if not pis:
-                continue
-            pi = next((x for x in pis if x.get("is_contact_pi")), pis[0])
-            key = (pi.get("full_name") or "").lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            org = p.get("organization") or {}
-            name = " ".join(w.capitalize() if w.isupper() else w for w in (pi.get("full_name") or "").split())
-            rows.append({"pi": name, "org": (org.get("org_name") or "").title(), "st": org.get("org_state") or "",
-                         "amt": p.get("award_amount") or 0, "end": (p.get("project_end_date") or "")[:10],
-                         "code": p.get("activity_code") or "", "kind": kind(p.get("activity_code") or "R"),
-                         "title": p.get("project_title") or "", "appl": p.get("appl_id")})
-            if len(rows) >= 80:
-                break
+        rows = rows_from(r.get("results", []), 80)
         total = (r.get("meta") or {}).get("total", 0)
         (OUT / f"nih-{slug(t)}.json").write_text(json.dumps({"topic": t, "total": total, "rows": rows}, ensure_ascii=False,
                                                             separators=(",", ":")), encoding="utf-8")
         index["topics"].append([t, slug(t), total])
         print(f"NIH {t}: {total} active, kept {len(rows)}")
         time.sleep(1.2)       # NIH asks for no more than one request per second
+    try:
+        latest(today, fy)
+    except Exception as e:  # noqa: BLE001
+        print("NIH latest failed", e)
     if index["topics"]:
         (OUT / "nih-index.json").write_text(json.dumps(index, ensure_ascii=False), encoding="utf-8")
 
