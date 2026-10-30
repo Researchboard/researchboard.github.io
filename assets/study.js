@@ -1,4 +1,4 @@
-/* Study Abroad (/study/): 🎓 Scholarships · 💰 Funded professors · 🇺🇸 US active grants */
+/* Study Abroad (/study/): 🎓 Scholarships · 💰 Funded professors · US active grants · Canada active grants */
 (function () {
   const box = document.getElementById("study");
   if (!box) return;
@@ -13,7 +13,7 @@
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const today = new Date();
   const P = new URLSearchParams(location.search);
-  let tab = ["scholarships", "professors", "usa"].includes(P.get("tab")) ? P.get("tab") : "scholarships";
+  let tab = ["scholarships", "professors", "usa", "canada"].includes(P.get("tab")) ? P.get("tab") : "scholarships";
   function setURL(k, v) { try { const u = new URL(location.href); if (v) u.searchParams.set(k, v); else u.searchParams.delete(k); history.replaceState(null, "", u); } catch (_) {} }
 
   // funded-research figures for 2025 from OpenAlex (papers naming a funder), checked Oct 2026
@@ -53,15 +53,15 @@
 
   box.innerHTML = `
     <div class="st-hero"><h1>🎓 Study abroad: <span>scholarships</span> and <span>funded</span> MS / PhD positions</h1>
-      <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US professors with active government grants — all free, with links to official sources.</p></div>
+      <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US and Canadian professors with active government grants — all free, with links to official sources.</p></div>
     <div class="st-tabs" role="tablist">
-      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button></div>
-    <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div>`;
+      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button><button data-t="canada"><span class="fi fi-ca"></span> Canada active grants</button></div>
+    <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div><div id="tCanada" hidden></div>`;
   function show(t) {
     tab = t; setURL("tab", t === "scholarships" ? "" : t);
     box.querySelectorAll(".st-tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
-    $("#tScholarships").hidden = t !== "scholarships"; $("#tProfessors").hidden = t !== "professors"; $("#tUsa").hidden = t !== "usa";
-    if (t === "scholarships") initScholarships(); else if (t === "professors") initProfessors(); else initUsa();
+    $("#tScholarships").hidden = t !== "scholarships"; $("#tProfessors").hidden = t !== "professors"; $("#tUsa").hidden = t !== "usa"; $("#tCanada").hidden = t !== "canada";
+    if (t === "scholarships") initScholarships(); else if (t === "professors") initProfessors(); else if (t === "usa") initUsa(); else initCanada();
   }
   box.querySelectorAll(".st-tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.t)));
 
@@ -237,7 +237,7 @@
       <div class="st-chips"><label><input type="checkbox" id="uNSF" checked> Science &amp; engineering (NSF)</label><label><input type="checkbox" id="uNIH" checked> Health &amp; biology (NIH)</label>
         <label><input type="checkbox" id="u2028"> Only grants active until ${today.getFullYear() + 2} or later</label></div>
       <p class="st-big" id="uBig"></p>
-      <div class="st-grid"><section class="panel2"><h2 id="uTitle">US professors with active grants</h2><div id="uList"><p class="note">Type a topic. Health topics come from NIH; science and engineering from NSF.</p></div>
+      <div class="st-grid"><section class="panel2"><h2 id="uTitle">US professors with active grants</h2><div id="uList"><p class="note">Loading the newest grants…</p></div>
         <button class="ud-more" id="uMore" hidden>Load more</button></section>
         <aside><section class="panel2"><h2>Health topics (NIH)</h2><div id="uTopics" class="st-tchips note">Loading…</div><p class="note">NIH grants are refreshed weekly for these topics. <a href="https://reporter.nih.gov/" target="_blank" rel="noopener">Search all NIH grants ↗</a></p></section>
         <section class="panel2"><h2>What the grant types mean</h2><p><span class="gt lab">Individual lab grant</span> One professor's project — the most direct route to a research-assistant job.</p>
@@ -254,14 +254,51 @@
     $("#uGo").addEventListener("click", runUsa);
     $("#uQ").addEventListener("keydown", (e) => { if (e.key === "Enter") runUsa(); });
     ["#uSort", "#u2028"].forEach((k) => $(k).addEventListener("input", () => { uPage = 1; renderUsa(); }));
-    ["#uNSF", "#uNIH"].forEach((k) => $(k).addEventListener("input", () => { if ($("#uQ").value.trim()) runUsa(); }));
+    ["#uNSF", "#uNIH"].forEach((k) => $(k).addEventListener("input", () => { if ($("#uQ").value.trim()) runUsa(); else { uPage = 1; renderUsa(); } }));
     $("#uMore").addEventListener("click", () => { uPage++; renderUsa(); });
-    if (P.get("q") && tab === "usa") { $("#uQ").value = P.get("q"); runUsa(); }
+    if (P.get("q") && tab === "usa") { $("#uQ").value = P.get("q"); runUsa(); } else usaDefault();
   }
+  // before anyone searches: grants awarded in the last 60 days (new grants = labs that are hiring)
+  async function usaDefault() {
+    const my = ++uTok; uRows = []; uCounts = {};
+    $("#uTitle").textContent = "Newest US grants — awarded in the last 60 days";
+    const from = new Date(today.getTime() - 60 * 864e5);
+    const jobs = [(async () => {
+      const base = `https://api.nsf.gov/services/v1/awards.json?dateStart=${encodeURIComponent(mdy(from))}&expDateStart=${encodeURIComponent(mdy(today))}&rpp=25`;
+      for (let off = 1; off <= 76; off += 25) {
+        const r = await fetch(base + `&offset=${off}`).then((x) => x.json());
+        const a = (r.response && r.response.award) || [];
+        uCounts.NSF = ((r.response || {}).metadata || {}).totalCount || uCounts.NSF;
+        a.forEach((x) => { if (!/^Conference\b/i.test(x.title || "")) { const o = nsfRow(x); if (o) uRows.push(o); } });
+        if (a.length < 25) break;
+      }
+    })().catch(() => {}), (async () => {
+      const d = await fetch("../data/grants/nih-latest.json", { cache: "no-cache" }).then((r) => r.json());
+      uCounts.NIH = d.total; d.rows.forEach((x) => uRows.push(nihRow(x)));
+    })().catch(() => {})];
+    await Promise.all(jobs);
+    if (my !== uTok) return;
+    const parts = [];
+    if (uCounts.NSF > 0) parts.push(`<b>${fmt(uCounts.NSF)} new NSF awards</b>`);
+    if (uCounts.NIH > 0) parts.push(`<b>${fmt(uCounts.NIH)} new NIH lab and training grants</b>`);
+    $("#uBig").innerHTML = parts.length ? `${parts.join(" and ")} in the last 60 days. Showing the largest — type a topic to search them all.` : "";
+    uPage = 1; renderUsa();
+  }
+  function nsfRow(x) {
+    const t = x.title || "";
+    if (/^(SBIR|STTR)\b/i.test(t) || /\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test((x.awardeeName || "").trim())) return null;   // companies rarely hire graduate students
+    const [mm, dd, yy] = String(x.expDate || "").split("/");
+    return { src: "NSF", pi: `${x.piFirstName || ""} ${x.piLastName || ""}`.trim(), org: x.awardeeName || "", st: x.awardeeStateCode || "",
+      amt: +(x.estimatedTotalAmt || x.fundsObligatedAmt || 0), end: yy ? `${yy}-${mm}-${dd}` : "", title: t,
+      kind: /graduate research fellowship|research traineeship|graduate fellowship|\bNRT\b|\bREU\b/i.test(t) ? "train" : /\b(center|centers|institute|RII|PREM|CREST|MRSEC|STC|ERC)\b/i.test(t) ? "ctr" : "lab",
+      url: `https://www.nsf.gov/awardsearch/showAward?AWD_ID=${x.id}` };
+  }
+  const nihRow = (x) => ({ src: "NIH", pi: x.pi, org: x.org, st: x.st, amt: x.amt, end: x.end, title: x.title, code: x.code,
+    kind: x.kind === "training" ? "train" : x.kind === "center" ? "ctr" : "lab", url: `https://reporter.nih.gov/project-details/${x.appl}` });
   let uRows = [], uPage = 1, uTok = 0, uCounts = {};
   const mdy = (d) => `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
   async function runUsa() {
-    const q = $("#uQ").value.trim(); if (!q) return;
+    const q = $("#uQ").value.trim(); if (!q) { setURL("q", ""); return usaDefault(); }
     setURL("q", q);
     const my = ++uTok; uRows = []; uCounts = {};
     $("#uTitle").textContent = `US professors with active grants on “${q}”`;
@@ -274,15 +311,7 @@
         const r = await fetch(base + `&offset=${off}`).then((x) => x.json());
         const a = (r.response && r.response.award) || [];
         total = ((r.response || {}).metadata || {}).totalCount || total;
-        a.forEach((x) => {
-          const t = x.title || "";
-          if (/^(SBIR|STTR)\b/i.test(t) || /\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test((x.awardeeName || "").trim())) return;   // companies rarely hire graduate students
-          const [mm, dd, yy] = String(x.expDate || "").split("/");
-          uRows.push({ src: "NSF", pi: `${x.piFirstName || ""} ${x.piLastName || ""}`.trim(), org: x.awardeeName || "", st: x.awardeeStateCode || "",
-            amt: +(x.estimatedTotalAmt || x.fundsObligatedAmt || 0), end: yy ? `${yy}-${mm}-${dd}` : "", title: x.title || "",
-            kind: /graduate research fellowship|research traineeship|\bNRT\b|\bREU\b/i.test(t) ? "train" : /\b(center|centers|institute|RII|PREM|CREST|MRSEC|STC|ERC)\b/i.test(t) ? "ctr" : "lab",
-            url: `https://www.nsf.gov/awardsearch/showAward?AWD_ID=${x.id}` });
-        });
+        a.forEach((x) => { const o = nsfRow(x); if (o) uRows.push(o); });
         if (a.length < 25) break;
       }
       uCounts.NSF = total;
@@ -294,8 +323,7 @@
       if (!hit) { uCounts.NIH = null; return; }
       const d = await fetch(`../data/grants/nih-${hit[1]}.json`).then((r) => r.json());
       uCounts.NIH = d.total; uCounts.NIHtopic = d.topic;
-      d.rows.forEach((x) => uRows.push({ src: "NIH", pi: x.pi, org: x.org, st: x.st, amt: x.amt, end: x.end, title: x.title, code: x.code,
-        kind: x.kind === "training" ? "train" : x.kind === "center" ? "ctr" : "lab", url: `https://reporter.nih.gov/project-details/${x.appl}` }));
+      d.rows.forEach((x) => uRows.push(nihRow(x)));
     })().catch(() => { uCounts.NIH = -1; }));
     await Promise.all(jobs);
     if (my !== uTok) return;
@@ -306,21 +334,103 @@
       `No active grants found for “${esc(q)}”.${uCounts.NIH === null && $("#uNIH").checked ? " For health topics, pick one from the NIH list or search NIH RePORTER directly." : ""}`;
     uPage = 1; renderUsa();
   }
-  function renderUsa() {
-    let L = uRows.slice();
-    if ($("#u2028").checked) L = L.filter((x) => x.end >= `${today.getFullYear() + 2}`);
-    L.sort($("#uSort").value === "end" ? (a, b) => (b.end || "").localeCompare(a.end || "") : (a, b) => b.amt - a.amt);
-    const K = { lab: ["lab", "Individual lab grant"], train: ["train", "Training program"], ctr: ["ctr", "Research center"] };
-    const money = (n) => n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : n ? `$${n}` : "—";
-    const endLab = (e) => { if (!e) return "—"; const [y, m] = e.split("-"); return `${MON[+m - 1]} ${y}`; };
-    const S = L.slice(0, uPage * 25);
-    if (!uRows.length) { $("#uList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#uMore").hidden = true; return; }
-    $("#uList").innerHTML = `<table class="rt"><thead><tr><th>Professor (PI)</th><th class="r">Award</th><th class="r">Active until</th></tr></thead><tbody>${S.map((x) =>
+  const K = { lab: ["lab", "Individual lab grant"], train: ["train", "Training program"], ctr: ["ctr", "Research center"] };
+  const endLab = (e) => { if (!e) return "—"; const [y, m] = e.split("-"); return m ? `${MON[+m - 1]} ${y}` : y; };
+  function grantTable(S, cur) {
+    const money = (n) => n >= 1e6 ? `${cur}${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${cur}${Math.round(n / 1e3)}K` : n ? `${cur}${n}` : "—";
+    const per = (x) => x.src === "NSF" ? "total" : x.src === "NSERC" ? "per year" : x.src === "CIHR" ? "CIHR funding" : "this year";
+    return `<table class="rt"><thead><tr><th>Professor (PI)</th><th class="r">Award</th><th class="r">Active until</th></tr></thead><tbody>${S.map((x) =>
       `<tr><td><b>${esc(x.pi)}</b><div class="ud-city">${esc(x.org)}${x.st ? " · " + esc(x.st) : ""}</div>
         <div class="st-gt">${esc(x.title)} <span class="gt ${K[x.kind][0]}">${K[x.kind][1]}</span> <span class="src">${x.src}</span></div>
-        <div class="st-acts"><a href="${esc(x.url)}" target="_blank" rel="noopener">Grant details ↗</a> <a href="../scientists/?q=${encodeURIComponent(x.pi)}">Find on ResearchBoard</a></div></td>
-        <td class="r"><b>${money(x.amt)}</b><div class="ud-city">${x.src === "NSF" ? "total" : "this year"}</div></td><td class="r"><span class="act">${endLab(x.end)}</span></td></tr>`).join("")}</tbody></table>`;
+        <div class="st-acts">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">Grant details ↗</a> ` : ""}<a href="../scientists/?q=${encodeURIComponent(x.pi)}">Find on ResearchBoard</a></div></td>
+        <td class="r"><b>${money(x.amt)}</b><div class="ud-city">${per(x)}</div></td><td class="r"><span class="act">${endLab(x.end)}</span></td></tr>`).join("")}</tbody></table>`;
+  }
+  function sortFilter(rows, sortSel, lateSel, srcOk) {
+    let L = rows.filter((x) => srcOk(x.src));
+    if ($(lateSel).checked) L = L.filter((x) => x.end >= `${today.getFullYear() + 2}`);
+    L.sort($(sortSel).value === "end" ? (a, b) => (b.end || "").localeCompare(a.end || "") : (a, b) => b.amt - a.amt);
+    return L;
+  }
+  function renderUsa() {
+    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked));
+    if (!L.length) { $("#uList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#uMore").hidden = true; return; }
+    $("#uList").innerHTML = grantTable(L.slice(0, uPage * 25), "$");
     $("#uMore").hidden = L.length <= uPage * 25;
+  }
+
+  // =================================================================== Canada active grants (NSERC + CIHR, refreshed weekly)
+  let caReady = false, CA = null, CIHR = null, cRows = [], cPage = 1, cTok = 0;
+  function initCanada() {
+    if (caReady) return; caReady = true;
+    const T = $("#tCanada");
+    T.innerHTML = `<div class="st-row"><input id="cQ" type="search" placeholder='e.g. "machine learning", "solar cells", "cancer", "water treatment"' aria-label="Research topic">
+      <select id="cSort" aria-label="Sort"><option value="amt">Sort: largest grant</option><option value="end">Sort: ending latest</option></select><button class="st-go" id="cGo">Search grants</button></div>
+      <div class="st-chips"><label><input type="checkbox" id="cNSERC" checked> Science &amp; engineering (NSERC)</label><label><input type="checkbox" id="cCIHR" checked> Health (CIHR)</label>
+        <label><input type="checkbox" id="c2028"> Only grants active until ${today.getFullYear() + 2} or later</label></div>
+      <p class="st-big" id="cBig"></p>
+      <div class="st-grid"><section class="panel2"><h2 id="cTitle">Canadian professors with active grants</h2><div id="cList"><p class="note">Loading…</p></div>
+        <button class="ud-more" id="cMore" hidden>Load more</button></section>
+        <aside><section class="panel2"><h2>Science &amp; engineering topics (NSERC)</h2><div id="cTopics" class="st-tchips note">Loading…</div><p class="note">Refreshed weekly. <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">Search all NSERC awards ↗</a></p></section>
+        <section class="panel2"><h2>How funding works in Canada</h2><p>Thesis-based MSc and PhD students are usually paid from their supervisor's grant. An <b>NSERC Discovery grant</b> is the main grant a science or engineering professor uses to pay students; <b>CIHR Project grants</b> do the same in health research.</p>
+          <p><span class="gt lab">Individual lab grant</span> One professor's research program.</p><p><span class="gt train">Training program</span> NSERC CREATE and CIHR training grants fund students directly.</p><p><span class="gt ctr">Research center</span> Large team or network grants, research chairs.</p></section>
+        <section class="panel2 st-tip">✉️ <b>Tip:</b> write to professors whose grants run 2+ more years. Mention the grant title and one of their recent papers, and ask whether they are taking a thesis-based MSc or PhD student.</section></aside></div>
+      <p class="note">Official sources: <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">NSERC Awards Database</a> and <a href="https://open.canada.ca/data/en/dataset/49edb1d7-5cb4-4fa7-897c-515d1aad5da3" target="_blank" rel="noopener">CIHR Grants and Awards open data</a>, refreshed weekly. NSERC amounts are the yearly instalment; the end date comes from the number of instalments left. Amounts in Canadian dollars.</p>`;
+    $("#cGo").addEventListener("click", runCanada);
+    $("#cQ").addEventListener("keydown", (e) => { if (e.key === "Enter") runCanada(); });
+    ["#cSort", "#c2028", "#cNSERC", "#cCIHR"].forEach((k) => $(k).addEventListener("input", () => { cPage = 1; renderCanada(); }));
+    $("#cMore").addEventListener("click", () => { cPage++; renderCanada(); });
+    fetch("../data/grants/ca-index.json", { cache: "no-cache" }).then((r) => r.json()).then((j) => {
+      CA = j;
+      const tp = (j.topics || []).filter((t) => t[3] > 0);
+      $("#cTopics").classList.toggle("note", !tp.length);
+      $("#cTopics").innerHTML = tp.length ? tp.map(([t, s, n, k]) => `<button data-t="${esc(t)}">${esc(t)} <span>${fmt(k)}</span></button>`).join("") : "Topics appear after the next weekly update.";
+      $("#cTopics").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("#cQ").value = b.dataset.t; runCanada(); }));
+      if (P.get("q") && tab === "canada") { $("#cQ").value = P.get("q"); runCanada(); } else canadaDefault();
+    }).catch(() => {
+      $("#cTopics").textContent = "Topics appear after the next weekly update.";
+      $("#cList").innerHTML = `<p class="note">Canadian grants are being collected and appear after the next daily update. Meanwhile, search the <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">NSERC Awards Database ↗</a>.</p>`;
+    });
+  }
+  const caRow = (x, src) => Object.assign({}, x, { src: x.src || src,
+    url: (x.src || src) === "NSERC" ? `https://nserc-crsng.canada.ca/en/awards-database/${x.id}` : "" });
+  function canadaDefault() {
+    $("#cTitle").textContent = "Largest active grants in Canada";
+    cRows = (CA.featured || []).map((x) => caRow(x));
+    $("#cBig").innerHTML = cRows.length ? `Showing the largest active grants${CA.cihr ? ` — <b>${fmt(CA.cihr)} active CIHR health grants</b> and NSERC grants in ${(CA.topics || []).filter((t) => t[3] > 0).length} topics` : ""}. Type a topic to search.` : "";
+    cPage = 1; renderCanada();
+  }
+  async function runCanada() {
+    const q = $("#cQ").value.trim(); setURL("q", q);
+    if (!q) return canadaDefault();
+    const my = ++cTok; cRows = [];
+    $("#cTitle").textContent = `Canadian professors with active grants on “${q}”`;
+    $("#cList").innerHTML = `<p class="note">Searching…</p>`; $("#cBig").textContent = "";
+    const ql = q.toLowerCase(), words = ql.split(/\s+/).filter(Boolean);
+    let nN = 0, nC = 0, topic = "";
+    const tps = (CA && CA.topics) || [];
+    const hit = tps.find(([t]) => t.toLowerCase() === ql) || tps.find(([t]) => ql.includes(t.toLowerCase()) || t.toLowerCase().includes(ql));
+    if (hit) {
+      const d = await fetch(`../data/grants/ca-nserc-${hit[1]}.json`).then((r) => r.json()).catch(() => null);
+      if (d) { topic = d.topic; d.rows.forEach((x) => cRows.push(caRow(x, "NSERC"))); nN = d.rows.length; }
+    }
+    // other NSERC rows already loaded (featured) whose title matches
+    const have = new Set(cRows.map((x) => x.id));
+    ((CA && CA.featured) || []).forEach((x) => { if (x.src === "NSERC" && !have.has(x.id) && words.every((w) => x.title.toLowerCase().includes(w))) { cRows.push(caRow(x)); nN++; } });
+    if (!CIHR) CIHR = await fetch("../data/grants/ca-cihr.json").then((r) => r.json()).then((j) => j.rows).catch(() => []);
+    CIHR.forEach((x) => { const h = `${x.title} ${x.kw} ${x.prog}`.toLowerCase(); if (words.every((w) => h.includes(w))) { cRows.push(caRow(x, "CIHR")); nC++; } });
+    if (my !== cTok) return;
+    const parts = [];
+    if (nN) parts.push(`<b>${fmt(nN)} NSERC grant${nN === 1 ? "" : "s"}</b>${topic && topic.toLowerCase() !== ql ? ` (topic “${esc(topic)}”)` : ""}`);
+    if (nC) parts.push(`<b>${fmt(nC)} CIHR grant${nC === 1 ? "" : "s"}</b>`);
+    $("#cBig").innerHTML = parts.length ? `Found ${parts.join(" and ")} on “${esc(q)}”.` :
+      `No active grants found for “${esc(q)}”. For science and engineering, pick a topic from the list or search the NSERC Awards Database directly.`;
+    cPage = 1; renderCanada();
+  }
+  function renderCanada() {
+    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked));
+    if (!L.length) { $("#cList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#cMore").hidden = true; return; }
+    $("#cList").innerHTML = grantTable(L.slice(0, cPage * 25), "CA$");
+    $("#cMore").hidden = L.length <= cPage * 25;
   }
 
   show(tab);
