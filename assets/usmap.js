@@ -35,13 +35,14 @@
 
   box.innerHTML = `<section class="usm">
     <div class="usm-head"><div><h2>🎓 US universities for master's &amp; PhD</h2>
-      <p class="sub" id="usmSub">Every US university that awards master's or doctoral degrees · tap a dot or search · application fee, tuition for international students, TOEFL, programs and more</p></div>
+      <p class="sub" id="usmSub">Every US university that awards master's or doctoral degrees · tap a dot or search · application fee, tuition, TOEFL/IELTS, GRE, WES, programs and more</p></div>
       <div class="usm-legend" id="usmLegend"></div></div>
     <div class="usm-bar">
       <div class="usm-search"><input id="usmQ" type="search" placeholder="Search a university or city…" aria-label="Search a US university" autocomplete="off"><div class="usm-sugg" id="usmSugg" hidden></div></div>
       <select id="usmState" aria-label="State"><option value="">All states</option>${Object.entries(STATE).sort((a, b) => a[1].localeCompare(b[1])).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
       <select id="usmCat" aria-label="Type"><option value="">All types</option><option value="r1">R1 · very high research</option><option value="r2">R2 · high research</option><option value="doc">Other doctoral</option><option value="ms">Master's universities</option><option value="oth">Specialized</option><option value="phd">Offers PhDs</option></select>
       <select id="usmCtl" aria-label="Public or private"><option value="">Public &amp; private</option><option value="1">Public</option><option value="2">Private nonprofit</option></select>
+      <select id="usmReq" aria-label="Admission requirements"><option value="">Any requirements</option><option value="gre">GRE optional / not required</option><option value="t80">TOEFL 80 or lower</option><option value="i65">IELTS 6.5 or lower</option><option value="wes">No WES evaluation needed</option></select>
       <label class="usm-chk"><input type="checkbox" id="usmIntl"> 10%+ international grad students</label>
       <span class="usm-count" id="usmCount"></span></div>
     <div class="usm-grid"><div class="usm-left">
@@ -54,17 +55,19 @@
     <p class="usm-src" id="usmSrc"></p></section>`;
   const $ = (s) => box.querySelector(s);
 
+  let REQ = {}, REQ_DATE = "";
   let U = [], META = {}, sel = null, svg, g, zoom, proj, W = 960, H = 600;
 
   async function load() {
-    const [d, topo] = await Promise.all([
+    const [d, , topo] = await Promise.all([
       fetch(BASE + "us-unis.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch(BASE + "us-grad-reqs.json").then((r) => r.json()).then((j) => { REQ = j.rows || {}; REQ_DATE = j.checked || ""; }).catch(() => {}),
       fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json").then((r) => r.json()).catch(() => null)]);
     META = d;
     U = d.rows.map((r) => Object.fromEntries(d.keys.map((k, i) => [k, r[i]])));
     U.forEach((u) => { u.cat = catOf(u); u.ip = u.ge ? (u.gi || 0) / u.ge : 0; u.key = `${u.n} ${u.alias || ""} ${u.city} ${STATE[u.st] || ""} ${u.st}`.toLowerCase(); });
     const nPhd = U.filter((u) => u.phd > 0).length;
-    $("#usmSub").innerHTML = `<b>${fmt(U.length)}</b> US universities that award master's degrees (${fmt(nPhd)} also award PhDs) · tap a dot or search · application fee, tuition for international students, TOEFL, programs and more`;
+    $("#usmSub").innerHTML = `<b>${fmt(U.length)}</b> US universities that award master's degrees (${fmt(nPhd)} also award PhDs) · tap a dot or search · application fee, tuition, TOEFL/IELTS, GRE, WES, programs and more`;
     $("#usmLegend").innerHTML = Object.values(CAT).map(([l, c]) => `<span><i style="background:${c}"></i>${l}</span>`).join("") + `<span class="muted">· dot size = graduate students</span>`;
     $("#usmSrc").innerHTML = `Source: IPEDS, US Department of Education (directory ${META.years.directory}, tuition ${META.years.tuition}-${String(META.years.tuition + 1).slice(2)}, fees ${META.years.fees}-${String(META.years.fees + 1).slice(2)}); research numbers from OpenAlex. Fees and deadlines change every year — always confirm on the university's website.`;
     drawMap(topo);
@@ -124,13 +127,22 @@
     if (c === "phd" ? !(u.phd > 0) : c && u.cat !== c) return false;
     if (ctl && String(u.ctl) !== ctl) return false;
     if ($("#usmIntl").checked && !(u.ip >= 0.1 && u.gi >= 20)) return false;
+    const rq = $("#usmReq").value;
+    if (rq) {
+      const r = REQ[u.id];
+      if (!r) return false;
+      if (rq === "gre" && !(r.gre === "optional" || r.gre === "not required")) return false;
+      if (rq === "t80" && !(r.toefl && r.toefl <= 80)) return false;
+      if (rq === "i65" && !(r.ielts && r.ielts <= 6.5)) return false;
+      if (rq === "wes" && !(r.wes === "not required" || r.wes === "accepted")) return false;
+    }
     return true;
   }
   let shown = [];
   function filter() {
     shown = U.filter(visible);
     g && g.selectAll(".usm-dots circle").attr("display", (u) => (visible(u) ? null : "none"));
-    $("#usmCount").textContent = `${fmt(shown.length)} universities`;
+    $("#usmCount").textContent = `${fmt(shown.length)} universities` + ($("#usmReq").value ? ` (of ${fmt(Object.keys(REQ).length)} with checked requirements)` : "");
     const st = $("#usmState").value;
     if (st && svg) zoomToState(st);
     if (!sel) overview();
@@ -235,6 +247,29 @@
     return `<div><span>${label}</span><b>${value == null || value === "" ? "—" : value}</b>${sub ? `<em>${sub}</em>` : ""}</div>`;
   }
 
+  // graduate-school requirements for international applicants (collected from official university pages)
+  const GRE = { required: ["Required", "bad"], optional: ["Optional", "good"], "not required": ["Not required", "good"], varies: ["Depends on program", ""] };
+  const WES = { required: ["Required", "bad"], some: ["Sometimes required", ""], accepted: ["Accepted, not required", "good"], "not required": ["Not required", "good"] };
+  function reqs(u) {
+    const r = REQ[u.id];
+    const q = encodeURIComponent(`${u.n.replace(/-Main Campus$/i, "")} graduate admissions international TOEFL IELTS GRE transcript evaluation`);
+    if (!r) {
+      return `<h4>English test, GRE &amp; credential evaluation</h4>
+        <div class="usm-req none"><p>Not checked yet for this university. Look for <b>TOEFL / IELTS minimum</b>, <b>GRE policy</b> and <b>WES / transcript evaluation</b> on its graduate admissions page.</p>
+        <a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Find the requirements ↗</a></div>`;
+    }
+    const lab = (m, v) => (v && m[v] ? `<b class="${m[v][1]}">${m[v][0]}</b>` : `<b class="ns">Not stated</b><em>check the official page</em>`);
+    return `<h4>English test, GRE &amp; credential evaluation <small>(graduate school)</small></h4>
+      <div class="usm-kpis req">
+        ${tile("TOEFL iBT minimum", r.toefl || null)}
+        ${tile("IELTS minimum", r.ielts ? Number(r.ielts).toFixed(1) : null)}
+        <div><span>GRE</span>${lab(GRE, r.gre)}</div>
+        <div><span>WES / credential evaluation</span>${lab(WES, r.wes)}${r.wes_note ? `<em>${esc(r.wes_note)}</em>` : ""}</div>
+      </div>
+      ${r.duolingo || r.note ? `<p class="usm-rnote">${r.duolingo ? `Duolingo English Test: <b>${r.duolingo}</b>. ` : ""}${esc(r.note || "")}</p>` : ""}
+      <p class="usm-rnote">Graduate-school minimums — many programs ask for more. ${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">Official page ↗</a>` : ""} · checked ${esc(REQ_DATE)}</p>`;
+  }
+
   function details(u) {
     const cost = u.gtu ? u.gtu + (u.rb || 0) : null;
     const badges = [CAT[u.cat][0], CTL[u.ctl], u.hbcu ? "HBCU" : "", u.lg ? "Land-grant" : "", LOC(u.loc)].filter(Boolean);
@@ -244,6 +279,7 @@
       <h3>${esc(u.n)}</h3><p class="usm-where">${esc(u.city)}, ${esc(STATE[u.st] || u.st)}${u.alias ? ` · also known as ${esc(u.alias.split("|")[0].split(",")[0])}` : ""}</p>
       <div class="usm-badges">${badges.map((b, i) => `<span${i === 0 ? ` style="background:${CAT[u.cat][1]};color:#fff"` : ""}>${esc(b)}</span>`).join("")}</div>
       <div class="usm-links">${links.map(([h, l, c]) => `<a href="${esc(url(h))}" target="_blank" rel="noopener"${c ? ` class="${c}"` : ""}>${l}</a>`).join("")}</div>
+      ${reqs(u)}
       <h4>For international graduate students</h4>
       <div class="usm-kpis">
         ${tile("Graduate application fee", u.afg === 0 ? "No fee" : money(u.afg))}
@@ -262,7 +298,7 @@
         ${tile("Application fee", u.afu === 0 ? "No fee" : money(u.afu))}
         ${tile("Tuition / year", money(u.utu), u.ctl === 1 ? "out-of-state rate" : "")}
         ${tile("Acceptance rate", u.ar != null ? Math.round(u.ar * 100) + "%" : null)}
-        ${tile("TOEFL / English test", TOEFL[u.toefl] || null)}
+        ${tile("International undergrads", u.ui != null ? fmt(u.ui) : null, u.ue ? `of ${fmt(u.ue)} students` : "")}
       </div>
       <h4>Research</h4><div id="usmOA" class="usm-oa"><p class="note">Loading research output…</p></div>`;
     $("#usmBack").addEventListener("click", () => { sel = null; g.select(".usm-ring").attr("r", 0); overview(); insights(); });
@@ -310,7 +346,7 @@
     q.addEventListener("focus", run);
     q.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); run(); pick(hits[0]); } if (e.key === "Escape") sg.hidden = true; });
     document.addEventListener("click", (e) => { if (!$(".usm-search").contains(e.target)) sg.hidden = true; });
-    ["#usmState", "#usmCat", "#usmCtl", "#usmIntl"].forEach((k) => $(k).addEventListener("input", () => {
+    ["#usmState", "#usmCat", "#usmCtl", "#usmIntl", "#usmReq"].forEach((k) => $(k).addEventListener("input", () => {
       if (k !== "#usmState" || !$("#usmState").value) { if (k === "#usmState") svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity); }
       if (sel && !visible(sel)) { sel = null; g.select(".usm-ring").attr("r", 0); }
       filter();
