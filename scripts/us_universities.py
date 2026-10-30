@@ -49,15 +49,15 @@ def get(url: str, binary: bool = False, timeout: int = 120, tries: int = 4):
             if attempt == tries - 1:
                 raise
             print("retry", url[:110], e)
-            time.sleep(5 * (attempt + 1))
+            time.sleep(3 * (attempt + 1))
 
 
-def rows(path: str, **params) -> list[dict]:
+def rows(path: str, _tries: int = 4, **params) -> list[dict]:
     """All result rows of one Urban Institute endpoint, following the 'next' pages."""
     url = API + path + ("?" + urllib.parse.urlencode(params) if params else "")
     out, pages = [], 0
     while url and pages < 60:
-        j = get(url)
+        j = get(url, tries=_tries if not out else 4)
         out += j.get("results", [])
         url = j.get("next")
         pages += 1
@@ -68,7 +68,7 @@ def rows(path: str, **params) -> list[dict]:
 def first_year(path_fmt: str, years, **params) -> tuple[int, list[dict]]:
     for y in years:
         try:
-            r = rows(path_fmt.format(y=y), **params)
+            r = rows(path_fmt.format(y=y), _tries=2, **params)
         except Exception as e:  # noqa: BLE001
             print("no data", path_fmt.format(y=y), e)
             continue
@@ -131,7 +131,7 @@ def main() -> None:
         pass
     t0 = time.time()
     this = dt.date.today().year
-    years = list(range(this - 1, this - 5, -1))
+    years = list(range(this - 1, this - 6, -1))
 
     dy, d = first_year("ipeds/directory/{y}/", years, offering_grad=1)
     print(f"directory {dy}: {len(d)} institutions offering graduate study")
@@ -149,7 +149,7 @@ def main() -> None:
             "web": x.get("url_school") or "", "app": x.get("url_application") or "", "aid": x.get("url_fin_aid") or "", "np": x.get("url_netprice") or ""}
     ids = set(unis)
 
-    ty, tu = first_year("ipeds/academic-year-tuition/{y}/", [dy, dy - 1])
+    ty, tu = first_year("ipeds/academic-year-tuition/{y}/", years)
     best = {}
     for r in tu:
         if r["unitid"] in ids and r.get("tuition_type") in (3, 4) and num(r.get("tuition_fees_ft")):
@@ -163,7 +163,7 @@ def main() -> None:
     for lvl, (tot, intl) in (("graduate", ("ge", "gi")), ("undergraduate", ("ue", "ui"))):
         er = []
         for race in (8, 99):                                   # 8 = nonresident (international), 99 = all students
-            ey, part = first_year("ipeds/fall-enrollment/{y}/" + lvl + "/race/sex/", [dy, dy - 1], sex=99, ftpt=99, race=race)
+            ey, part = first_year("ipeds/fall-enrollment/{y}/" + lvl + "/race/sex/", years, sex=99, ftpt=99, race=race)
             er += part
         for r in er:
             if r["unitid"] in ids and r.get("degree_seeking") == 99 and r.get("class_level") == 99 and r.get("race") in (8, 99):
@@ -173,7 +173,7 @@ def main() -> None:
         print(f"{lvl} enrollment {ey}: {len(er)} rows")
 
     for lvl, key, fk in ((9, "ms", "mf"), (22, "phd", "pf"), (23, "prof", None)):
-        cy, cr = first_year("ipeds/completions-cip-2/{y}/", [dy, dy - 1, dy - 2], race=99, sex=99, majornum=1, award_level=lvl)
+        cy, cr = first_year("ipeds/completions-cip-2/{y}/", years, race=99, sex=99, majornum=1, award_level=lvl)
         fields: dict[int, list] = {}
         for r in cr:
             u, n = r["unitid"], num(r.get("awards"))
@@ -188,15 +188,15 @@ def main() -> None:
                 unis[u][fk] = sorted(f, key=lambda x: -x[1])[:6]
         print(f"completions level {lvl} ({cy}): {len(cr)} rows")
 
-    ay, ad = first_year("ipeds/admissions-enrollment/{y}/", [dy, dy - 1], sex=99)
+    ay, ad = first_year("ipeds/admissions-enrollment/{y}/", years, sex=99)
     for r in ad:
         if r["unitid"] in ids and num(r.get("number_applied")) and num(r.get("number_admitted")) is not None:
             unis[r["unitid"]]["ar"] = round(num(r["number_admitted"]) / num(r["number_applied"]), 3)
-    _, rq = first_year("ipeds/admissions-requirements/{y}/", [dy, dy - 1, dy - 2])
+    _, rq = first_year("ipeds/admissions-requirements/{y}/", years)
     for r in rq:
         if r["unitid"] in ids and r.get("reqt_toefl") not in (None, -1, -2):
             unis[r["unitid"]]["toefl"] = r["reqt_toefl"]
-    _, sf = first_year("ipeds/student-faculty-ratio/{y}/", [dy, dy - 1])
+    _, sf = first_year("ipeds/student-faculty-ratio/{y}/", years)
     for r in sf:
         if r["unitid"] in ids and num(r.get("student_faculty_ratio")):
             unis[r["unitid"]]["sfr"] = int(num(r["student_faculty_ratio"]))
