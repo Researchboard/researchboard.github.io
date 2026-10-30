@@ -281,16 +281,17 @@
     const parts = [];
     if (uCounts.NSF > 0) parts.push(`<b>${fmt(uCounts.NSF)} new NSF awards</b>`);
     if (uCounts.NIH > 0) parts.push(`<b>${fmt(uCounts.NIH)} new NIH lab and training grants</b>`);
-    $("#uBig").innerHTML = parts.length ? `${parts.join(" and ")} in the last 60 days. Showing the largest — type a topic to search them all.` : "";
+    $("#uBig").innerHTML = parts.length ? `${parts.join(" and ")} in the last 60 days. Individual lab and training grants first — type a topic to search all active grants.` : "";
     uPage = 1; renderUsa();
   }
   function nsfRow(x) {
     const t = x.title || "";
     if (/^(SBIR|STTR)\b/i.test(t) || /\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test((x.awardeeName || "").trim())) return null;   // companies rarely hire graduate students
+    if (/Community College|Technical College/i.test(x.awardeeName || "")) return null;                                    // no graduate programs
     const [mm, dd, yy] = String(x.expDate || "").split("/");
     return { src: "NSF", pi: `${x.piFirstName || ""} ${x.piLastName || ""}`.trim(), org: x.awardeeName || "", st: x.awardeeStateCode || "",
       amt: +(x.estimatedTotalAmt || x.fundsObligatedAmt || 0), end: yy ? `${yy}-${mm}-${dd}` : "", title: t,
-      kind: /graduate research fellowship|research traineeship|graduate fellowship|\bNRT\b|\bREU\b/i.test(t) ? "train" : /\b(center|centers|institute|RII|PREM|CREST|MRSEC|STC|ERC)\b/i.test(t) ? "ctr" : "lab",
+      kind: /graduate research fellowship|research traineeship|graduate fellowship|\bNRT\b|\bREU\b/i.test(t) ? "train" : /\b(center|centers|institute|RII|PREM|CREST|MRSEC|STC|ERC|Infrastructure|Facility|Facilities|Operations|Mid-scale|NAIRR|Network)\b/i.test(t) ? "ctr" : "lab",
       url: `https://www.nsf.gov/awardsearch/showAward?AWD_ID=${x.id}` };
   }
   const nihRow = (x) => ({ src: "NIH", pi: x.pi, org: x.org, st: x.st, amt: x.amt, end: x.end, title: x.title, code: x.code,
@@ -337,7 +338,7 @@
   const K = { lab: ["lab", "Individual lab grant"], train: ["train", "Training program"], ctr: ["ctr", "Research center"] };
   const endLab = (e) => { if (!e) return "—"; const [y, m] = e.split("-"); return m ? `${MON[+m - 1]} ${y}` : y; };
   function grantTable(S, cur) {
-    const money = (n) => n >= 1e6 ? `${cur}${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${cur}${Math.round(n / 1e3)}K` : n ? `${cur}${n}` : "—";
+    const money = (n) => n >= 999500 ? `${cur}${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${cur}${Math.round(n / 1e3)}K` : n ? `${cur}${n}` : "—";
     const per = (x) => x.src === "NSF" ? "total" : x.src === "NSERC" ? "per year" : x.src === "CIHR" ? "CIHR funding" : "this year";
     return `<table class="rt"><thead><tr><th>Professor (PI)</th><th class="r">Award</th><th class="r">Active until</th></tr></thead><tbody>${S.map((x) =>
       `<tr><td><b>${esc(x.pi)}</b><div class="ud-city">${esc(x.org)}${x.st ? " · " + esc(x.st) : ""}</div>
@@ -345,14 +346,15 @@
         <div class="st-acts">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">Grant details ↗</a> ` : ""}<a href="../scientists/?q=${encodeURIComponent(x.pi)}">Find on ResearchBoard</a></div></td>
         <td class="r"><b>${money(x.amt)}</b><div class="ud-city">${per(x)}</div></td><td class="r"><span class="act">${endLab(x.end)}</span></td></tr>`).join("")}</tbody></table>`;
   }
-  function sortFilter(rows, sortSel, lateSel, srcOk) {
+  function sortFilter(rows, sortSel, lateSel, srcOk, labsFirst) {
     let L = rows.filter((x) => srcOk(x.src));
     if ($(lateSel).checked) L = L.filter((x) => x.end >= `${today.getFullYear() + 2}`);
-    L.sort($(sortSel).value === "end" ? (a, b) => (b.end || "").localeCompare(a.end || "") : (a, b) => b.amt - a.amt);
+    const rank = (x) => (labsFirst && x.kind === "ctr" ? 1 : 0);
+    L.sort($(sortSel).value === "end" ? (a, b) => (b.end || "").localeCompare(a.end || "") : (a, b) => rank(a) - rank(b) || b.amt - a.amt);
     return L;
   }
   function renderUsa() {
-    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked));
+    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked), !$("#uQ").value.trim());
     if (!L.length) { $("#uList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#uMore").hidden = true; return; }
     $("#uList").innerHTML = grantTable(L.slice(0, uPage * 25), "$");
     $("#uMore").hidden = L.length <= uPage * 25;
@@ -396,7 +398,7 @@
   function canadaDefault() {
     $("#cTitle").textContent = "Largest active grants in Canada";
     cRows = (CA.featured || []).map((x) => caRow(x));
-    $("#cBig").innerHTML = cRows.length ? `Showing the largest active grants${CA.cihr ? ` — <b>${fmt(CA.cihr)} active CIHR health grants</b> and NSERC grants in ${(CA.topics || []).filter((t) => t[3] > 0).length} topics` : ""}. Type a topic to search.` : "";
+    $("#cBig").innerHTML = cRows.length ? `Showing some of the largest active grants${CA.cihr ? ` — <b>${fmt(CA.cihr)} active CIHR health grants</b> and NSERC grants in ${(CA.topics || []).filter((t) => t[3] > 0).length} topics` : ""}. Type a topic to search.` : "";
     cPage = 1; renderCanada();
   }
   async function runCanada() {
@@ -427,7 +429,7 @@
     cPage = 1; renderCanada();
   }
   function renderCanada() {
-    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked));
+    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked), !$("#cQ").value.trim());
     if (!L.length) { $("#cList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#cMore").hidden = true; return; }
     $("#cList").innerHTML = grantTable(L.slice(0, cPage * 25), "CA$");
     $("#cMore").hidden = L.length <= cPage * 25;
