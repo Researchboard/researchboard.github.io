@@ -401,6 +401,7 @@ def build_llms(posts: list[dict]) -> str:
 - [World research map]({SITE_URL}/map/): tap any country to see its papers, world rank and top university.
 - [Countries]({SITE_URL}/country/): a page for every country with daily papers, top universities and the top 5 most-cited scientists.
 - [Universities]({SITE_URL}/universities/): the most active universities each day, plus a searchable list of about 30,000 universities by country with papers, citations, h-index, open-access share and website.
+- [US universities for master's and PhD]({SITE_URL}/us-universities/): map and search of every US university that awards master's or doctoral degrees, with graduate application fee, tuition for international students, international student numbers, TOEFL, top programs and research output (IPEDS data).
 - [Scientists and "Find a supervisor"]({SITE_URL}/scientists/): search active researchers by name, research topic, country, field or university, ranked by OpenAlex citations (career and last 5 years), h-index or i10-index.
 - [Research trends (Weekly pulse)]({SITE_URL}/market/): countries, research fields and universities gaining or losing share of world research this week.
 - [Research fields]({SITE_URL}/fields/) and [Journals]({SITE_URL}/journals/): daily papers by field and by journal.

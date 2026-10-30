@@ -201,6 +201,31 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
           '<div class="crumb"><a href="../">Home</a> › Study abroad</div><div id="study"><p class="note">Loading…</p></div>'
           '<script src="../assets/study.js" defer></script>' + sch_html, "Study Abroad")
 
+    # ------------------------------------------------------------------ US universities for master's and PhD (map + search)
+    us_html = ""
+    try:
+        ud = json.loads((root / "data" / "us-unis.json").read_text(encoding="utf-8"))
+        K = {k: i for i, k in enumerate(ud["keys"])}
+        top = ud["rows"][:300]
+        def usd(v):
+            return f"${v:,}" if isinstance(v, (int, float)) and v > 0 else "—"
+        items = "".join(f'<li><a href="?unitid={r[K["id"]]}">{esc(r[K["n"]])}</a> ({esc(r[K["city"]])}, {r[K["st"]]}) — graduate application fee '
+                        f'{usd(r[K["afg"]])}, graduate tuition {usd(r[K["gtu"]])} a year, {(r[K["gi"]] or 0):,} international graduate students</li>'
+                        for r in top)
+        us_html = (f'<section class="panel2 st-seo"><h2>US universities with the most international graduate students</h2>'
+                   f'<p>{len(ud["rows"]):,} US universities award master\'s or doctoral degrees. The 300 with the most international graduate '
+                   f'students, with graduate application fee and yearly tuition (IPEDS, US Department of Education):</p><ol>{items}</ol></section>')
+    except Exception:  # noqa: BLE001
+        pass
+    write("us-universities", "US universities for master's and PhD: application fees, tuition and international students · ResearchBoard",
+          "Map and search of every US university that awards master's or PhD degrees: graduate application fee, tuition for international "
+          "students, international student numbers, TOEFL, top programs and research output. Free, from official IPEDS data.",
+          '<div class="crumb"><a href="../">Home</a> › <a href="../study/">Study abroad</a> › US universities</div>'
+          '<div id="usUnis" data-base="../data/" data-site="../"><p class="note">Loading…</p></div>'
+          '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>'
+          '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>'
+          '<script src="../assets/usmap.js" defer></script>' + us_html, "Study Abroad")
+
     # ------------------------------------------------------------------ one university (loads live from OpenAlex)
     write("university", "University research output · ResearchBoard",
           "Research output of a university: papers per year, top research fields, researchers, partners and open access.",
