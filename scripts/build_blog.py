@@ -123,15 +123,45 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-NAV = [("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Scientists", "../scientists/"), ("Study Abroad", "../study/"), ("Journals", "../journals/"),
-       ("Research fields", "../fields/"), ("Trends", "../market/"), ("Blog", "../blog/"), ("About", "../about/")]
+NAV = [("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Scientists", "../scientists/"), ("Study Abroad", "../study/"),
+       ("Trends", "../market/"), ("Blog", "../blog/"), ("About", "../about/")]
+NAV_LABEL = {"Map": "Research Map"}
+# "Research Trends" dropdown: (active name, label, link, icon, one-line description)
+TRENDS_MENU = [("Trends", "Weekly pulse", "../market/", "📈", "What is rising and falling this week"),
+               ("Research fields", "Research fields", "../fields/", "🧪", "Papers and growth by research field"),
+               ("Journals", "Journals", "../journals/", "📚", "The most active journals today")]
+NAV_JS = """<script>(function(){document.querySelectorAll('.topnav .nd').forEach(function(n){var b=n.querySelector('.nd-top'),d=n.querySelector('.dd'),t;
+function place(){var r=b.getBoundingClientRect(),w=Math.min(320,innerWidth-24);d.style.width=w+'px';d.style.top=(r.bottom+8)+'px';d.style.left=Math.max(12,Math.min(r.left,innerWidth-w-12))+'px';}
+function open(){place();n.classList.add('open');b.setAttribute('aria-expanded','true');}
+function close(){n.classList.remove('open');b.setAttribute('aria-expanded','false');}
+b.addEventListener('click',function(e){if(!n.classList.contains('open')){e.preventDefault();open();}});
+if(window.matchMedia&&matchMedia('(hover:hover)').matches){n.addEventListener('mouseenter',function(){clearTimeout(t);open();});n.addEventListener('mouseleave',function(){t=setTimeout(close,200);});}
+document.addEventListener('click',function(e){if(!n.contains(e.target))close();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+addEventListener('scroll',close,{passive:true});addEventListener('resize',close);});})();</script>"""
+
+
+def nav_html(active: str = "", prefix: str = "../") -> str:
+    """Top menu: plain links plus the "Research Trends" dropdown (Weekly pulse, Research fields, Journals)."""
+    HL, ON = ' class="hl"', ' class="on"'
+    fix = lambda h: prefix + h[3:] if h.startswith("../") else h
+    out = []
+    for n, h in NAV:
+        if n == "Trends":
+            group_on = active in {x[0] for x in TRENDS_MENU}
+            items = "".join(f'<a href="{fix(link)}"{HL if a == active else ""}><span class="ic">{ic}</span>'
+                            f'<span><b>{label}</b><small>{d}</small></span></a>' for a, label, link, ic, d in TRENDS_MENU)
+            out.append(f'<div class="nd{" on" if group_on else ""}"><a href="{fix(h)}" class="nd-top{" on" if group_on else ""}" aria-haspopup="true" '
+                       f'aria-expanded="false">Research Trends <span class="car" aria-hidden="true">▾</span></a><div class="dd">{items}</div></div>')
+        else:
+            out.append(f'<a href="{fix(h)}"{ON if n == active else ""}>{NAV_LABEL.get(n, n)}</a>')
+    return "\n      ".join(out)
 
 
 def page(title: str, description: str, body: str, canonical: str, extra_head: str = "", image: str = "",
          active: str = "Blog", main_class: str = "blog-main") -> str:
     image = image or f"{SITE_URL}/assets/og-card.png"
-    on = ' class="on"'
-    nav = "\n      ".join(f'<a href="{h}"{on if n == active else ""}>{n}</a>' for n, h in NAV)
+    nav = nav_html(active)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -169,7 +199,7 @@ def page(title: str, description: str, body: str, canonical: str, extra_head: st
     </a>
     <nav class="topnav" aria-label="Sections">
       {nav}
-    </nav>
+    </nav>{NAV_JS}
     <div class="gsearch" role="search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" placeholder="Search a country or institution…" aria-label="Search a country or institution" autocomplete="off">
