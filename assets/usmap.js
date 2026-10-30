@@ -42,7 +42,7 @@
       <select id="usmState" aria-label="State"><option value="">All states</option>${Object.entries(STATE).sort((a, b) => a[1].localeCompare(b[1])).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
       <select id="usmCat" aria-label="Type"><option value="">All types</option><option value="r1">R1 · very high research</option><option value="r2">R2 · high research</option><option value="doc">Other doctoral</option><option value="ms">Master's universities</option><option value="oth">Specialized</option><option value="phd">Offers PhDs</option></select>
       <select id="usmCtl" aria-label="Public or private"><option value="">Public &amp; private</option><option value="1">Public</option><option value="2">Private nonprofit</option></select>
-      <select id="usmReq" aria-label="Admission requirements"><option value="">Any requirements</option><option value="gre">GRE optional / not required</option><option value="t80">TOEFL 80 or lower</option><option value="i65">IELTS 6.5 or lower</option><option value="wes">No WES evaluation needed</option></select>
+      <select id="usmReq" aria-label="Admission requirements"><option value="">Any requirements</option><option value="gre">GRE optional / not required</option><option value="t80">TOEFL 80 or lower</option><option value="i65">IELTS 6.5 or lower</option><option value="wes">No WES evaluation needed</option><option value="spr">Spring intake offered</option></select>
       <label class="usm-chk"><input type="checkbox" id="usmIntl"> 10%+ international grad students</label>
       <span class="usm-count" id="usmCount"></span></div>
     <div class="usm-grid"><div class="usm-left">
@@ -135,6 +135,7 @@
       if (rq === "t80" && !(r.toefl && r.toefl <= 80)) return false;
       if (rq === "i65" && !(r.ielts && r.ielts <= 6.5)) return false;
       if (rq === "wes" && !(r.wes === "not required" || r.wes === "accepted")) return false;
+      if (rq === "spr" && !(r.spring && !/^no\b|not offered|none/i.test(r.spring))) return false;
     }
     return true;
   }
@@ -252,14 +253,21 @@
   const WES = { required: ["Required", "bad"], some: ["Sometimes required", ""], accepted: ["Accepted, not required", "good"], "not required": ["Not required", "good"] };
   function reqs(u) {
     const r = REQ[u.id];
-    const q = encodeURIComponent(`${u.n.replace(/-Main Campus$/i, "")} graduate admissions international TOEFL IELTS GRE transcript evaluation`);
+    const q = encodeURIComponent(`${u.n.replace(/-Main Campus$/i, "")} graduate admissions international deadline TOEFL IELTS GRE`);
     if (!r) {
-      return `<h4>English test, GRE &amp; credential evaluation</h4>
-        <div class="usm-req none"><p>Not checked yet for this university. Look for <b>TOEFL / IELTS minimum</b>, <b>GRE policy</b> and <b>WES / transcript evaluation</b> on its graduate admissions page.</p>
+      return `<h4>Deadlines, English test, GRE &amp; credential evaluation</h4>
+        <div class="usm-req none"><p>Not checked yet for this university. Look for the <b>application deadline</b>, <b>TOEFL / IELTS minimum</b>, <b>GRE policy</b> and <b>WES / transcript evaluation</b> on its graduate admissions page.</p>
         <a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Find the requirements ↗</a></div>`;
     }
     const lab = (m, v) => (v && m[v] ? `<b class="${m[v][1]}">${m[v][0]}</b>` : `<b class="ns">Not stated</b><em>check the official page</em>`);
-    return `<h4>English test, GRE &amp; credential evaluation <small>(graduate school)</small></h4>
+    const dl = r.fall || r.spring || r.funding || r.rolling ? `<h4>📅 Application deadlines <small>(graduate, international applicants)</small></h4>
+      <div class="usm-kpis req dl">
+        ${tile("Fall intake", esc(r.fall || "") || null)}
+        ${tile("Spring intake", esc(r.spring || "") || null)}
+      </div>
+      ${r.funding || r.rolling ? `<p class="usm-rnote">${r.rolling ? "<b>Rolling admission.</b> " : ""}${r.funding ? `💰 ${esc(r.funding)}` : ""}</p>` : ""}
+      <p class="usm-rnote">Deadlines often differ by program — confirm on your program's page. ${r.dl_url ? `<a href="${esc(r.dl_url)}" target="_blank" rel="noopener">Deadlines page ↗</a>` : ""}</p>` : "";
+    return dl + `<h4>English test, GRE &amp; credential evaluation <small>(graduate school)</small></h4>
       <div class="usm-kpis req">
         ${tile("TOEFL iBT minimum", r.toefl || null)}
         ${tile("IELTS minimum", r.ielts ? Number(r.ielts).toFixed(1) : null)}
