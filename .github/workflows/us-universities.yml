@@ -1,0 +1,42 @@
+name: US universities data
+
+# Collects the US graduate-university data (IPEDS) for the US university map.
+# Data only: it never posts to social media. Runs monthly, and when the collector script changes.
+on:
+  schedule:
+    - cron: "41 6 3 * *"     # 3rd of each month, 06:41 UTC
+  push:
+    branches: [main]
+    paths: ["scripts/us_universities.py", ".github/workflows/us-universities.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: researchboard
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collect US universities (IPEDS)
+        run: python scripts/us_universities.py --force
+      - name: Save the data
+        run: |
+          git config user.name  "researchboard-bot"
+          git config user.email "researchboard-bot@users.noreply.github.com"
+          git add data/us-unis.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "US universities data $(date -u +%F)"
+            git pull --rebase --autostash origin main || true
+            git push
+          fi
