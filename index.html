@@ -41,17 +41,23 @@
       </span>
     </a>
     <nav class="topnav" aria-label="Sections">
-      <a href="map/">Map</a>
+      <a href="map/">Research Map</a>
       <a href="country/">Countries</a>
       <a href="universities/">Universities</a>
       <a href="scientists/">Scientists</a>
       <a href="study/">Study Abroad</a>
-      <a href="journals/">Journals</a>
-      <a href="fields/">Research fields</a>
-      <a href="market/">Trends</a>
+      <div class="nd"><a href="market/" class="nd-top" aria-haspopup="true" aria-expanded="false">Research Trends <span class="car" aria-hidden="true">▾</span></a><div class="dd"><a href="market/"><span class="ic">📈</span><span><b>Weekly pulse</b><small>What is rising and falling this week</small></span></a><a href="fields/"><span class="ic">🧪</span><span><b>Research fields</b><small>Papers and growth by research field</small></span></a><a href="journals/"><span class="ic">📚</span><span><b>Journals</b><small>The most active journals today</small></span></a></div></div>
       <a href="blog/">Blog</a>
       <a href="about/">About</a>
-    </nav>
+    </nav><script>(function(){document.querySelectorAll('.topnav .nd').forEach(function(n){var b=n.querySelector('.nd-top'),d=n.querySelector('.dd'),t;
+function place(){var r=b.getBoundingClientRect(),w=Math.min(320,innerWidth-24);d.style.width=w+'px';d.style.top=(r.bottom+8)+'px';d.style.left=Math.max(12,Math.min(r.left,innerWidth-w-12))+'px';}
+function open(){place();n.classList.add('open');b.setAttribute('aria-expanded','true');}
+function close(){n.classList.remove('open');b.setAttribute('aria-expanded','false');}
+b.addEventListener('click',function(e){if(!n.classList.contains('open')){e.preventDefault();open();}});
+if(window.matchMedia&&matchMedia('(hover:hover)').matches){n.addEventListener('mouseenter',function(){clearTimeout(t);open();});n.addEventListener('mouseleave',function(){t=setTimeout(close,200);});}
+document.addEventListener('click',function(e){if(!n.contains(e.target))close();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+addEventListener('scroll',close,{passive:true});addEventListener('resize',close);});})();</script>
     <div class="gsearch" role="search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" placeholder="Search a country or institution…" aria-label="Search a country or institution" autocomplete="off">
