@@ -179,12 +179,14 @@ def main() -> None:
             u, n = r["unitid"], num(r.get("awards"))
             if u not in ids or not n:
                 continue
-            if r.get("cipcode") == 990000:
+            cip = int(r.get("cipcode") or 0)
+            if cip in (99, 990000):                            # "all fields" total row
                 unis[u][key] = int(n)
-            elif fk:
-                fields.setdefault(u, []).append([int(r["cipcode"]) // 10000, int(n)])
-        if fk:
-            for u, f in fields.items():
+            elif cip >= 10000 and cip % 10000 == 0:            # 2-digit field family
+                fields.setdefault(u, []).append([cip // 10000, int(n)])
+        for u, f in fields.items():
+            unis[u].setdefault(key, sum(n for _, n in f))
+            if fk:
                 unis[u][fk] = sorted(f, key=lambda x: -x[1])[:6]
         print(f"completions level {lvl} ({cy}): {len(cr)} rows")
 
@@ -210,6 +212,8 @@ def main() -> None:
 
     # keep universities that actually award master's or research doctorates
     keep = [x for x in unis.values() if (x.get("ms") or 0) + (x.get("phd") or 0) > 0]
+    if len(keep) < 500:
+        sys.exit(f"Only {len(keep)} universities found — something is wrong with the source data, keeping the old file")
     keep.sort(key=lambda x: -((x.get("gi") or 0) * 3 + (x.get("ge") or 0)))
     data = [[x.get(k) for k in KEYS] for x in keep]
     OUT.parent.mkdir(parents=True, exist_ok=True)
