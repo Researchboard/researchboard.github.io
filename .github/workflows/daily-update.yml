@@ -57,6 +57,8 @@ jobs:
         run: |
           python scripts/update_data.py
           python scripts/uni_directory.py || echo "university directory skipped"
+          python scripts/nih_topics.py || echo "NIH topics skipped"
+          python scripts/check_links.py || echo "link check skipped"
 
       - name: Write today's automatic blog post and image card
         if: github.event_name != 'push' && github.event.schedule != '7 21 * * *' && env.SPOTLIGHT_SLOT == '' && github.event.schedule != '37 3 * * *' && github.event.inputs.mode != 'totals-only'
