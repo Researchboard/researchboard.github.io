@@ -412,3 +412,76 @@ table.sci td.on, table.sci th.on { background: rgba(244,210,122,.14); font-weigh
 }
 /* the menu has 8 items now: give back room to the tagline and the search box on laptops */
 @media (max-width: 1500px) and (min-width: 1321px) { .topnav a { padding: 8px 10px; font-size: 15px; } }
+
+/* ---- US universities map (homepage + /us-universities/) ---- */
+.usm { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 16px; margin: 16px 0; }
+.usm-head { display: flex; justify-content: space-between; gap: 10px 18px; flex-wrap: wrap; align-items: flex-end; }
+.usm-head h2 { font-size: 23px; margin: 0 0 2px; letter-spacing: -.02em; }
+.usm-head .sub { color: var(--text-2); font-size: 13.5px; margin: 0; max-width: 760px; }
+.usm-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--text-2); }
+.usm-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.usm-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.usm-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.usm-search { position: relative; flex: 1 1 280px; }
+.usm-search input { width: 100%; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 12px; padding: 11px 14px; font-size: 15.5px; background: var(--panel); color: var(--text); }
+.usm-bar select { border: 1px solid var(--line); border-radius: 11px; padding: 10px 10px; background: var(--panel); color: var(--text); font-size: 14px; }
+.usm-chk { font-size: 13.5px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; }
+.usm-count { font-size: 13px; color: var(--muted); margin-left: auto; }
+.usm-sugg { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgba(8,20,40,.18); padding: 4px; }
+.usm-sugg button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text); }
+.usm-sugg button:hover { background: var(--accent-soft); }
+.usm-sugg button span { display: block; font-size: 12.5px; color: var(--muted); }
+.usm-sugg .note { margin: 8px 10px; }
+.usm-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+.usm-map { position: relative; background: var(--panel-2); border-radius: 14px; overflow: hidden; min-height: 300px; }
+.usm-map svg { width: 100%; height: auto; display: block; cursor: grab; touch-action: none; }
+.usm-states path { fill: var(--map-0); stroke: var(--line); }
+.usm-borders { fill: none; stroke: var(--panel); stroke-width: .8; }
+:root .usm-states path { fill: #e3ebf6; stroke: #fff; }
+.usm-dots circle { stroke: #fff; stroke-width: .6; fill-opacity: .82; cursor: pointer; }
+.usm-dots circle:hover { fill-opacity: 1; stroke: #0e1a2b; }
+.usm-ring { fill: none; stroke: #e11d48; pointer-events: none; }
+.usm-zoom { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.usm-zoom button { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 18px; cursor: pointer; box-shadow: var(--shadow); }
+.usm-tip { position: absolute; z-index: 5; pointer-events: none; background: #0e1a2b; color: #fff; font-size: 12.5px; line-height: 1.4; padding: 7px 10px; border-radius: 9px; max-width: 240px; }
+.usm-panel { background: var(--panel-2); border-radius: 14px; padding: 14px 16px; max-height: 720px; overflow: auto; }
+.usm-panel h3 { margin: 0 0 4px; font-size: 19px; line-height: 1.25; }
+.usm-panel h4 { margin: 16px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-2); }
+.usm-panel h4 small { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); }
+.usm-where { margin: 0 0 8px; color: var(--text-2); font-size: 13.5px; }
+.usm-back { border: 0; background: none; color: var(--accent); font-weight: 700; padding: 0; margin-bottom: 8px; cursor: pointer; font-size: 13.5px; }
+.usm-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.usm-badges span { background: var(--accent-soft); color: var(--accent-strong); border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 700; }
+.usm-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.usm-links a { border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 6px 10px; font-size: 13px; font-weight: 700; text-decoration: none; }
+.usm-links a.primary { background: #0e7490; border-color: #0e7490; color: #fff; }
+.usm-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.usm-kpis > div { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; min-width: 0; }
+.usm-kpis span { display: block; font-size: 12px; color: var(--muted); }
+.usm-kpis b { display: block; font-size: 18px; margin-top: 2px; }
+.usm-kpis em { display: block; font-style: normal; font-size: 11.5px; color: var(--text-2); margin-top: 1px; }
+.usm-kpis.small b { font-size: 15.5px; }
+.usm-bars > div { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; margin: 5px 0; }
+.usm-bars span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usm-bars i { display: block; height: 9px; border-radius: 5px; background: var(--accent); }
+.usm-bars b { font-size: 12.5px; min-width: 36px; text-align: right; }
+.usm-top { margin: 0; padding-left: 22px; }
+.usm-top li { margin: 2px 0; }
+.usm-top button { border: 0; background: none; text-align: left; padding: 5px 4px; cursor: pointer; color: var(--text); border-radius: 8px; width: 100%; }
+.usm-top button:hover { background: var(--accent-soft); }
+.usm-top button span { display: block; font-size: 12.5px; color: var(--muted); }
+.usm-src { font-size: 12px; color: var(--muted); margin: 10px 2px 0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .usm-states path { fill: #1a2538; stroke: #0b1220; } :root:not([data-theme="light"]) .usm-dots circle { stroke: #0b1220; } }
+:root[data-theme="dark"] .usm-states path { fill: #1a2538; stroke: #0b1220; }
+:root[data-theme="dark"] .usm-dots circle { stroke: #0b1220; }
+@media (max-width: 900px) {
+  .usm-grid { grid-template-columns: 1fr; }
+  .usm-map { min-height: 0; }
+  .usm-zoom button { width: 30px; height: 30px; font-size: 16px; }
+  .usm-panel { max-height: none; }
+  .usm-count { margin-left: 0; }
+  .usm-bar select { flex: 1 1 28%; min-width: 0; padding: 9px 6px; font-size: 13.5px; }
+}
+@media (max-width: 480px) { .usm { padding: 12px; } .usm-head h2 { font-size: 20px; } .usm-kpis b { font-size: 16px; } }
+
+.st-hero .st-hero-link { margin-top: 10px; } .st-hero .st-hero-link a { color: #f4d27a; font-weight: 700; }

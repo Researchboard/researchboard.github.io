@@ -53,7 +53,8 @@
 
   box.innerHTML = `
     <div class="st-hero"><h1>🎓 Study abroad: <span>scholarships</span> and <span>funded</span> MS / PhD positions</h1>
-      <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US and Canadian professors with active government grants — all free, with links to official sources.</p></div>
+      <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US and Canadian professors with active government grants — all free, with links to official sources.</p>
+      <p class="st-hero-link"><a href="../us-universities/">🗺️ Map of every US university for master's &amp; PhD — application fees, tuition, international students →</a></p></div>
     <div class="st-tabs" role="tablist">
       <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button><button data-t="canada"><span class="fi fi-ca"></span> Canada active grants</button></div>
     <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div><div id="tCanada" hidden></div>`;
