@@ -94,13 +94,13 @@ def ic_fees(years) -> tuple[int, dict]:
             print("no IC file for", y, e)
             continue
         name = next(n for n in z.namelist() if n.lower().endswith(".csv"))
-        text = z.read(name).decode("latin-1")
+        text = z.read(name).decode("utf-8-sig", "replace")
         if "APPLFEEG" not in text.split("\n", 1)[0].upper():
             print(f"IC{y}: no application fee columns yet (provisional file), trying an older year")
             continue
         out = {}
         for r in csv.DictReader(io.StringIO(text)):
-            r = {k.strip().upper(): v for k, v in r.items() if k}
+            r = {k.strip().lstrip("\ufeff").upper(): v for k, v in r.items() if k}
             rb = num(r.get("RMBRDAMT"))
             if rb is None and num(r.get("ROOMAMT")) is not None:
                 rb = (num(r.get("ROOMAMT")) or 0) + (num(r.get("BOARDAMT")) or 0)
