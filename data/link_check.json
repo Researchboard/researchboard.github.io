@@ -1,0 +1,145 @@
+{
+ "checked": "2026-10-30",
+ "results": [
+  {
+   "id": "sisgp",
+   "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+   "status": 200
+  },
+  {
+   "id": "sh",
+   "url": "https://stipendiumhungaricum.hu/",
+   "status": 200
+  },
+  {
+   "id": "tb",
+   "url": "https://www.turkiyeburslari.gov.tr/",
+   "status": 200
+  },
+  {
+   "id": "gks",
+   "url": "https://www.studyinkorea.go.kr/",
+   "status": 200
+  },
+  {
+   "id": "mext",
+   "url": "https://www.studyinjapan.go.jp/en/smap-stopj-applications-research.html",
+   "status": 200
+  },
+  {
+   "id": "mext",
+   "url": "https://www.bd.emb-japan.go.jp/itpr_en/scholarshipnotice.html",
+   "status": 403
+  },
+  {
+   "id": "chevening",
+   "url": "https://www.chevening.org/",
+   "status": 0
+  },
+  {
+   "id": "csuk",
+   "url": "https://cscuk.fcdo.gov.uk/",
+   "status": 200
+  },
+  {
+   "id": "daad",
+   "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/",
+   "status": 403
+  },
+  {
+   "id": "erasmus",
+   "url": "https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en",
+   "status": 200
+  },
+  {
+   "id": "csc",
+   "url": "https://www.campuschina.org/",
+   "status": 0
+  },
+  {
+   "id": "aus",
+   "url": "https://www.dfat.gov.au/people-to-people/australia-awards",
+   "status": 0
+  },
+  {
+   "id": "rtp",
+   "url": "https://www.education.gov.au/research-block-grants/research-training-program",
+   "status": 0
+  },
+  {
+   "id": "fulbright",
+   "url": "https://foreign.fulbrightonline.org/",
+   "status": 200
+  },
+  {
+   "id": "fulbright",
+   "url": "https://bd.usembassy.gov/",
+   "status": 403
+  },
+  {
+   "id": "kh",
+   "url": "https://knight-hennessy.stanford.edu/",
+   "status": 200
+  },
+  {
+   "id": "gates",
+   "url": "https://www.gatescambridge.org/",
+   "status": 200
+  },
+  {
+   "id": "clarendon",
+   "url": "https://www.ox.ac.uk/clarendon",
+   "status": 403
+  },
+  {
+   "id": "holland",
+   "url": "https://www.studyinnl.org/finances/holland-scholarship",
+   "status": 200
+  },
+  {
+   "id": "eiffel",
+   "url": "https://www.campusfrance.org/en/eiffel-scholarship-program-of-excellence",
+   "status": 200
+  },
+  {
+   "id": "swiss",
+   "url": "https://www.sbfi.admin.ch/sbfi/en/home/education/scholarships-and-grants/swiss-government-excellence-scholarships.html",
+   "status": 200
+  },
+  {
+   "id": "hkpfs",
+   "url": "https://cerg1.ugc.edu.hk/hkpfs/index.html",
+   "status": 200
+  },
+  {
+   "id": "singa",
+   "url": "https://www.a-star.edu.sg/Scholarships/for-graduate-studies/singapore-international-graduate-award-singa",
+   "status": 202
+  },
+  {
+   "id": "kaust",
+   "url": "https://www.kaust.edu.sa/en/study",
+   "status": 200
+  },
+  {
+   "id": "oist",
+   "url": "https://www.oist.jp/graduate-school",
+   "status": 200
+  },
+  {
+   "id": "imprs",
+   "url": "https://www.mpg.de/imprs",
+   "status": 200
+  },
+  {
+   "id": "boell",
+   "url": "https://www.boell.de/en/scholarships",
+   "status": 200
+  },
+  {
+   "id": "taiwan",
+   "url": "https://taiwanscholarship.moe.gov.tw/",
+   "status": 200
+  }
+ ]
+}
