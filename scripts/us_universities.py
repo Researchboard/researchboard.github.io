@@ -14,6 +14,7 @@ Runs monthly; the source data changes once a year.
 from __future__ import annotations
 
 import csv
+import functools
 import datetime as dt
 import io
 import json
@@ -24,6 +25,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+print = functools.partial(print, flush=True)  # noqa: A001  (show progress in the Actions log)
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "us-unis.json"
 API = "https://educationdata.urban.org/api/v1/college-university/"
@@ -37,14 +39,14 @@ KEYS = ["id", "n", "alias", "city", "st", "lat", "lon", "ctl", "cc", "hbcu", "lg
         "gtu", "utu", "afg", "afu", "rb", "ge", "gi", "ue", "ui", "ms", "phd", "prof", "mf", "pf", "ar", "sfr", "toefl"]
 
 
-def get(url: str, binary: bool = False, timeout: int = 120):
-    for attempt in range(4):
+def get(url: str, binary: bool = False, timeout: int = 120, tries: int = 4):
+    for attempt in range(tries):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout) as r:
                 b = r.read()
                 return b if binary else json.loads(b.decode("utf-8"))
         except Exception as e:  # noqa: BLE001
-            if attempt == 3:
+            if attempt == tries - 1:
                 raise
             print("retry", url[:110], e)
             time.sleep(5 * (attempt + 1))
@@ -53,11 +55,13 @@ def get(url: str, binary: bool = False, timeout: int = 120):
 def rows(path: str, **params) -> list[dict]:
     """All result rows of one Urban Institute endpoint, following the 'next' pages."""
     url = API + path + ("?" + urllib.parse.urlencode(params) if params else "")
-    out = []
-    while url:
+    out, pages = [], 0
+    while url and pages < 60:
         j = get(url)
         out += j.get("results", [])
         url = j.get("next")
+        pages += 1
+    print(f"  {path} {params or ''}: {len(out)} rows")
     return out
 
 
@@ -85,12 +89,15 @@ def ic_fees(years) -> tuple[int, dict]:
     """Application fees and room/board from the IPEDS IC complete data file (newest year available)."""
     for y in years:
         try:
-            z = zipfile.ZipFile(io.BytesIO(get(f"{NCES}IC{y}.zip", binary=True, timeout=180)))
+            z = zipfile.ZipFile(io.BytesIO(get(f"{NCES}IC{y}.zip", binary=True, timeout=60, tries=2)))
         except Exception as e:  # noqa: BLE001
             print("no IC file for", y, e)
             continue
         name = next(n for n in z.namelist() if n.lower().endswith(".csv"))
         text = z.read(name).decode("latin-1")
+        if "APPLFEEG" not in text.split("\n", 1)[0].upper():
+            print(f"IC{y}: no application fee columns yet (provisional file), trying an older year")
+            continue
         out = {}
         for r in csv.DictReader(io.StringIO(text)):
             r = {k.strip().upper(): v for k, v in r.items() if k}
@@ -100,6 +107,16 @@ def ic_fees(years) -> tuple[int, dict]:
             out[int(r["UNITID"])] = {"afu": num(r.get("APPLFEEU")), "afg": num(r.get("APPLFEEG")), "rb": rb}
         print(f"IC{y}: application fees for {len(out)} institutions")
         return y, out
+    # NCES download not reachable: use the copy saved in the repository (data/ipeds-fees.csv: UNITID,APPLFEEU,APPLFEEG,RB,YEAR)
+    try:
+        out, y = {}, 0
+        for r in csv.DictReader(io.StringIO((ROOT / "data" / "ipeds-fees.csv").read_text(encoding="utf-8"))):
+            out[int(r["UNITID"])] = {"afu": num(r["APPLFEEU"]), "afg": num(r["APPLFEEG"]), "rb": num(r["RB"])}
+            y = int(r["YEAR"])
+        print(f"fees from saved copy ({y}): {len(out)} institutions")
+        return y, out
+    except Exception as e:  # noqa: BLE001
+        print("no saved fees copy", e)
     return 0, {}
 
 
@@ -184,7 +201,7 @@ def main() -> None:
         if r["unitid"] in ids and num(r.get("student_faculty_ratio")):
             unis[r["unitid"]]["sfr"] = int(num(r["student_faculty_ratio"]))
 
-    fy, fees = ic_fees([this, this - 1, this - 2])
+    fy, fees = ic_fees([this - 1, this - 2, this - 3, this - 4])
     for u, f in fees.items():
         if u in unis:
             for k, v in f.items():
