@@ -58,6 +58,8 @@ jobs:
           python scripts/update_data.py
           python scripts/uni_directory.py || echo "university directory skipped"
           python scripts/nih_topics.py || echo "NIH topics skipped"
+          pip install -q openpyxl==3.1.5 || true
+          python scripts/canada_grants.py || echo "Canada grants skipped"
           python scripts/check_links.py || echo "link check skipped"
 
       - name: Write today's automatic blog post and image card
