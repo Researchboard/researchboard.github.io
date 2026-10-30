@@ -44,10 +44,11 @@
       <select id="usmCtl" aria-label="Public or private"><option value="">Public &amp; private</option><option value="1">Public</option><option value="2">Private nonprofit</option></select>
       <label class="usm-chk"><input type="checkbox" id="usmIntl"> 10%+ international grad students</label>
       <span class="usm-count" id="usmCount"></span></div>
-    <div class="usm-grid">
+    <div class="usm-grid"><div class="usm-left">
       <div class="usm-map" id="usmMap"><p class="note">Loading the map…</p>
         <div class="usm-zoom"><button type="button" data-z="in" aria-label="Zoom in">+</button><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="reset" aria-label="Reset map">⟲</button></div>
         <div class="usm-tip" id="usmTip" hidden></div></div>
+      <div class="usm-ins" id="usmIns"></div></div>
       <aside class="usm-panel" id="usmPanel"><p class="note">Loading universities…</p></aside>
     </div>
     <p class="usm-src" id="usmSrc"></p></section>`;
@@ -133,6 +134,7 @@
     const st = $("#usmState").value;
     if (st && svg) zoomToState(st);
     if (!sel) overview();
+    insights();
   }
   function zoomToState(st) {
     const pts = U.filter((u) => u.st === st && u.x != null);
@@ -145,7 +147,7 @@
   // panel before a university is chosen: the universities with most international graduate students in the current filter
   function overview() {
     const st = $("#usmState").value;
-    const top = shown.slice().sort((a, b) => (b.gi || 0) - (a.gi || 0)).slice(0, 12);
+    const top = shown.slice().sort((a, b) => (b.gi || 0) - (a.gi || 0)).slice(0, 25);
     const fees = shown.map((u) => u.afg).filter((x) => x > 0).sort((a, b) => a - b);
     const tu = shown.map((u) => u.gtu).filter((x) => x > 0).sort((a, b) => a - b);
     const med = (a) => (a.length ? a[Math.floor(a.length / 2)] : null);
@@ -159,6 +161,57 @@
     $("#usmPanel").querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => select(U.find((u) => String(u.id) === b.dataset.id), true)));
   }
 
+  // cards under the map: quick lists for the current filter (and universities near the one selected)
+  const miles = (a, b) => { const R = 3959, r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lon - a.lon) * r;
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+  function card(icon, title, note, list, val) {
+    if (!list.length) return "";
+    return `<div class="usm-card"><h4>${icon} ${title}</h4>${note ? `<p class="usm-cnote">${note}</p>` : ""}<ol>${list.map((u) =>
+      `<li><button type="button" data-id="${u.id}"><span class="nm">${esc(u.n)}<small>${esc(u.city)}, ${u.st}</small></span><b>${val(u)}</b></button></li>`).join("")}</ol></div>`;
+  }
+  function insights() {
+    const el = $("#usmIns"); if (!el) return;
+    const st = $("#usmState").value, where = st ? ` in ${STATE[st]}` : "";
+    const L = shown, cards = [];
+    if (sel) {
+      const near = U.filter((u) => u !== sel && visible(u)).map((u) => [u, miles(sel, u)]).filter(([, d]) => d <= 100).sort((a, b) => a[1] - b[1]).slice(0, 5);
+      if (near.length) cards.push(card("📍", `Near ${esc(sel.alias ? sel.alias.split(/[|,]/)[0] : sel.n)}`, "Other universities within 100 miles", near.map(([u, d]) => Object.assign(Object.create(u), { _d: d })),
+        (u) => `${Math.round(u._d)} mi`));
+    }
+    const research = (arr) => { const r = arr.filter((u) => u.cat === "r1" || u.cat === "r2"); return r.length >= 5 ? [r, true] : [arr.filter((u) => u.phd > 0), false]; };
+    const [rt, isR] = research(L.filter((u) => u.gtu > 0));
+    cards.push(card("💰", `Lowest graduate tuition${where}`, isR ? "Research universities (R1 & R2), per year" : "Universities with PhD programs, per year",
+      rt.slice().sort((a, b) => a.gtu - b.gtu).slice(0, 5), (u) => money(u.gtu)));
+    const free = L.filter((u) => u.afg === 0), [rf, isRf] = research(free);
+    cards.push(card("🆓", `No graduate application fee${where}`, `${fmt(free.length)} universities charge no fee — ${isRf ? "research universities" : "the biggest"}:`,
+      (rf.length ? rf : free).slice().sort((a, b) => (b.ge || 0) - (a.ge || 0)).slice(0, 5), (u) => `${fmt(u.ge)} grads`));
+    if (!sel) {
+      const [ri, isRi] = research(L.filter((u) => (u.ge || 0) >= 300));
+      cards.push(card("🌍", `Highest share of international students${where}`, isRi ? "Research universities (R1 & R2), graduate students" : "Graduate students",
+        ri.slice().sort((a, b) => b.ip - a.ip).slice(0, 5), (u) => `${Math.round(u.ip * 100)}%`));
+    }
+    if (!st) {
+      const by = {};
+      L.forEach((u) => { by[u.st] = (by[u.st] || 0) + (u.gi || 0); });
+      const top = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 7), mx = top.length ? top[0][1] : 1;
+      cards.push(`<div class="usm-card"><h4>🗺️ States with most international grad students</h4><p class="usm-cnote">Tap a state to explore it</p>
+        <div class="usm-sbars">${top.map(([k, v]) => `<button type="button" data-st="${k}"><span>${esc(STATE[k])}</span><i style="width:${Math.max(4, Math.round(v / mx * 100))}%"></i><b>${fmt(v)}</b></button>`).join("")}</div></div>`);
+    } else {
+      cards.push(card("🎓", `Most PhDs awarded${where}`, "Research doctorates per year",
+        L.filter((u) => u.phd > 0).sort((a, b) => b.phd - a.phd).slice(0, 5), (u) => fmt(u.phd)));
+    }
+    el.innerHTML = cards.filter(Boolean).join("");
+    el.querySelectorAll("[data-id]").forEach((b) => b.addEventListener("click", () => select(U.find((u) => String(u.id) === b.dataset.id), true)));
+    el.querySelectorAll("[data-st]").forEach((b) => b.addEventListener("click", () => { $("#usmState").value = b.dataset.st; $("#usmState").dispatchEvent(new Event("input")); }));
+    fit();
+  }
+  // the details panel is as tall as the map + cards, so the two columns end together
+  function fit() {
+    const p = $("#usmPanel"), l = $(".usm-left");
+    p.style.maxHeight = window.innerWidth > 900 ? l.offsetHeight + "px" : "";
+  }
+  window.addEventListener("resize", () => { clearTimeout(fit.t); fit.t = setTimeout(fit, 200); });
+
   function select(u, fly) {
     if (!u) return;
     sel = u;
@@ -169,6 +222,7 @@
       svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity.translate(W / 2, H / 2).scale(kk).translate(-u.x, -u.y));
     }
     details(u);
+    insights();
     if (window.innerWidth < 900) $("#usmPanel").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -211,7 +265,7 @@
         ${tile("TOEFL / English test", TOEFL[u.toefl] || null)}
       </div>
       <h4>Research</h4><div id="usmOA" class="usm-oa"><p class="note">Loading research output…</p></div>`;
-    $("#usmBack").addEventListener("click", () => { sel = null; g.select(".usm-ring").attr("r", 0); overview(); });
+    $("#usmBack").addEventListener("click", () => { sel = null; g.select(".usm-ring").attr("r", 0); overview(); insights(); });
     research(u);
   }
 
