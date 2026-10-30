@@ -2,7 +2,7 @@
 title: New — a map of every US university for your Master's or PhD, with fees, tuition and international students
 date: 2026-10-30
 author: ResearchBoard Team
-summary: 1,863 US universities that award master's degrees (764 also award PhDs) on one map. Tap any university to see its graduate application fee, tuition for international students, how many international students it has, its top programs and its research output — all free, from official US government data.
+summary: 1,863 US universities that award master's degrees (764 also award PhDs) on one map. Tap any university to see its graduate application deadline, TOEFL/IELTS minimum, GRE and WES policy, application fee, tuition for international students, international students, top programs and research output — all free.
 tags: study abroad, usa, masters, phd, universities, students
 slug: us-universities-map-for-masters-and-phd
 ---
@@ -21,6 +21,19 @@ The map shows **1,863 US universities that award master's degrees**. **764 of th
 - **Dot size** shows how many graduate students study there.
 
 Together, these universities teach **558,462 international graduate students**.
+
+## New: deadlines, TOEFL/IELTS, GRE and WES
+
+For the **200 US universities with the most international students**, we checked each university's **official graduate admissions pages** and added:
+
+- 📅 **Application deadlines** for international graduate applicants — **Fall** and **Spring** intake, earlier dates for **funding and assistantships**, and whether admission is **rolling**
+- **TOEFL iBT** and **IELTS** minimum scores (and Duolingo where accepted)
+- **GRE** policy — required, optional, not required, or depends on the program
+- **WES / credential evaluation** — whether you need a WES (or similar) evaluation of your transcripts
+
+You can also **filter the map**: *GRE optional or not required*, *TOEFL 80 or lower*, *IELTS 6.5 or lower*, *No WES evaluation needed* and *Spring intake offered*.
+
+Deadlines and score minimums often differ by program, so each card links to the official page — always confirm there for your program.
 
 ## Tap a university — see everything in one place
 
