@@ -187,6 +187,20 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
     write("universities", "Most active universities and research institutions today · ResearchBoard",
           f"Daily ranking of universities and research institutions by papers published. Latest: {nice(day)}.", body, "Universities")
 
+    # ------------------------------------------------------------------ study abroad (scholarships + funded professors + US grants)
+    try:
+        sch = json.loads((root / "assets" / "scholarships.json").read_text(encoding="utf-8"))
+        rows = "".join(f'<li><a href="{esc(x["url"])}" rel="noopener">{esc(x["name"])}</a> — {esc(x["covers"])}</li>' for x in sch["items"])
+        sch_html = (f'<section class="panel2 st-seo"><h2>All scholarships listed</h2><p>Fully funded and partial scholarships for international '
+                    f'Master\'s and PhD students, with links to the official websites. Last checked {esc(sch["updated"])}.</p><ul>{rows}</ul></section>')
+    except Exception:  # noqa: BLE001
+        sch_html = ""
+    write("study", "Study abroad: fully funded scholarships, funded MS & PhD positions and US research grants · ResearchBoard",
+          "Free list of fully funded scholarships for international students (Chevening, DAAD, MEXT, GKS, CSC, Erasmus Mundus and more), "
+          "professors with funded research in 10 countries, and US professors with active NIH and NSF grants.",
+          '<div class="crumb"><a href="../">Home</a> › Study abroad</div><div id="study"><p class="note">Loading…</p></div>'
+          '<script src="../assets/study.js" defer></script>' + sch_html, "Study Abroad")
+
     # ------------------------------------------------------------------ one university (loads live from OpenAlex)
     write("university", "University research output · ResearchBoard",
           "Research output of a university: papers per year, top research fields, researchers, partners and open access.",

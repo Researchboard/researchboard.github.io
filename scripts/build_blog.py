@@ -123,7 +123,7 @@ def load_posts() -> list[dict]:
 LOGO = "../assets/logo.svg"
 
 
-NAV = [("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Scientists", "../scientists/"), ("Journals", "../journals/"),
+NAV = [("Map", "../map/"), ("Countries", "../country/"), ("Universities", "../universities/"), ("Scientists", "../scientists/"), ("Study Abroad", "../study/"), ("Journals", "../journals/"),
        ("Research fields", "../fields/"), ("Trends", "../market/"), ("Blog", "../blog/"), ("About", "../about/")]
 
 
