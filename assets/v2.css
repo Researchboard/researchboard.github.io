@@ -385,3 +385,30 @@ table.sci td.on, table.sci th.on { background: rgba(244,210,122,.14); font-weigh
 @media (max-width: 1420px) and (min-width: 1001px) { .topnav a { padding: 7px 5px; font-size: 13px; } .gsearch { min-width: 100px !important; flex-basis: 230px !important; } }
 @media (max-width: 1120px) and (min-width: 1001px) { .topnav a { padding: 6px 3px; font-size: 12.5px; } .brand-name { display: none; } }
 @media (max-width: 600px) { .sc-top { flex-wrap: wrap; } .dl { white-space: normal; } .st-tabs button { font-size: 13.5px; padding: 9px 11px; } .sc-f label { font-size: 13px; } .sc { padding: 14px; } .sc-web { overflow-wrap: anywhere; } .st-acts a { display: inline-block; } }
+
+/* ---- top menu: "Research Trends" dropdown (the panel is fixed-position because the menu row scrolls sideways on phones) ---- */
+.topnav .nd { position: relative; flex: none; display: flex; }
+.topnav .nd-top { display: inline-flex; align-items: center; gap: 5px; }
+.topnav .nd-top .car { font-size: 11px; opacity: .75; transition: transform .15s; }
+.topnav .nd.open .nd-top { background: rgba(255,255,255,.14); }
+.topnav .nd.open .nd-top .car { transform: rotate(180deg); }
+.topnav .nd-top.on { background: var(--accent); color: #fff; }
+.topnav .dd { display: none; position: fixed; z-index: 1000; background: #fff; border-radius: 14px; box-shadow: 0 14px 40px rgba(8,20,40,.28); padding: 8px; }
+.topnav .nd.open .dd { display: block; }
+.topnav .dd a { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; color: #13213a; white-space: normal; font-size: 14.5px; }
+.topnav .dd a:hover, .topnav .dd a.hl { background: #eef3fb; }
+.topnav .dd .ic { font-size: 20px; line-height: 1.15; width: 26px; text-align: center; flex: none; }
+.topnav .dd b { display: block; font-weight: 700; color: #13213a; }
+.topnav .dd small { display: block; font-size: 12.5px; color: #5b6b85; margin-top: 2px; line-height: 1.35; }
+:root[data-theme="dark"] .topnav .dd { background: #16233a; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+:root[data-theme="dark"] .topnav .dd a, :root[data-theme="dark"] .topnav .dd b { color: #e6eefb; }
+:root[data-theme="dark"] .topnav .dd a:hover, :root[data-theme="dark"] .topnav .dd a.hl { background: #22324f; }
+:root[data-theme="dark"] .topnav .dd small { color: #9fb0c8; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .topnav .dd { background: #16233a; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+  :root:not([data-theme="light"]) .topnav .dd a, :root:not([data-theme="light"]) .topnav .dd b { color: #e6eefb; }
+  :root:not([data-theme="light"]) .topnav .dd a:hover, :root:not([data-theme="light"]) .topnav .dd a.hl { background: #22324f; }
+  :root:not([data-theme="light"]) .topnav .dd small { color: #9fb0c8; }
+}
+/* the menu has 8 items now: give back room to the tagline and the search box on laptops */
+@media (max-width: 1500px) and (min-width: 1321px) { .topnav a { padding: 8px 10px; font-size: 15px; } }
