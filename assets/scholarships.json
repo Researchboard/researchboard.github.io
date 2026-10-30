@@ -1,0 +1,646 @@
+{
+ "updated": "2026-10-29",
+ "note": "Dates change every year. 'checked' = this cycle verified on an official or reliable source on that date; otherwise 'timing' shows the usual pattern from past years.",
+ "items": [
+  {
+   "id": "sisgp",
+   "name": "Swedish Institute Scholarships for Global Professionals",
+   "short": "SISGP",
+   "country": "SE",
+   "type": "Government",
+   "levels": [
+    "Master's"
+   ],
+   "funding": "full",
+   "covers": "Full tuition, SEK 12,000 a month living allowance and a SEK 15,000 travel grant.",
+   "who": "Citizens of eligible countries with work and leadership experience. Fields: governance, public health, entrepreneurship and innovation, STEM.",
+   "tags": [
+    "Work experience needed"
+   ],
+   "bd": "yes",
+   "deadline": "2027-01-15",
+   "window": [
+    11,
+    1
+   ],
+   "checked": "2026-10",
+   "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+   "site": "si.se"
+  },
+  {
+   "id": "sh",
+   "name": "Stipendium Hungaricum",
+   "country": "HU",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "No tuition, monthly stipend, housing contribution and medical insurance.",
+   "who": "Citizens of partner countries (Bangladesh is a partner). Hundreds of English-taught programmes.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    11,
+    1
+   ],
+   "timing": "Usually November to mid-January (last year: 15 January)",
+   "url": "https://stipendiumhungaricum.hu/",
+   "site": "stipendiumhungaricum.hu"
+  },
+  {
+   "id": "tb",
+   "name": "Türkiye Scholarships (Türkiye Bursları)",
+   "country": "TR",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, monthly stipend, dormitory, health insurance, return flight and a one-year Turkish language course.",
+   "who": "Open to students from all countries.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    1,
+    2
+   ],
+   "timing": "Usually 10 January to 20 February (last year's dates)",
+   "url": "https://www.turkiyeburslari.gov.tr/",
+   "site": "turkiyeburslari.gov.tr"
+  },
+  {
+   "id": "gks",
+   "name": "Global Korea Scholarship (GKS) — Graduate",
+   "short": "GKS",
+   "country": "KR",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, monthly allowance, return flight and a one-year Korean language course.",
+   "who": "Apply through the Korean embassy in your country or directly to a participating university.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    2,
+    3
+   ],
+   "timing": "Usually February to March",
+   "url": "https://www.studyinkorea.go.kr/",
+   "site": "studyinkorea.go.kr"
+  },
+  {
+   "id": "mext",
+   "name": "MEXT Research Student Scholarship",
+   "short": "MEXT",
+   "country": "JP",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, monthly stipend and return flight.",
+   "who": "Apply through the Embassy of Japan (written test and interview) or through a Japanese university.",
+   "tags": [
+    "Age under 35"
+   ],
+   "bd": "yes",
+   "window": [
+    4,
+    5
+   ],
+   "timing": "Embassy route: usually April to May",
+   "url": "https://www.studyinjapan.go.jp/en/smap-stopj-applications-research.html",
+   "site": "studyinjapan.go.jp",
+   "local": {
+    "label": "Embassy of Japan in Bangladesh",
+    "url": "https://www.bd.emb-japan.go.jp/itpr_en/scholarshipnotice.html",
+    "site": "bd.emb-japan.go.jp"
+   }
+  },
+  {
+   "id": "chevening",
+   "name": "Chevening Scholarships",
+   "country": "GB",
+   "type": "Government",
+   "levels": [
+    "Master's"
+   ],
+   "funding": "full",
+   "covers": "Tuition for a one-year master's, monthly living allowance, return flight and visa costs.",
+   "who": "Citizens of Chevening countries with about 2 years (2,800 hours) of work experience.",
+   "tags": [
+    "2 years' work experience",
+    "1-year master's"
+   ],
+   "bd": "yes",
+   "window": [
+    8,
+    10
+   ],
+   "checked": "2026-10",
+   "timing": "2027-28 round closed 6 October 2026. The next round usually opens in August.",
+   "url": "https://www.chevening.org/",
+   "site": "chevening.org",
+   "deadline": "2026-10-06"
+  },
+  {
+   "id": "csuk",
+   "name": "Commonwealth Master's and PhD Scholarships",
+   "country": "GB",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, monthly stipend, return flight and allowances.",
+   "who": "Citizens of eligible Commonwealth countries, usually nominated through a national body in your home country.",
+   "tags": [
+    "Nomination by home country"
+   ],
+   "bd": "yes",
+   "window": [
+    9,
+    10
+   ],
+   "timing": "Usually September to October (deadlines set by your national nominating body)",
+   "url": "https://cscuk.fcdo.gov.uk/",
+   "site": "cscuk.fcdo.gov.uk",
+   "closeDay": 15
+  },
+  {
+   "id": "daad",
+   "name": "DAAD scholarships (incl. development-related postgraduate courses, EPOS)",
+   "short": "DAAD",
+   "country": "DE",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Monthly stipend, health insurance and travel allowance; tuition is free or low at most German public universities.",
+   "who": "Depends on the programme. EPOS courses are for graduates from developing countries with work experience.",
+   "tags": [
+    "Work experience (EPOS)"
+   ],
+   "bd": "yes",
+   "window": [
+    8,
+    10
+   ],
+   "timing": "Varies by programme; many EPOS courses close between August and October",
+   "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/",
+   "site": "daad.de — scholarship database"
+  },
+  {
+   "id": "erasmus",
+   "name": "Erasmus Mundus Joint Master's Scholarships",
+   "short": "Erasmus Mundus",
+   "country": "EU",
+   "type": "European Union",
+   "levels": [
+    "Master's"
+   ],
+   "funding": "full",
+   "covers": "Tuition, monthly allowance, travel and insurance, while studying in two or more European countries.",
+   "who": "Open to students from all countries. You apply to a specific joint master's programme.",
+   "tags": [
+    "Study in 2+ countries"
+   ],
+   "bd": "yes",
+   "window": [
+    10,
+    2
+   ],
+   "timing": "Usually October to February (each programme sets its own deadline)",
+   "url": "https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en",
+   "site": "eacea.ec.europa.eu — programme catalogue"
+  },
+  {
+   "id": "csc",
+   "name": "Chinese Government Scholarship (CSC)",
+   "short": "CSC",
+   "country": "CN",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, accommodation, monthly stipend and medical insurance.",
+   "who": "Apply through the Chinese embassy or directly to a participating Chinese university.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    1,
+    4
+   ],
+   "timing": "Usually January to April",
+   "url": "https://www.campuschina.org/",
+   "site": "campuschina.org"
+  },
+  {
+   "id": "aus",
+   "name": "Australia Awards Scholarships",
+   "country": "AU",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, return flight, living allowance and health cover.",
+   "who": "Citizens of participating countries in the Indo-Pacific, including South Asia.",
+   "tags": [
+    "Return home after study"
+   ],
+   "bd": "yes",
+   "window": [
+    2,
+    4
+   ],
+   "timing": "Usually February to April for South Asia",
+   "url": "https://www.dfat.gov.au/people-to-people/australia-awards",
+   "site": "dfat.gov.au/australia-awards"
+  },
+  {
+   "id": "rtp",
+   "name": "Research Training Program (RTP) scholarships",
+   "short": "RTP",
+   "country": "AU",
+   "type": "University",
+   "levels": [
+    "PhD",
+    "Research master's"
+   ],
+   "funding": "full",
+   "covers": "Tuition offset and a living stipend, awarded by each Australian university.",
+   "who": "Apply to an Australian university's research degree; most consider you for RTP automatically.",
+   "tags": [
+    "Apply via university"
+   ],
+   "bd": "yes",
+   "window": [
+    8,
+    10
+   ],
+   "timing": "Varies by university (often August to October for the next year)",
+   "url": "https://www.education.gov.au/research-block-grants/research-training-program",
+   "site": "education.gov.au"
+  },
+  {
+   "id": "fulbright",
+   "name": "Fulbright Foreign Student Program",
+   "short": "Fulbright",
+   "country": "US",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition, living stipend, flights and health insurance (varies by country).",
+   "who": "Run separately in each country by the US Embassy or Fulbright Commission.",
+   "tags": [
+    "Apply in your home country"
+   ],
+   "bd": "yes",
+   "window": [
+    2,
+    5
+   ],
+   "timing": "Varies by country — check the US Embassy in your country",
+   "url": "https://foreign.fulbrightonline.org/",
+   "site": "foreign.fulbrightonline.org",
+   "local": {
+    "label": "US Embassy in Bangladesh — exchange programs",
+    "url": "https://bd.usembassy.gov/",
+    "site": "bd.usembassy.gov"
+   }
+  },
+  {
+   "id": "kh",
+   "name": "Knight-Hennessy Scholars (Stanford)",
+   "short": "Knight-Hennessy",
+   "country": "US",
+   "type": "University",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Full funding for any Stanford graduate degree, plus leadership training.",
+   "who": "Open to all nationalities; apply alongside your Stanford graduate application.",
+   "tags": [
+    "Very competitive"
+   ],
+   "bd": "yes",
+   "window": [
+    8,
+    10
+   ],
+   "timing": "Usually closes in early October",
+   "url": "https://knight-hennessy.stanford.edu/",
+   "site": "knight-hennessy.stanford.edu",
+   "closeDay": 8
+  },
+  {
+   "id": "gates",
+   "name": "Gates Cambridge Scholarship",
+   "country": "GB",
+   "type": "University",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Full cost of study at the University of Cambridge, living allowance and flights.",
+   "who": "Open to all non-UK citizens applying to Cambridge.",
+   "tags": [
+    "Very competitive"
+   ],
+   "bd": "yes",
+   "window": [
+    9,
+    12
+   ],
+   "timing": "Usually October to early December/January, with your Cambridge application",
+   "url": "https://www.gatescambridge.org/",
+   "site": "gatescambridge.org",
+   "closeDay": 5
+  },
+  {
+   "id": "clarendon",
+   "name": "Clarendon Scholarships (Oxford)",
+   "short": "Clarendon",
+   "country": "GB",
+   "type": "University",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition and a generous living grant at the University of Oxford.",
+   "who": "All graduate applicants to Oxford are considered automatically — no separate form.",
+   "tags": [
+    "Automatic consideration"
+   ],
+   "bd": "yes",
+   "window": [
+    11,
+    1
+   ],
+   "timing": "Apply to Oxford by the December/January course deadline",
+   "url": "https://www.ox.ac.uk/clarendon",
+   "site": "ox.ac.uk/clarendon"
+  },
+  {
+   "id": "holland",
+   "name": "Holland Scholarship",
+   "country": "NL",
+   "type": "Government + universities",
+   "levels": [
+    "Master's"
+   ],
+   "funding": "partial",
+   "covers": "A one-off €5,000 grant in the first year (partial funding).",
+   "who": "Non-EEA students starting a master's at a participating Dutch university.",
+   "tags": [
+    "Partial funding"
+   ],
+   "bd": "yes",
+   "window": [
+    1,
+    5
+   ],
+   "timing": "Usually 1 February or 1 May, depending on the university",
+   "url": "https://www.studyinnl.org/finances/holland-scholarship",
+   "site": "studyinnl.org"
+  },
+  {
+   "id": "eiffel",
+   "name": "Eiffel Excellence Scholarship",
+   "short": "Eiffel",
+   "country": "FR",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Monthly allowance, return flight, insurance and cultural activities (tuition not included).",
+   "who": "The French university applies on your behalf — contact your chosen programme first.",
+   "tags": [
+    "University nominates you"
+   ],
+   "bd": "yes",
+   "window": [
+    11,
+    1
+   ],
+   "timing": "Usually November to January (university deadlines are earlier)",
+   "url": "https://www.campusfrance.org/en/eiffel-scholarship-program-of-excellence",
+   "site": "campusfrance.org"
+  },
+  {
+   "id": "swiss",
+   "name": "Swiss Government Excellence Scholarships",
+   "country": "CH",
+   "type": "Government",
+   "levels": [
+    "PhD",
+    "Postdoc"
+   ],
+   "funding": "full",
+   "covers": "Monthly stipend, tuition exemption, health insurance and housing allowance.",
+   "who": "Researchers from eligible countries, with a Swiss professor who agrees to supervise you.",
+   "tags": [
+    "Need a Swiss supervisor"
+   ],
+   "bd": "check",
+   "window": [
+    9,
+    12
+   ],
+   "timing": "Varies by country (often September to December)",
+   "url": "https://www.sbfi.admin.ch/sbfi/en/home/education/scholarships-and-grants/swiss-government-excellence-scholarships.html",
+   "site": "sbfi.admin.ch"
+  },
+  {
+   "id": "hkpfs",
+   "name": "Hong Kong PhD Fellowship Scheme",
+   "short": "HKPFS",
+   "country": "HK",
+   "type": "Government",
+   "levels": [
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Monthly stipend and a conference/research travel allowance for up to 3–4 years.",
+   "who": "Open to all nationalities applying to a PhD at a Hong Kong university.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    9,
+    12
+   ],
+   "timing": "Usually September to 1 December",
+   "url": "https://cerg1.ugc.edu.hk/hkpfs/index.html",
+   "site": "cerg1.ugc.edu.hk/hkpfs",
+   "closeDay": 1
+  },
+  {
+   "id": "singa",
+   "name": "Singapore International Graduate Award (SINGA)",
+   "short": "SINGA",
+   "country": "SG",
+   "type": "Government",
+   "levels": [
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Full tuition, monthly stipend, one-time airfare and settling-in allowance.",
+   "who": "Open to all nationalities for PhD research in science and engineering at NUS, NTU, SUTD or A*STAR.",
+   "tags": [],
+   "bd": "yes",
+   "window": [
+    5,
+    6
+   ],
+   "timing": "Two rounds a year: usually by 1 June and 1 December",
+   "url": "https://www.a-star.edu.sg/Scholarships/for-graduate-studies/singapore-international-graduate-award-singa",
+   "site": "a-star.edu.sg",
+   "closeDay": 1
+  },
+  {
+   "id": "kaust",
+   "name": "KAUST Fellowship (King Abdullah University of Science and Technology)",
+   "short": "KAUST",
+   "country": "SA",
+   "type": "University",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Full tuition, living stipend, housing, medical and dental coverage, and relocation support.",
+   "who": "All admitted students receive the fellowship. Science and engineering only.",
+   "tags": [
+    "Automatic with admission"
+   ],
+   "bd": "yes",
+   "window": [
+    12,
+    2
+   ],
+   "timing": "Main admission rounds usually December to February",
+   "url": "https://www.kaust.edu.sa/en/study",
+   "site": "kaust.edu.sa"
+  },
+  {
+   "id": "oist",
+   "name": "OIST Graduate School PhD (Okinawa, Japan)",
+   "short": "OIST",
+   "country": "JP",
+   "type": "University",
+   "levels": [
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Full tuition, research assistantship stipend, housing support and travel.",
+   "who": "Open to all nationalities. Five-year interdisciplinary PhD taught in English.",
+   "tags": [
+    "Automatic with admission"
+   ],
+   "bd": "yes",
+   "window": [
+    11,
+    12
+   ],
+   "timing": "Main round usually closes in December",
+   "url": "https://www.oist.jp/graduate-school",
+   "site": "oist.jp",
+   "closeDay": 5
+  },
+  {
+   "id": "imprs",
+   "name": "Max Planck International Research Schools (IMPRS)",
+   "short": "IMPRS",
+   "country": "DE",
+   "type": "Research institutes",
+   "levels": [
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Paid PhD position (contract or stipend) at a Max Planck Institute.",
+   "who": "Open to all nationalities. Each research school recruits separately, usually once or twice a year.",
+   "tags": [
+    "Paid PhD position"
+   ],
+   "bd": "yes",
+   "window": [
+    10,
+    1
+   ],
+   "timing": "Varies by research school",
+   "url": "https://www.mpg.de/imprs",
+   "site": "mpg.de/imprs"
+  },
+  {
+   "id": "boell",
+   "name": "Heinrich Böll Foundation Scholarships",
+   "short": "Heinrich Böll",
+   "country": "DE",
+   "type": "Foundation",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Monthly stipend and allowances for study at a German university.",
+   "who": "International students enrolled or applying at a German university, with social or political engagement.",
+   "tags": [
+    "Social engagement valued"
+   ],
+   "bd": "yes",
+   "window": [
+    2,
+    3
+   ],
+   "timing": "Usually 1 March and 1 September",
+   "url": "https://www.boell.de/en/scholarships",
+   "site": "boell.de"
+  },
+  {
+   "id": "taiwan",
+   "name": "Taiwan Scholarship (Ministry of Education)",
+   "short": "Taiwan Scholarship",
+   "country": "TW",
+   "type": "Government",
+   "levels": [
+    "Master's",
+    "PhD"
+   ],
+   "funding": "full",
+   "covers": "Tuition support and a monthly living allowance.",
+   "who": "Apply through the Taiwan representative office for your country.",
+   "tags": [],
+   "bd": "check",
+   "window": [
+    2,
+    3
+   ],
+   "timing": "Usually February to March",
+   "url": "https://taiwanscholarship.moe.gov.tw/",
+   "site": "taiwanscholarship.moe.gov.tw"
+  }
+ ]
+}
