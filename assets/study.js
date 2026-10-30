@@ -8,7 +8,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const sid = (u) => String(u || "").split("/").pop();
   const oa = (p) => fetch(OA + p + (p.includes("?") ? "&" : "?") + "mailto=researchboardlive@gmail.com").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
-  const FLAG = { SE: "🇸🇪", HU: "🇭🇺", TR: "🇹🇷", KR: "🇰🇷", JP: "🇯🇵", GB: "🇬🇧", DE: "🇩🇪", EU: "🇪🇺", CN: "🇨🇳", AU: "🇦🇺", US: "🇺🇸", NL: "🇳🇱", FR: "🇫🇷", CH: "🇨🇭", HK: "🇭🇰", SG: "🇸🇬", SA: "🇸🇦", TW: "🇹🇼", CA: "🇨🇦" };
+  const FLAG = new Proxy({}, { get: (_, c) => (typeof c === "string" && /^[A-Z]{2}$/.test(c) ? `<span class="fi fi-${c.toLowerCase()}"></span>` : "") });
   const CNAME = { SE: "Sweden", HU: "Hungary", TR: "Türkiye", KR: "South Korea", JP: "Japan", GB: "United Kingdom", DE: "Germany", EU: "European Union", CN: "China", AU: "Australia", US: "USA", NL: "Netherlands", FR: "France", CH: "Switzerland", HK: "Hong Kong", SG: "Singapore", SA: "Saudi Arabia", TW: "Taiwan", CA: "Canada" };
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const today = new Date();
@@ -55,7 +55,7 @@
     <div class="st-hero"><h1>🎓 Study abroad: <span>scholarships</span> and <span>funded</span> MS / PhD positions</h1>
       <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US professors with active government grants — all free, with links to official sources.</p></div>
     <div class="st-tabs" role="tablist">
-      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa">🇺🇸 US active grants</button></div>
+      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button></div>
     <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div>`;
   function show(t) {
     tab = t; setURL("tab", t === "scholarships" ? "" : t);
@@ -88,7 +88,7 @@
     const [cls, lab] = status(s);
     const lvl = s.levels.map((l) => `<span>${esc(l)}</span>`).join("");
     const tags = (s.tags || []).map((l) => `<span>${esc(l)}</span>`).join("");
-    const bd = s.bd === "yes" ? `<span class="bd">🇧🇩 Bangladesh eligible</span>` : s.bd === "check" ? `<span class="chk">Check country list</span>` : "";
+    const bd = s.bd === "yes" ? `<span class="bd"><span class="fi fi-bd"></span> Bangladesh eligible</span>` : s.bd === "check" ? `<span class="chk">Check country list</span>` : "";
     return `<article class="sc"><div class="sc-top"><div><h3>${FLAG[s.country] || ""} ${esc(s.name)}</h3><div class="sc-c">${esc(CNAME[s.country] || s.country)} · ${esc(s.type)}</div></div>
       <span class="dl ${cls}">${esc(lab)}</span></div>
       <div class="sc-tags"><span class="${s.funding === "full" ? "full" : "part"}">${s.funding === "full" ? "Fully funded" : "Partial funding"}</span>${lvl}${tags}${bd}</div>
@@ -112,7 +112,7 @@
     try { SCH = await fetch("../assets/scholarships.json", { cache: "no-cache" }).then((r) => r.json()); }
     catch (_) { $("#scGrid").innerHTML = `<p class="note">Couldn't load the list. Please refresh.</p>`; return; }
     const cs = [...new Set(SCH.items.map((s) => s.country))].sort((a, b) => (CNAME[a] || a).localeCompare(CNAME[b] || b));
-    $("#scC").innerHTML += cs.map((c) => `<option value="${c}">${FLAG[c] || ""} ${esc(CNAME[c] || c)}</option>`).join("");
+    $("#scC").innerHTML += cs.map((c) => `<option value="${c}">${esc(CNAME[c] || c)}</option>`).join("");
     const pc = P.get("c"); if (pc && cs.includes(pc.toUpperCase())) $("#scC").value = pc.toUpperCase();
     const soon = SCH.items.map((s) => [s, status(s)]).filter(([, st]) => st[0] === "soon")
       .sort((a, b) => (a[0].deadline ? 0 : 1) - (b[0].deadline ? 0 : 1) || a[1][2] - b[1][2]).slice(0, 4);
@@ -275,10 +275,12 @@
         const a = (r.response && r.response.award) || [];
         total = ((r.response || {}).metadata || {}).totalCount || total;
         a.forEach((x) => {
+          const t = x.title || "";
+          if (/^(SBIR|STTR)\b/i.test(t) || /\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test((x.awardeeName || "").trim())) return;   // companies rarely hire graduate students
           const [mm, dd, yy] = String(x.expDate || "").split("/");
           uRows.push({ src: "NSF", pi: `${x.piFirstName || ""} ${x.piLastName || ""}`.trim(), org: x.awardeeName || "", st: x.awardeeStateCode || "",
             amt: +(x.estimatedTotalAmt || x.fundsObligatedAmt || 0), end: yy ? `${yy}-${mm}-${dd}` : "", title: x.title || "",
-            kind: /graduate research fellowship|research traineeship/i.test(x.title || "") ? "train" : "lab",
+            kind: /graduate research fellowship|research traineeship|\bNRT\b|\bREU\b/i.test(t) ? "train" : /\b(center|centers|institute|RII|PREM|CREST|MRSEC|STC|ERC)\b/i.test(t) ? "ctr" : "lab",
             url: `https://www.nsf.gov/awardsearch/showAward?AWD_ID=${x.id}` });
         });
         if (a.length < 25) break;
