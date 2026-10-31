@@ -340,7 +340,7 @@
   const endLab = (e) => { if (!e) return "—"; const [y, m] = e.split("-"); return m ? `${MON[+m - 1]} ${y}` : y; };
   function grantTable(S, cur) {
     const money = (n) => n >= 999500 ? `${cur}${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${cur}${Math.round(n / 1e3)}K` : n ? `${cur}${n}` : "—";
-    const per = (x) => x.src === "NSF" ? "total" : x.src === "NSERC" ? "per year" : x.src === "CIHR" ? "CIHR funding" : "this year";
+    const per = (x) => x.src === "NSF" ? "total" : x.src === "NSERC" ? "per year" : x.src === "CIHR" ? "total award" : "this year";
     return `<table class="rt"><thead><tr><th>Professor (PI)</th><th class="r">Award</th><th class="r">Active until</th></tr></thead><tbody>${S.map((x) =>
       `<tr><td><b>${esc(x.pi)}</b><div class="ud-city">${esc(x.org)}${x.st ? " · " + esc(x.st) : ""}</div>
         <div class="st-gt">${esc(x.title)} <span class="gt ${K[x.kind][0]}">${K[x.kind][1]}</span> <span class="src">${x.src}</span></div>
