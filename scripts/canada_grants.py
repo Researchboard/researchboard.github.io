@@ -234,14 +234,14 @@ def cihr() -> list[dict]:
             "id": first(pick(hdr, "fundingreferencenumber"), pick(hdr, "reference")),
             "title": pick(hdr, "title", avoid=("program", "competition")),
             "fam": first(pick(hdr, "principal", "family"), pick(hdr, "npi", "family"), pick(hdr, "familyname")),
-            "giv": first(pick(hdr, "principal", "given"), pick(hdr, "npi", "given"), pick(hdr, "givenname")),
+            "giv": first(pick(hdr, "firstname"), pick(hdr, "principal", "given"), pick(hdr, "npi", "given"), pick(hdr, "givenname")),
             "name": first(pick(hdr, "principal", "name"), pick(hdr, "npi"), pick(hdr, "investigator")),
-            "org": first(pick(hdr, "institution", "name"), pick(hdr, "institution", avoid=("id", "code", "province", "country", "type"))),
+            "org": first(pick(hdr, "researchinstitutionname"), pick(hdr, "institution", "name"), pick(hdr, "institution", avoid=("id", "code", "province", "country", "type"))),
             "prov": pick(hdr, "province"),
-            "amt": first(pick(hdr, "cihr", "amount"), pick(hdr, "cihr", "contribution"), pick(hdr, "amount", avoid=("partner",))),
+            "amt": first(pick(hdr, "totalamountawarded"), pick(hdr, "cihr", "amount"), pick(hdr, "cihr", "contribution"), pick(hdr, "amount", avoid=("partner",))),
             "end": pick(hdr, "end", "date"),
             "prog": first(pick(hdr, "program", "name"), pick(hdr, "program", avoid=("code", "id"))),
-            "type": first(pick(hdr, "grantoraward"), pick(hdr, "grant", "award", avoid=("amount", "date"))),
+            "type": first(pick(hdr, "programtype"), pick(hdr, "grantoraward"), pick(hdr, "grant", "award", avoid=("amount", "date"))),
             "kw": pick(hdr, "keyword"),
         }
         print("CIHR column match:", {k: (hdr[v] if v is not None else None) for k, v in c.items()})
@@ -299,11 +299,11 @@ def main() -> None:
         idx["updated"] = dt.date.today().isoformat()
 
     # CIHR once per refresh
-    if starting_fresh or not (OUT / "ca-cihr.json").exists():
+    if starting_fresh or load(OUT / "ca-cihr.json", {}).get("v") != 2:      # v2: first names, research institution, total award
         try:
             rows = cihr()
             if rows:
-                save(OUT / "ca-cihr.json", {"updated": dt.date.today().isoformat(), "rows": rows})
+                save(OUT / "ca-cihr.json", {"updated": dt.date.today().isoformat(), "v": 2, "rows": rows})
                 idx["cihr"] = len(rows)
                 print(f"CIHR: {len(rows)} active grants")
         except Exception as e:  # noqa: BLE001
