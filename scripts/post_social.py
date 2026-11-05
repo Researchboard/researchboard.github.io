@@ -76,6 +76,28 @@ def request(method: str, url: str, data=None, headers=None, raw: bytes | None = 
         raise RuntimeError(f"HTTP {e.code}: {text}") from None
 
 
+def wait_until_live(url: str, tries: int = 10, pause: int = 30) -> bool:
+    """
+    The image card is published by the deploy a moment earlier, and GitHub
+    Pages can take a minute or two to serve it. Make switches the LinkedIn
+    scenario OFF after a single "Not Found", so only hand over a card that
+    already loads.
+    """
+    import time
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(url + ("&" if "?" in url else "?") + f"v={int(time.time())}",
+                                         method="GET", headers={"User-Agent": "ResearchBoard-poster"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                if r.status == 200 and r.headers.get("Content-Type", "").startswith("image"):
+                    return True
+        except Exception:  # noqa: BLE001 - 404 while the deploy spreads, or a network blip
+            pass
+        if i < tries - 1:
+            time.sleep(pause)
+    return False
+
+
 # --------------------------------------------------------------------------- the message
 
 def compose() -> dict | None:
@@ -254,6 +276,8 @@ def post_via_make(hook: str, msg: dict) -> str:
         return "skipped (no image card today)"
     if DRY:
         return "dry run via Make"
+    if not wait_until_live(msg["card_url"]):
+        raise RuntimeError("image card not online yet; not sent to Make (it would switch the scenario off)")
     payload = {"day": msg["day"], "title": msg["title"], "text": msg["text"],
                "link": msg["url"], "image_url": msg["card_url"]}
     status, _, res = request("POST", hook, payload, headers={"Content-Type": "application/json"})
