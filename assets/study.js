@@ -417,7 +417,7 @@
     return L;
   }
   function renderUsa() {
-    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked), !$("#uQ").value.trim() && !$("#uU").value.trim());
+    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked), !$("#uQ").value.trim());   // no topic: individual labs before big centers
     if (!L.length) { $("#uList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#uMore").hidden = true; return; }
     $("#uList").innerHTML = grantTable(L.slice(0, uPage * 25), "$");
     $("#uMore").hidden = L.length <= uPage * 25;
@@ -499,7 +499,7 @@
     cPage = 1; renderCanada();
   }
   function renderCanada() {
-    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked), !$("#cQ").value.trim() && !$("#cU").value.trim());
+    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked), !$("#cQ").value.trim());
     if (!L.length) { $("#cList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#cMore").hidden = true; return; }
     $("#cList").innerHTML = grantTable(L.slice(0, cPage * 25), "CA$");
     $("#cMore").hidden = L.length <= cPage * 25;
