@@ -16,7 +16,7 @@ import re
 from pathlib import Path
 
 esc = html.escape
-FLAGS = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">'
+FLAGS = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" integrity="sha384-aQuvIWWIbpu/mSqULLDiUveyYiPoJzPKAWjUmGJ+Elm+N/LJhzfZqsutsfw870JS" crossorigin="anonymous">'
 
 
 def slugify(text: str) -> str:
@@ -222,8 +222,8 @@ OpenAlex shows a sudden jump, usually a bulk upload of old records; we rank it b
           "students, international student numbers, TOEFL, top programs and research output. Free, from official IPEDS data.",
           '<div class="crumb"><a href="../">Home</a> › <a href="../study/">Study abroad</a> › US universities</div>'
           '<div id="usUnis" data-base="../data/" data-site="../"><p class="note">Loading…</p></div>'
-          '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>'
-          '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>'
+          '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous" defer></script>'
+          '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous" defer></script>'
           '<script src="../assets/usmap.js" defer></script>' + us_html, "Study Abroad")
 
     # ------------------------------------------------------------------ one university (loads live from OpenAlex)

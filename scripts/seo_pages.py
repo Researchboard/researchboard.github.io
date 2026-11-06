@@ -176,7 +176,7 @@ The <b>fractional count</b> gives each country an equal share of papers written 
         desc = (f"{name}: {n:,} research papers published on {nice(d)}" + (f" (#{rank} worldwide)" if rank else "") +
                 f". Daily research statistics for {name}: papers, top universities and most-cited scientists, updated every day.")
         htm = page(title, desc, body, f"{site_url}/country/{slug}.html", active="Countries", extra_head=
-                   f'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">'
+                   f'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" integrity="sha384-aQuvIWWIbpu/mSqULLDiUveyYiPoJzPKAWjUmGJ+Elm+N/LJhzfZqsutsfw870JS" crossorigin="anonymous">'
                    f'<script type="application/ld+json">{ld}</script>')
         (out / f"{slug}.html").write_text(fix_nav(htm), encoding="utf-8")
         urls.append((f"{site_url}/country/{slug}.html", day, "daily", "0.6"))
@@ -199,7 +199,7 @@ with their fractional count, share of world output and the total for the last 30
     htm = page("Research output by country, updated daily · ResearchBoard",
                f"Which countries publish the most research? Daily ranking of {len(rows)} countries by papers published, "
                f"with share of world output. Latest: {nice(d)}.", body, f"{site_url}/country/", active="Countries",
-               extra_head='<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">')
+               extra_head='<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" integrity="sha384-aQuvIWWIbpu/mSqULLDiUveyYiPoJzPKAWjUmGJ+Elm+N/LJhzfZqsutsfw870JS" crossorigin="anonymous">')
     (out / "index.html").write_text(fix_nav(htm), encoding="utf-8")
 
     # homepage with a plain-text summary and a Dataset description
