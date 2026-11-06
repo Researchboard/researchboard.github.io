@@ -26,8 +26,11 @@
 
   // ------------------------------------------------------------------ state <-> URL
   const P = new URLSearchParams(location.search);
-  const st = { mode: P.get("mode") === "topic" ? "topic" : "name", q: P.get("q") || "", c: (P.get("c") || "").toUpperCase(),
-    f: P.get("f") || "", i: P.get("i") || "", iname: P.get("in") || "", s: P.get("s") || "cited_by_count", page: 1 };
+  // only accept well-formed values from the address bar (a crafted link must not inject anything into the page)
+  const ok = (v, re) => (re.test(v || "") ? v : "");
+  const st = { mode: P.get("mode") === "topic" ? "topic" : "name", q: (P.get("q") || "").slice(0, 200), c: ok((P.get("c") || "").toUpperCase(), /^[A-Z]{2}$/),
+    f: ok(P.get("f"), /^\d{1,4}$/), i: ok(P.get("i"), /^I\d{1,12}$/), iname: (P.get("in") || "").slice(0, 200),
+    s: ["cited_by_count", "c5", "summary_stats.h_index", "summary_stats.i10_index"].includes(P.get("s")) ? P.get("s") : "cited_by_count", page: 1 };
   if (!["cited_by_count", "c5", "summary_stats.h_index", "summary_stats.i10_index"].includes(st.s)) st.s = "cited_by_count";
   const METRICS = [
     ["cited_by_count", "OpenAlex citations", "total influence", "How many times other research papers indexed in OpenAlex have cited this scientist's work, across the whole career."],
@@ -82,9 +85,9 @@
     const names = l.country_names || {};
     const codes = Object.keys(names).length ? Object.keys(names) : [];
     const all = [...new Set(codes.concat(st.c ? [st.c] : []))].map((c) => [c, names[c] || cname(c)]).sort((a, b) => a[1].localeCompare(b[1]));
-    C.innerHTML = `<option value="">🌍 All countries</option>` + all.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join("");
+    C.innerHTML = `<option value="">🌍 All countries</option>` + all.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join("");
     C.value = st.c;
-  }).catch(() => { if (st.c) C.innerHTML += `<option value="${st.c}">${esc(cname(st.c))}</option>`; C.value = st.c; });
+  }).catch(() => { if (st.c) C.innerHTML += `<option value="${esc(st.c)}">${esc(cname(st.c))}</option>`; C.value = st.c; });
   $("#sQ").value = st.q; $("#sF").value = st.f; $("#sI").value = st.iname;
   function setMetric(k) {
     st.s = k;
