@@ -12,9 +12,9 @@
 <meta property="og:url" content="https://researchboard.net/map/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/logo.svg">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" integrity="sha384-aQuvIWWIbpu/mSqULLDiUveyYiPoJzPKAWjUmGJ+Elm+N/LJhzfZqsutsfw870JS" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous" defer></script>
 <script src="../assets/iso.js" defer></script>
 <script data-goatcounter="https://researchboard.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
@@ -102,6 +102,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const fmt = (n) => Number(n || 0).toLocaleString("en-US");
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const nice = (k) => new Date(k + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   const [hist, latest, topo] = await Promise.all([
@@ -161,14 +162,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const det = detail[c] || {};
     const inst = (det.top_institutions || [])[0];
     card.innerHTML = `<button class="x" aria-label="Close">✕</button>
-      <h2>${c && c.length === 2 ? `<span class="fi fi-${c.toLowerCase()}"></span>` : ""}${nm}</h2>
+      <h2>${/^[A-Z]{2}$/.test(c) ? `<span class="fi fi-${c.toLowerCase()}"></span>` : ""}${esc(nm)}</h2>
       <div class="sub">${nice(day)}</div>
       <div class="stats"><div class="big"><span>Papers</span><b>${fmt(n)}</b></div>
         <div><span>World rank</span><b>${rank[c] ? "#" + rank[c] : "—"}</b></div>
         <div><span>Share</span><b>${n ? (n / world * 100).toFixed(1) + "%" : "—"}</b></div></div>
       <div class="spark" title="Last 14 days">${series.map((v) => `<i style="height:${Math.max(4, v / mx * 100)}%"></i>`).join("")}</div>
-      <div class="row">${inst ? `🏛️ Most active: <b>${inst.name}</b> (${fmt(inst.count)} papers${det.inst_days === 7 ? " in 7 days" : ""})` : `Last 14 days: <b>${fmt(series.reduce((a, b) => a + b, 0))}</b> papers`}</div>
-      <a class="go" href="../country/${slug(nm)}.html">See ${nm}'s full research page →</a>`;
+      <div class="row">${inst ? `🏛️ Most active: <b>${esc(inst.name)}</b> (${fmt(inst.count)} papers${det.inst_days === 7 ? " in 7 days" : ""})` : `Last 14 days: <b>${fmt(series.reduce((a, b) => a + b, 0))}</b> papers`}</div>
+      <a class="go" href="../country/${esc(slug(nm))}.html">See ${esc(nm)}'s full research page →</a>`;
     card.querySelector(".x").onclick = () => { sheet.classList.remove("open"); paths.classed("sel", false); svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity); };
     sheet.classList.add("open");
     try { history.replaceState(null, "", "?c=" + c + (q.get("day") ? "&day=" + day : "")); } catch (_) {}
@@ -181,11 +182,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const t = qi.value.trim().toLowerCase();
     if (!t) { qs.hidden = true; return; }
     const hits = all.filter(([, n]) => n.toLowerCase().includes(t)).slice(0, 6);
-    qs.innerHTML = hits.map(([c, n]) => `<li data-c="${c}"><span class="fi fi-${c.toLowerCase()}"></span>${n}</li>`).join("") || "<li>No match</li>";
+    qs.innerHTML = hits.map(([c, n]) => `<li data-c="${esc(c)}"><span class="fi fi-${esc(c.toLowerCase())}"></span>${esc(n)}</li>`).join("") || "<li>No match</li>";
     qs.hidden = false;
   });
   qs.addEventListener("click", (e) => { const li = e.target.closest("[data-c]"); if (!li) return; qs.hidden = true; qi.value = ""; qi.blur(); window.RBMapSelect(li.dataset.c); });
-  if (q.get("c")) window.RBMapSelect(q.get("c").toUpperCase());
+  if (/^[A-Z]{2}$/i.test(q.get("c") || "")) window.RBMapSelect(q.get("c").toUpperCase());
 });
 </script>
 </body>
