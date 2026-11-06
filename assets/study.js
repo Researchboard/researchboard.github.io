@@ -16,6 +16,39 @@
   let tab = ["scholarships", "professors", "usa", "canada"].includes(P.get("tab")) ? P.get("tab") : "scholarships";
   function setURL(k, v) { try { const u = new URL(location.href); if (v) u.searchParams.set(k, v); else u.searchParams.delete(k); history.replaceState(null, "", u); } catch (_) {} }
 
+  // ---- university / institution search (grants tabs)
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ").replace(/\b(the|inc|incorporated)\b/g, " ").replace(/\s+/g, " ").trim();
+  // short names people type -> [phrase NSF uses for the awardee, other official spellings]
+  const UNI_ALIAS = {
+    "mit": ["Massachusetts Institute of Technology"], "caltech": ["California Institute of Technology"],
+    "georgia tech": ["Georgia Tech Research Corporation", "Georgia Institute of Technology"], "gatech": ["Georgia Tech Research Corporation", "Georgia Institute of Technology"],
+    "ucla": ["University of California-Los Angeles"], "uc berkeley": ["University of California-Berkeley"], "berkeley": ["University of California-Berkeley"],
+    "ucsd": ["University of California-San Diego"], "uc san diego": ["University of California-San Diego"], "ucsf": ["University of California-San Francisco"],
+    "uc davis": ["University of California-Davis"], "uc irvine": ["University of California-Irvine"], "uci": ["University of California-Irvine"],
+    "ucsb": ["University of California-Santa Barbara"], "uc santa barbara": ["University of California-Santa Barbara"], "ucr": ["University of California-Riverside"],
+    "uiuc": ["University of Illinois at Urbana-Champaign"], "ut austin": ["University of Texas at Austin"], "utd": ["University of Texas at Dallas"],
+    "umich": ["University of Michigan"], "nyu": ["New York University"], "usc": ["University of Southern California"],
+    "cmu": ["Carnegie-Mellon University", "Carnegie Mellon University"], "carnegie mellon": ["Carnegie-Mellon University", "Carnegie Mellon University"],
+    "upenn": ["University of Pennsylvania"], "penn": ["University of Pennsylvania"], "penn state": ["Pennsylvania State Univ University Park", "Pennsylvania State University"],
+    "psu": ["Pennsylvania State Univ University Park", "Pennsylvania State University"], "uw": ["University of Washington"], "uw madison": ["University of Wisconsin-Madison"],
+    "unc": ["University of North Carolina at Chapel Hill"], "jhu": ["Johns Hopkins University"], "asu": ["Arizona State University"],
+    "osu": ["Ohio State University"], "ohio state": ["Ohio State University"], "tamu": ["Texas A&M University"], "texas a and m": ["Texas A&M University"],
+    "uf": ["University of Florida"], "fsu": ["Florida State University"], "ucf": ["University of Central Florida"], "uga": ["University of Georgia"],
+    "gsu": ["Georgia State University"], "umd": ["University of Maryland, College Park", "University of Maryland College Park"], "vt": ["Virginia Polytechnic Institute and State University"],
+    "virginia tech": ["Virginia Polytechnic Institute and State University"], "msu": ["Michigan State University"], "umn": ["University of Minnesota-Twin Cities", "University of Minnesota"],
+    "rpi": ["Rensselaer Polytechnic Institute"], "wpi": ["Worcester Polytechnic Institute"], "byu": ["Brigham Young University"], "lsu": ["Louisiana State University"],
+    "ubc": ["University of British Columbia"], "uoft": ["University of Toronto"], "u of t": ["University of Toronto"], "udem": ["Universite de Montreal"],
+    "uottawa": ["University of Ottawa"], "ualberta": ["University of Alberta"], "ucalgary": ["University of Calgary"], "sfu": ["Simon Fraser University"],
+    "uwaterloo": ["University of Waterloo"], "ulaval": ["Universite Laval"], "uqam": ["Universite du Quebec a Montreal"], "mun": ["Memorial University of Newfoundland"],
+  };
+  const uniNames = (u) => { const k = norm(u); return [u, ...(UNI_ALIAS[k] || [])]; };
+  // does an awardee name belong to the university the user typed?
+  function orgMatch(org, u) {
+    const n = " " + norm(org) + " ";
+    return uniNames(u).some((x) => { const t = norm(x); return t && n.includes(" " + t + " "); });
+  }
+
   // funded-research figures for 2025 from OpenAlex (papers naming a funder), checked Oct 2026
   const COUNTRIES = {
     CA: { mf: ["✅", "Often (thesis MSc)"], pf: ["✅", "Common"], how: "Email a professor", stat: [67197, 54],
@@ -233,7 +266,8 @@
   function initUsa() {
     if (usaReady) return; usaReady = true;
     const T = $("#tUsa");
-    T.innerHTML = `<div class="st-row"><input id="uQ" type="search" placeholder='e.g. "solar cells", "machine learning", "cancer", "arsenic"' aria-label="Research topic">
+    T.innerHTML = `<div class="st-row"><input id="uQ" type="search" placeholder='Topic, e.g. "solar cells", "machine learning", "cancer"' aria-label="Research topic">
+      <input id="uU" class="st-uni" type="search" placeholder='University, e.g. "University of Georgia", "MIT"' aria-label="University or institution">
       <select id="uSort" aria-label="Sort"><option value="amt">Sort: largest grant</option><option value="end">Sort: ending latest</option></select><button class="st-go" id="uGo">Search grants</button></div>
       <div class="st-chips"><label><input type="checkbox" id="uNSF" checked> Science &amp; engineering (NSF)</label><label><input type="checkbox" id="uNIH" checked> Health &amp; biology (NIH)</label>
         <label><input type="checkbox" id="u2028"> Only grants active until ${today.getFullYear() + 2} or later</label></div>
@@ -253,11 +287,11 @@
       $("#uTopics").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("#uQ").value = b.dataset.t; runUsa(); }));
     }).catch(() => { $("#uTopics").textContent = "NIH topics appear after the next weekly update."; });
     $("#uGo").addEventListener("click", runUsa);
-    $("#uQ").addEventListener("keydown", (e) => { if (e.key === "Enter") runUsa(); });
+    ["#uQ", "#uU"].forEach((k) => $(k).addEventListener("keydown", (e) => { if (e.key === "Enter") runUsa(); }));
     ["#uSort", "#u2028"].forEach((k) => $(k).addEventListener("input", () => { uPage = 1; renderUsa(); }));
-    ["#uNSF", "#uNIH"].forEach((k) => $(k).addEventListener("input", () => { if ($("#uQ").value.trim()) runUsa(); else { uPage = 1; renderUsa(); } }));
+    ["#uNSF", "#uNIH"].forEach((k) => $(k).addEventListener("input", () => { if ($("#uQ").value.trim() || $("#uU").value.trim()) runUsa(); else { uPage = 1; renderUsa(); } }));
     $("#uMore").addEventListener("click", () => { uPage++; renderUsa(); });
-    if (P.get("q") && tab === "usa") { $("#uQ").value = P.get("q"); runUsa(); } else usaDefault();
+    if ((P.get("q") || P.get("u")) && tab === "usa") { $("#uQ").value = P.get("q") || ""; $("#uU").value = P.get("u") || ""; runUsa(); } else usaDefault();
   }
   // before anyone searches: grants awarded in the last 60 days (new grants = labs that are hiring)
   async function usaDefault() {
@@ -287,7 +321,9 @@
   }
   function nsfRow(x) {
     const t = x.title || "";
-    if (/^(SBIR|STTR)\b/i.test(t) || /\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test((x.awardeeName || "").trim())) return null;   // companies rarely hire graduate students
+    const an = (x.awardeeName || "").trim();
+    // companies rarely hire graduate students (but "Georgia Tech Research Corporation", "University of Georgia Research Foundation Inc" are universities)
+    if (/^(SBIR|STTR)\b/i.test(t) || (/\b(INC|LLC|CORP|CORPORATION|LTD)\.?$/i.test(an) && !/universit|college|institute|polytechnic|regents|trustees|research foundation|research corporation|tech research/i.test(an))) return null;
     if (/Community College|Technical College/i.test(x.awardeeName || "")) return null;                                    // no graduate programs
     const [mm, dd, yy] = String(x.expDate || "").split("/");
     return { src: "NSF", pi: `${x.piFirstName || ""} ${x.piLastName || ""}`.trim(), org: x.awardeeName || "", st: x.awardeeStateCode || "",
@@ -299,41 +335,67 @@
     kind: x.kind === "training" ? "train" : x.kind === "center" ? "ctr" : "lab", url: `https://reporter.nih.gov/project-details/${x.appl}` });
   let uRows = [], uPage = 1, uTok = 0, uCounts = {};
   const mdy = (d) => `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+  // NSF matches an exact phrase in the awardee name; try a few spellings ("University of California-Davis" etc.)
+  function nsfOrgPhrases(u) {
+    const out = [];
+    [...(UNI_ALIAS[norm(u)] || []), u].forEach((x) => {   // official spellings first, then what was typed
+      const t = x.replace(/\s+/g, " ").trim();
+      out.push(t, t.replace(/,\s*/g, "-"), t.replace(/\s*-\s*/g, " "));
+      const m = t.match(/^(university of [a-z]+(?: [a-z]+)?)[ ,]+(.+)$/i);   // "University of California Davis" -> "University of California-Davis"
+      if (m && /^university of (california|wisconsin|minnesota|massachusetts|texas|illinois|maryland|colorado|hawaii|missouri|nebraska|north carolina)$/i.test(m[1])) out.push(`${m[1]}-${m[2].replace(/^at /i, "")}`);
+    });
+    return [...new Set(out.filter(Boolean))];
+  }
   async function runUsa() {
-    const q = $("#uQ").value.trim(); if (!q) { setURL("q", ""); return usaDefault(); }
-    setURL("q", q);
+    const q = $("#uQ").value.trim(), u = $("#uU").value.trim();
+    setURL("q", q); setURL("u", u);
+    if (!q && !u) return usaDefault();
     const my = ++uTok; uRows = []; uCounts = {};
-    $("#uTitle").textContent = `US professors with active grants on “${q}”`;
+    const what = q && u ? `on “${q}” at ${u}` : q ? `on “${q}”` : `at ${u}`;
+    $("#uTitle").textContent = `US professors with active grants ${what}`;
     $("#uList").innerHTML = `<p class="note">Searching official grant databases…</p>`; $("#uBig").textContent = "";
     const jobs = [];
     if ($("#uNSF").checked) jobs.push((async () => {
-      const base = `https://api.nsf.gov/services/v1/awards.json?keyword=${encodeURIComponent('"' + q + '"')}&expDateStart=${encodeURIComponent(mdy(today))}&rpp=25`;
+      const kw = q ? `keyword=${encodeURIComponent('"' + q + '"')}&` : "";
+      const phrases = u ? nsfOrgPhrases(u) : [""];
       let total = 0;
-      for (let off = 1; off <= 76; off += 25) {
-        const r = await fetch(base + `&offset=${off}`).then((x) => x.json());
-        const a = (r.response && r.response.award) || [];
-        total = ((r.response || {}).metadata || {}).totalCount || total;
-        a.forEach((x) => { const o = nsfRow(x); if (o) uRows.push(o); });
-        if (a.length < 25) break;
+      for (const ph of phrases) {
+        const org = ph ? `awardeeName=${encodeURIComponent('"' + ph + '"')}&` : "";
+        const base = `https://api.nsf.gov/services/v1/awards.json?${kw}${org}expDateStart=${encodeURIComponent(mdy(today))}&rpp=25`;
+        for (let off = 1; off <= 76; off += 25) {
+          const r = await fetch(base + `&offset=${off}`).then((x) => x.json());
+          const a = (r.response && r.response.award) || [];
+          if (off === 1) total = ((r.response || {}).metadata || {}).totalCount || 0;
+          a.forEach((x) => { const o = nsfRow(x); if (o && (!u || orgMatch(o.org, u) || ph)) uRows.push(o); });
+          if (a.length < 25) break;
+        }
+        if (total) break;                                     // found the right spelling
       }
       uCounts.NSF = total;
     })().catch(() => { uCounts.NSF = -1; }));
     if ($("#uNIH").checked) jobs.push((async () => {
       if (!NIH) NIH = await fetch("../data/grants/nih-index.json").then((r) => r.json()).catch(() => null);
+      if (!NIH) { uCounts.NIH = -1; return; }
       const ql = q.toLowerCase();
-      const hit = NIH && NIH.topics.find(([t]) => t.toLowerCase() === ql) || (NIH && NIH.topics.find(([t]) => ql.includes(t.toLowerCase()) || t.toLowerCase().includes(ql)));
-      if (!hit) { uCounts.NIH = null; return; }
-      const d = await fetch(`../data/grants/nih-${hit[1]}.json`).then((r) => r.json());
-      uCounts.NIH = d.total; uCounts.NIHtopic = d.topic;
-      d.rows.forEach((x) => uRows.push(nihRow(x)));
+      let files = [];
+      if (q) {
+        const hit = NIH.topics.find(([t]) => t.toLowerCase() === ql) || NIH.topics.find(([t]) => ql.includes(t.toLowerCase()) || t.toLowerCase().includes(ql));
+        if (!hit) { uCounts.NIH = null; return; }
+        files = [`nih-${hit[1]}.json`]; uCounts.NIHtopic = hit[0];
+      } else files = ["nih-latest.json", ...NIH.topics.map(([, slug]) => `nih-${slug}.json`)];   // university only: everything we collect
+      const ds = await Promise.all(files.map((f) => fetch(`../data/grants/${f}`).then((r) => r.json()).catch(() => null)));
+      const seen = new Set();
+      ds.forEach((d) => d && d.rows.forEach((x) => { if (seen.has(x.appl)) return; seen.add(x.appl); if (!u || orgMatch(x.org, u)) uRows.push(nihRow(x)); }));
+      uCounts.NIH = u ? uRows.filter((x) => x.src === "NIH").length : ds[0] && ds[0].total;
     })().catch(() => { uCounts.NIH = -1; }));
     await Promise.all(jobs);
     if (my !== uTok) return;
     const parts = [];
     if (uCounts.NSF > 0) parts.push(`<b>${fmt(uCounts.NSF)} active NSF awards</b>`);
     if (uCounts.NIH > 0) parts.push(`<b>${fmt(uCounts.NIH)} active NIH grants</b>${uCounts.NIHtopic && uCounts.NIHtopic.toLowerCase() !== q.toLowerCase() ? ` (topic “${esc(uCounts.NIHtopic)}”)` : ""}`);
-    $("#uBig").innerHTML = parts.length ? `Found ${parts.join(" and ")} on “${esc(q)}”.` :
-      `No active grants found for “${esc(q)}”.${uCounts.NIH === null && $("#uNIH").checked ? " For health topics, pick one from the NIH list or search NIH RePORTER directly." : ""}`;
+    const tail = u && $("#uNIH").checked ? ` NIH grants come from our weekly collection of ${NIH ? NIH.topics.length : 40} health topics — <a href="https://reporter.nih.gov/" target="_blank" rel="noopener">search NIH RePORTER</a> for all of ${esc(u)}'s NIH grants.` : "";
+    $("#uBig").innerHTML = (parts.length ? `Found ${parts.join(" and ")} ${esc(what)}.` :
+      `No active grants found ${esc(what)}.${u ? " Try the university's full official name, e.g. “University of Michigan”." : ""}${uCounts.NIH === null && $("#uNIH").checked ? " For health topics, pick one from the NIH list or search NIH RePORTER directly." : ""}`) + tail;
     uPage = 1; renderUsa();
   }
   const K = { lab: ["lab", "Individual lab grant"], train: ["train", "Training program"], ctr: ["ctr", "Research center"] };
@@ -355,7 +417,7 @@
     return L;
   }
   function renderUsa() {
-    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked), !$("#uQ").value.trim());
+    const L = sortFilter(uRows, "#uSort", "#u2028", (s) => (s === "NSF" ? $("#uNSF").checked : $("#uNIH").checked), !$("#uQ").value.trim() && !$("#uU").value.trim());
     if (!L.length) { $("#uList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#uMore").hidden = true; return; }
     $("#uList").innerHTML = grantTable(L.slice(0, uPage * 25), "$");
     $("#uMore").hidden = L.length <= uPage * 25;
@@ -366,7 +428,8 @@
   function initCanada() {
     if (caReady) return; caReady = true;
     const T = $("#tCanada");
-    T.innerHTML = `<div class="st-row"><input id="cQ" type="search" placeholder='e.g. "machine learning", "solar cells", "cancer", "water treatment"' aria-label="Research topic">
+    T.innerHTML = `<div class="st-row"><input id="cQ" type="search" placeholder='Topic, e.g. "machine learning", "solar cells", "cancer"' aria-label="Research topic">
+      <input id="cU" class="st-uni" type="search" placeholder='University, e.g. "University of Toronto", "UBC"' aria-label="University or institution">
       <select id="cSort" aria-label="Sort"><option value="amt">Sort: largest grant</option><option value="end">Sort: ending latest</option></select><button class="st-go" id="cGo">Search grants</button></div>
       <div class="st-chips"><label><input type="checkbox" id="cNSERC" checked> Science &amp; engineering (NSERC)</label><label><input type="checkbox" id="cCIHR" checked> Health (CIHR)</label>
         <label><input type="checkbox" id="c2028"> Only grants active until ${today.getFullYear() + 2} or later</label></div>
@@ -379,7 +442,7 @@
         <section class="panel2 st-tip">✉️ <b>Tip:</b> write to professors whose grants run 2+ more years. Mention the grant title and one of their recent papers, and ask whether they are taking a thesis-based MSc or PhD student.</section></aside></div>
       <p class="note">Official sources: <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">NSERC Awards Database</a> and <a href="https://open.canada.ca/data/en/dataset/49edb1d7-5cb4-4fa7-897c-515d1aad5da3" target="_blank" rel="noopener">CIHR Grants and Awards open data</a>, refreshed weekly. NSERC amounts are the yearly instalment; the end date comes from the number of instalments left. Amounts in Canadian dollars.</p>`;
     $("#cGo").addEventListener("click", runCanada);
-    $("#cQ").addEventListener("keydown", (e) => { if (e.key === "Enter") runCanada(); });
+    ["#cQ", "#cU"].forEach((k) => $(k).addEventListener("keydown", (e) => { if (e.key === "Enter") runCanada(); }));
     ["#cSort", "#c2028", "#cNSERC", "#cCIHR"].forEach((k) => $(k).addEventListener("input", () => { cPage = 1; renderCanada(); }));
     $("#cMore").addEventListener("click", () => { cPage++; renderCanada(); });
     fetch("../data/grants/ca-index.json", { cache: "no-cache" }).then((r) => r.json()).then((j) => {
@@ -388,7 +451,7 @@
       $("#cTopics").classList.toggle("note", !tp.length);
       $("#cTopics").innerHTML = tp.length ? tp.map(([t, s, n, k]) => `<button data-t="${esc(t)}">${esc(t)} <span>${fmt(k)}</span></button>`).join("") : "Topics appear after the next weekly update.";
       $("#cTopics").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("#cQ").value = b.dataset.t; runCanada(); }));
-      if (P.get("q") && tab === "canada") { $("#cQ").value = P.get("q"); runCanada(); } else canadaDefault();
+      if ((P.get("q") || P.get("u")) && tab === "canada") { $("#cQ").value = P.get("q") || ""; $("#cU").value = P.get("u") || ""; runCanada(); } else canadaDefault();
     }).catch(() => {
       $("#cTopics").textContent = "Topics appear after the next weekly update.";
       $("#cList").innerHTML = `<p class="note">Canadian grants are being collected and appear after the next daily update. Meanwhile, search the <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">NSERC Awards Database ↗</a>.</p>`;
@@ -403,34 +466,40 @@
     cPage = 1; renderCanada();
   }
   async function runCanada() {
-    const q = $("#cQ").value.trim(); setURL("q", q);
-    if (!q) return canadaDefault();
+    const q = $("#cQ").value.trim(), u = $("#cU").value.trim(); setURL("q", q); setURL("u", u);
+    if (!q && !u) return canadaDefault();
     const my = ++cTok; cRows = [];
-    $("#cTitle").textContent = `Canadian professors with active grants on “${q}”`;
+    const what = q && u ? `on “${q}” at ${u}` : q ? `on “${q}”` : `at ${u}`;
+    $("#cTitle").textContent = `Canadian professors with active grants ${what}`;
     $("#cList").innerHTML = `<p class="note">Searching…</p>`; $("#cBig").textContent = "";
     const ql = q.toLowerCase(), words = ql.split(/\s+/).filter(Boolean);
-    let nN = 0, nC = 0, topic = "";
+    const okOrg = (x) => !u || orgMatch(x.org, u);
+    let topic = "";
     const tps = (CA && CA.topics) || [];
-    const hit = tps.find(([t]) => t.toLowerCase() === ql) || tps.find(([t]) => ql.includes(t.toLowerCase()) || t.toLowerCase().includes(ql));
-    if (hit) {
-      const d = await fetch(`../data/grants/ca-nserc-${hit[1]}.json`).then((r) => r.json()).catch(() => null);
-      if (d) { topic = d.topic; d.rows.forEach((x) => cRows.push(caRow(x, "NSERC"))); nN = d.rows.length; }
-    }
+    const have = new Set();
+    const add = (x, src) => { const r = caRow(x, src); if (have.has(r.src + r.id) || !okOrg(r)) return; have.add(r.src + r.id); cRows.push(r); };
+    // NSERC: the matching topic file, or every topic file when searching a university only
+    let files = [];
+    if (q) { const hit = tps.find(([t]) => t.toLowerCase() === ql) || tps.find(([t]) => ql.includes(t.toLowerCase()) || t.toLowerCase().includes(ql)); if (hit) { files = [hit[1]]; topic = hit[0]; } }
+    else files = tps.filter((t) => t[3] > 0).map((t) => t[1]);
+    const ds = await Promise.all(files.map((sl) => fetch(`../data/grants/ca-nserc-${sl}.json`).then((r) => r.json()).catch(() => null)));
+    ds.forEach((d) => d && d.rows.forEach((x) => add(x, "NSERC")));
     // other NSERC rows already loaded (featured) whose title matches
-    const have = new Set(cRows.map((x) => x.id));
-    ((CA && CA.featured) || []).forEach((x) => { if (x.src === "NSERC" && !have.has(x.id) && words.every((w) => x.title.toLowerCase().includes(w))) { cRows.push(caRow(x)); nN++; } });
+    ((CA && CA.featured) || []).forEach((x) => { if (x.src === "NSERC" && words.every((w) => x.title.toLowerCase().includes(w))) add(x); });
     if (!CIHR) CIHR = await fetch("../data/grants/ca-cihr.json").then((r) => r.json()).then((j) => j.rows).catch(() => []);
-    CIHR.forEach((x) => { const h = `${x.title} ${x.kw} ${x.prog}`.toLowerCase(); if (words.every((w) => h.includes(w))) { cRows.push(caRow(x, "CIHR")); nC++; } });
+    CIHR.forEach((x) => { const h = `${x.title} ${x.kw} ${x.prog}`.toLowerCase(); if (words.every((w) => h.includes(w))) add(x, "CIHR"); });
     if (my !== cTok) return;
+    const nN = cRows.filter((x) => x.src === "NSERC").length, nC = cRows.filter((x) => x.src === "CIHR").length;
     const parts = [];
     if (nN) parts.push(`<b>${fmt(nN)} NSERC grant${nN === 1 ? "" : "s"}</b>${topic && topic.toLowerCase() !== ql ? ` (topic “${esc(topic)}”)` : ""}`);
     if (nC) parts.push(`<b>${fmt(nC)} CIHR grant${nC === 1 ? "" : "s"}</b>`);
-    $("#cBig").innerHTML = parts.length ? `Found ${parts.join(" and ")} on “${esc(q)}”.` :
-      `No active grants found for “${esc(q)}”. For science and engineering, pick a topic from the list or search the NSERC Awards Database directly.`;
+    const tail = u ? ` NSERC grants come from our weekly collection of ${tps.length} topics — <a href="https://nserc-crsng.canada.ca/en/awards-database" target="_blank" rel="noopener">search the NSERC Awards Database</a> for all of them.` : "";
+    $("#cBig").innerHTML = (parts.length ? `Found ${parts.join(" and ")} ${esc(what)}.` :
+      `No active grants found ${esc(what)}.${u ? " Try the university's full official name, e.g. “University of Toronto”." : " For science and engineering, pick a topic from the list or search the NSERC Awards Database directly."}`) + tail;
     cPage = 1; renderCanada();
   }
   function renderCanada() {
-    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked), !$("#cQ").value.trim());
+    const L = sortFilter(cRows, "#cSort", "#c2028", (s) => (s === "NSERC" ? $("#cNSERC").checked : $("#cCIHR").checked), !$("#cQ").value.trim() && !$("#cU").value.trim());
     if (!L.length) { $("#cList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#cMore").hidden = true; return; }
     $("#cList").innerHTML = grantTable(L.slice(0, cPage * 25), "CA$");
     $("#cMore").hidden = L.length <= cPage * 25;

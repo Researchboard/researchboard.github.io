@@ -342,6 +342,7 @@ table.sci td.on, table.sci th.on { background: rgba(244,210,122,.14); font-weigh
 .st-tabs button.on { background: #0e1a2b; color: #fff; border-color: #0e1a2b; }
 .sc-f, .st-row, .st-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
 .sc-f input[type=search], .st-row input { flex: 2 1 260px; font: inherit; padding: 11px 13px; border-radius: 11px; border: 2px solid #2a6fdb; background: var(--panel, #fff); color: inherit; }
+.st-row input.st-uni { flex: 1.3 1 220px; border-width: 1px; border-color: #7aa3e8; }
 .sc-f select, .st-row select { font: inherit; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--line, #cfd8e6); background: var(--panel, #fff); color: inherit; }
 .sc-f label, .st-chips label { font-size: 14px; display: inline-flex; gap: 6px; align-items: center; background: var(--panel, #fff); border: 1px solid var(--line, #cfd8e6); border-radius: 20px; padding: 6px 12px; cursor: pointer; }
 .sc-soon { background: #fff4e5; border: 1px solid #f5c26b; border-radius: 14px; padding: 11px 15px; margin-bottom: 10px; font-size: 14.5px; color: #3b2a07; }
