@@ -20,6 +20,7 @@ from PIL import ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import social_card as sc  # noqa: E402
+import data_checks as dc  # noqa: E402
 
 ROOT = sc.ROOT
 DATA = ROOT / "data"
@@ -90,18 +91,33 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
         rows = [(c, names.get(c, c), f"▲ {g * 100:.0f}%", g, f"{n:,} papers") for c, n, g in cand[:10] if g > 0]
         if len(rows) < 3:
             return None
-        return dict(kicker="RISING COUNTRIES · WEEK ON WEEK", title="Fastest-growing research countries",
+        note = card_note = ""
+        for c, *_r in rows[:5]:
+            sp_ = dc.country_spike(days, wk, c)
+            if sp_:
+                k, n = sp_
+                kd = dt.date.fromisoformat(k)
+                note = (f"much of the rise for {names.get(c, c)} comes from one day ({n:,} papers on {kd:%b} {kd.day}), "
+                        "for example a big conference, so it may not last")
+                card_note = f"{names.get(c, c)}: {n:,} papers on {kd:%b} {kd.day} alone (e.g. a big conference), so this rise may not last"
+                break
+        return dict(note=note, card_note=card_note, kicker="RISING COUNTRIES · WEEK ON WEEK", title="Fastest-growing research countries",
                     sub=f"Growth in share of world papers · {span_label(wk)} vs the week before (150+ papers)", rows=rows,
                     url=f"{SITE}/country/", unit="growth",
                     intro=f"🚀 Which countries grew their share of world research the most this week? ({span_label(wk)} vs the previous 7 days)",
                     tags=[tag(r[1]) for r in rows[:4]])
 
     if theme == "universities":
-        inst = (days[day].get("institutions") or [])[:10]
+        inst = dc.real_institutions(days[day].get("institutions"))[:10]
         if not inst:
             return None
+        spikes = [x["name"] for x in inst if dc.institution_spike(days, day, x["id"], x["count"])]
+        note = (f"{spikes[0]}: {dc.SPIKE_NOTE}" if len(spikes) == 1 else
+                f"{len(spikes)} institutions show unusual one-day jumps, which can happen when a big conference or special issue publishes many papers at once" if spikes else "")
+        card_note = (f"{spikes[0][:48]}: {dc.SPIKE_SHORT}" if len(spikes) == 1 else
+                     f"{len(spikes)} institutions: {dc.SPIKE_SHORT.replace('jump', 'jumps')}" if spikes else "")
         rows = [(ic.get(x["id"]) or "", x["name"], f"{x['count']:,}", x["count"], "") for x in inst]
-        return dict(kicker="DAILY LEADERBOARD · UNIVERSITIES", title="Top 10 most active universities",
+        return dict(note=note, card_note=card_note, kicker="DAILY LEADERBOARD · UNIVERSITIES", title="Top 10 most active universities",
                     sub=f"Papers with at least one author from each institution · {dl}", rows=rows,
                     url=f"{SITE}/universities/", unit="papers",
                     intro=f"🏛️ The 10 most active universities and research institutions on {d:%B} {d.day}:",
@@ -167,6 +183,12 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
 
 # --------------------------------------------------------------------------- card
 
+def fit_note(text, fnt, d, width=1072):
+    while d.textlength(text, font=fnt) > width and len(text) > 20:
+        text = text[:-2].rstrip() + "…"
+    return text
+
+
 def card(info: dict, theme: str, when: dt.date, site: str, slot: int = 0) -> Path:
     sc.use_theme(dt.date.fromordinal(when.toordinal() + 3 * slot + 1))
     img = sc.background()
@@ -176,6 +198,9 @@ def card(info: dict, theme: str, when: dt.date, site: str, slot: int = 0) -> Pat
     d.text((64, 150), info["kicker"], font=F("b", 19), fill=sc.ACCENT)
     d.text((64, 176), info["title"], font=F("x", 42), fill=sc.WHITE)
     d.text((64, 230), info["sub"], font=F("r", 19), fill=sc.MUTED)
+    if info.get("card_note") or info.get("note"):
+        d.text((64, 255), fit_note("⚠ Note: " + (info.get("card_note") or info["note"]), F("b", 15), d), font=F("b", 15),
+               fill=(255, 214, 102))
     rows = info["rows"]
     top = max((r[3] for r in rows), default=1) or 1
 
@@ -245,6 +270,8 @@ def compose_spotlight(when: dt.date | None = None, theme: str | None = None) -> 
         unit = " papers" if info["unit"] == "papers" else (" citations" if info["unit"] == "citations" and not val.startswith("+") else "")
         more = f" ({extra})" if extra and info["unit"] == "growth" else ""
         lines.append(f"{medals[i]} {name} — {val}{unit}{more}")
+    if info.get("note"):
+        lines += ["", f"⚠️ Note: {info['note']}."]
     lines += ["", f"See the full rankings and search any country or university 👉 {info['url']}",
               "📊 Data: OpenAlex (openalex.org), the open catalog of the world's research, counted by ResearchBoard.", "",
               " ".join(["#Research", "#Science"] + [t for t in info["tags"] if t] + ["#ResearchBoard"])]

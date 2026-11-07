@@ -223,9 +223,15 @@ def countries(day: dt.date) -> tuple[dict, dict]:
     return dict(sorted(counts.items(), key=lambda kv: -kv[1])), names
 
 
+# Government parent bodies (e.g. "State Council of the People's Republic of China") collect the papers of
+# every institute under them, so they are left out of "most active institution" lists.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from data_checks import is_government_body, sane_market_institutions  # noqa: E402
+
+
 def ranked(groups: list[dict], n: int) -> list[dict]:
     out = [{"id": short_id(g.get("key")), "name": g.get("key_display_name") or "Unknown", "count": g["count"]}
-           for g in groups if g.get("key")]
+           for g in groups if g.get("key") and not is_government_body(g.get("key_display_name"))]
     out.sort(key=lambda x: -x["count"])
     return out[:n]
 
@@ -392,7 +398,8 @@ def totals_now(today: dt.date) -> dict:
             "total": total, "countries": countries_, "institutions": insts}
 
 
-def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_deltas: list[int]) -> dict | None:
+def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_deltas: list[int],
+                  prev_flagged: str = "") -> dict | None:
     """Compare two snapshots ~24 h apart. Returns None if they can't be compared."""
     if not prev or prev.get("filter") != now["filter"]:
         return None
@@ -410,20 +417,43 @@ def market_change(now: dict, prev: dict, pubmed_yesterday: int | None, history_d
         flagged = "clean-up (OpenAlex removed more old records than it added)"
     elif added <= 0:
         flagged = "no growth (database update pending)"
-    elif usual and (added > 4 * usual or added < usual / 4):
+    elif prev_flagged:
+        flagged = "first day after a database clean-up (not comparable)"
+    elif not 8_000 <= added <= 45_000:
+        flagged = f"outside the normal daily range ({added:,}) - likely a database update or bulk import"
+    elif usual and (added > 3 * usual or added < usual / 3):
         flagged = f"unusual jump ({added:,} vs usual {usual:,}) - likely a database clean-up or bulk import"
+    elif c_delta and max(c_delta.values()) > 0.5 * added:
+        flagged = "one country makes up over half of the change - likely a bulk re-index"
     c_top = sorted(((c, d) for c, d in c_delta.items() if d > 0), key=lambda x: -x[1])[:10]
     i_top = []
     for iid, (name, n) in now["institutions"].items():
         if iid in prev["institutions"]:
             d = n - prev["institutions"][iid][1]
-            if d > 0:
+            # an institution can't add more papers than a quarter of the whole world's change: bigger jumps
+            # are OpenAlex re-crediting old papers, not new ones
+            if 0 < d <= 0.25 * max(added, 1) and not is_government_body(name):
                 i_top.append({"id": iid, "name": name, "added": d})
     i_top.sort(key=lambda x: -x["added"])
     return {"from": prev["at"], "to": now["at"], "hours": round(hours, 1), "papers_added": added,
             "pubmed_yesterday": pubmed_yesterday, "countries": [{"code": c, "added": d} for c, d in c_top],
             "countries_active": sum(1 for d in c_delta.values() if d > 0),
-            "institutions": i_top[:10], "flagged": flagged}
+            "institutions": i_top[:40], "flagged": flagged}
+
+
+def clean_market_institutions(market: dict, inst_country: dict) -> dict:
+    """Keep only institutions whose rise is no bigger than their own country's rise."""
+    c_add = {c["code"]: c["added"] for c in market.get("countries", [])}
+    keep = []
+    for i in market.get("institutions", []):
+        cc = inst_country.get(i["id"])
+        if cc and cc in c_add and i["added"] > c_add[cc]:
+            continue
+        if cc and cc not in c_add and i["added"] > min(c_add.values(), default=0):
+            continue  # its country isn't even among the top movers, so the jump can't be new papers
+        keep.append(i)
+    market["institutions"] = keep[:10]
+    return market
 
 # --------------------------------------------------------------------------- leaderboards
 
@@ -576,6 +606,13 @@ def gains(rows: list[dict], path: Path, today: dt.date) -> tuple[list[dict], str
             out.append({**r, "gain": r["citations"] - before})
     out.sort(key=lambda x: -x["gain"])
     gap = (today - dt.date.fromisoformat(base_date)).days or None
+    # OpenAlex sometimes merges author profiles or re-links references, which makes totals jump by
+    # thousands overnight. Real daily gains sit close to the day's median, so far-off jumps are dropped.
+    if out:
+        all_g = sorted(r["citations"] - base[r["id"]] for r in rows if r["id"] in base)
+        med = all_g[len(all_g) // 2] if all_g else 0
+        limit = max(8 * med, 50 * (gap or 1))
+        out = [r for r in out if r["gain"] <= limit]
     return out[:10], base_date, gap
 
 
@@ -677,8 +714,14 @@ def main() -> int:
     market = None
     deltas = [m["papers_added"] for m in history.get("market", []) if not m.get("flagged")][-14:]
     if now_totals:
-        market = market_change(now_totals, prev_totals, days.get(iso(newest), {}).get("pubmed_added"), deltas)
+        last_m = (history.get("market") or [{}])[-1]
+        market = market_change(now_totals, prev_totals, days.get(iso(newest), {}).get("pubmed_added"), deltas,
+                               last_m.get("flagged", "") if last_m.get("to") == prev_totals.get("at") else "")
         if market:
+            inst_country = safe("market institution countries", lambda: institution_countries(
+                [i["id"] for i in market["institutions"]], inst_country), inst_country)
+            market = clean_market_institutions(market, inst_country)
+            market["institutions"] = sane_market_institutions(market, inst_country, days)[:10]
             history["market"] = (history.get("market", []) + [market])[-120:]
         # Keep the old snapshot if this run came too soon after it (e.g. a manual re-run).
         if not prev_totals or market or (dt.datetime.fromisoformat(now_totals["at"]) -

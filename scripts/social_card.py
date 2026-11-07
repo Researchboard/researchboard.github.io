@@ -16,6 +16,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import data_checks as dc  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 FONTS = Path(__file__).resolve().parent / "fonts"
 DATA = ROOT / "data"
@@ -167,10 +170,12 @@ def make_daily_card(site: str = "researchboard.net") -> Path | None:
             txt = f"{i}. {names.get(code, code)}  {n:,}"
             d.text((x, 496), txt, font=font("b", 26), fill=WHITE)
             x += int(d.textlength(txt, font=font("b", 26))) + 44
-    inst = (rec.get("institutions") or [])[:1]
+    inst = dc.real_institutions(rec.get("institutions"))[:1]
     if inst:
-        d.text((64, 548), f"Most active institution: {inst[0]['name']} ({inst[0]['count']:,} papers)",
+        d.text((64, 540), f"Most active institution: {inst[0]['name']} ({inst[0]['count']:,} papers)",
                font=font("r", 21), fill=MUTED)
+        if dc.institution_spike(hist.get("days", {}), day, inst[0]["id"], inst[0]["count"]):
+            d.text((64, 568), f"⚠ Note: {dc.SPIKE_NOTE}", font=font("b", 17), fill=ACCENT)
     d.text((64, 594), "Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard",
            font=font("r", 16), fill=MUTED)
 
@@ -202,6 +207,11 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
     m = latest.get("market")
     if not m or m.get("flagged"):
         return None
+    try:
+        _days = json.loads((DATA / "history.json").read_text(encoding="utf-8")).get("days", {})
+    except (OSError, ValueError):
+        _days = {}
+
     names = latest.get("country_names", {})
     t0 = dt.datetime.fromisoformat(m["from"]); t1 = dt.datetime.fromisoformat(m["to"])
     up, down = (52, 220, 120), (255, 92, 92)
@@ -237,7 +247,7 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
     # headline number
     d.text((64, 248), "▲", font=font("x", 54), fill=up)
     d.text((128, 238), f"+{m['papers_added']:,}", font=font("x", 76), fill=up)
-    d.text((64, 330), "new papers added to the global research record", font=font("b", 22), fill=(190, 200, 216))
+    d.text((64, 330), "papers added to the OpenAlex research database", font=font("b", 22), fill=(190, 200, 216))
     y = 372
     if m.get("pubmed_yesterday"):
         d.text((64, y), f"+{m['pubmed_yesterday']:,}", font=font("x", 34), fill=WHITE)
@@ -258,12 +268,14 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
         d.text((x0 + 24, yy), c["code"], font=font("x", 22), fill=(150, 162, 184))
         d.text((x0 + 70, yy), name[:20], font=font("b", 22), fill=WHITE)
         d.text((W - 88, yy), f"▲ +{c['added']:,}", font=font("x", 22), fill=up, anchor="ra")
-    inst = (m.get("institutions") or [])[:1]
+    inst = dc.sane_market_institutions(m, latest.get("inst_country"), _days)[:1]
     if inst:
-        d.text((64, 560), f"Top institution: {inst[0]['name']}  ▲ +{inst[0]['added']:,}",
+        d.text((64, 552), f"Top institution: {inst[0]['name']}  ▲ +{inst[0]['added']:,}",
                font=font("r", 20), fill=(150, 162, 184))
-    d.text((64, 596), "Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard",
-           font=font("r", 16), fill=(150, 162, 184))
+    d.text((64, 588), "Note: counts papers from this year and last year that were indexed in these 24 hours, not only papers published today.",
+           font=font("r", 15), fill=(150, 162, 184))
+    d.text((64, 608), "Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard",
+           font=font("r", 15), fill=(150, 162, 184))
 
     CARDS.mkdir(parents=True, exist_ok=True)
     out = CARDS / f"market-{t1.date().isoformat()}.png"

@@ -44,6 +44,9 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import data_checks as dc  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 LOG = DATA / "social_log.json"
@@ -123,9 +126,11 @@ def compose() -> dict | None:
     ]
     if top:
         lines += ["", "Top countries:"] + [f"{medals[i]} {names.get(c, c)} — {n:,}" for i, (c, n) in enumerate(top)]
-    inst = (rec.get("institutions") or [])[:1]
+    inst = dc.real_institutions(rec.get("institutions"))[:1]
     if inst:
         lines += ["", f"Most active institution: {inst[0]['name']} ({inst[0]['count']:,} papers)"]
+        if dc.institution_spike(hist.get("days", {}), day, inst[0]["id"], inst[0]["count"]):
+            lines.append(f"⚠️ Note: {dc.SPIKE_NOTE}.")
     url = f"{SITE}/blog/daily-{day}.html"
     lines += ["", f"Full daily report 👉 {url}",
               "📊 Data: OpenAlex (openalex.org) for papers, citations and institutions, and PubMed (US National Library of Medicine), counted by ResearchBoard.",
@@ -148,13 +153,19 @@ def compose_market() -> dict | None:
     m = latest.get("market")
     if not m or m.get("flagged"):
         return None
+    try:
+        _days = json.loads((DATA / "history.json").read_text(encoding="utf-8")).get("days", {})
+    except (OSError, ValueError):
+        _days = {}
+
     names = latest.get("country_names", {})
     t0 = dt.datetime.fromisoformat(m["from"]); t1 = dt.datetime.fromisoformat(m["to"])
     window = f"{t0:%b} {t0.day}, {t0:%H:%M} → {t1:%b} {t1.day}, {t1:%H:%M} UTC"
     hrs = round(m.get("hours") or 24)
     span = "last 24 hours" if abs(hrs - 24) <= 2 else f"last {hrs} hours"
     lines = [f"📈 Research trends — {span}", f"⏱️ {window}", "",
-             f"▲ +{m['papers_added']:,} new papers added to the global research record"]
+             f"▲ +{m['papers_added']:,} papers added to the OpenAlex research database",
+             "(papers from this year and last year indexed in these 24 hours, not only papers published today)"]
     if m.get("pubmed_yesterday"):
         lines.append(f"🧬 +{m['pubmed_yesterday']:,} records added to PubMed")
     if m.get("countries_active"):
@@ -162,7 +173,7 @@ def compose_market() -> dict | None:
     movers = m.get("countries", [])[:5]
     if movers:
         lines += ["", "Top movers:"] + [f"▲ {names.get(c['code'], c['code'])} +{c['added']:,}" for c in movers]
-    inst = (m.get("institutions") or [])[:1]
+    inst = dc.sane_market_institutions(m, latest.get("inst_country"), _days)[:1]
     if inst:
         lines += ["", f"🏛️ Top institution: {inst[0]['name']} +{inst[0]['added']:,}"]
     lines += ["", f"Live dashboard 👉 {SITE}",
@@ -170,7 +181,7 @@ def compose_market() -> dict | None:
               "", "#Research #Science #OpenScience #ResearchTrends #ResearchBoard"]
     day = t1.date().isoformat()
     card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
-    short = [f"📈 Research trends — {span}", f"▲ +{m['papers_added']:,} new papers added"]
+    short = [f"📈 Research trends — {span}", f"▲ +{m['papers_added']:,} papers added to the database"]
     if m.get("pubmed_yesterday"):
         short.append(f"🧬 +{m['pubmed_yesterday']:,} PubMed records")
     if movers:
