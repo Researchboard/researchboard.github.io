@@ -142,7 +142,8 @@ def compose() -> dict | None:
         medals = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8.", "9.", "10."]
         lines += [f"{medals[i]} {r['name']} +{r['added']:,}" for i, r in enumerate(m["institutions"][:10])]
     url = f"{SITE}/country/{slug}.html"
-    lines += ["", f"{name} papers day by day 👉 {url}", "",
+    lines += ["", f"{name} papers day by day 👉 {url}",
+              "📊 Data: OpenAlex (openalex.org), the open catalog of the world's research; papers added in the last 24 hours, counted by ResearchBoard.", "",
               f"#{name.replace(' ', '')} #{name.replace(' ', '')}Research #Research #Science #ResearchBoard"]
     day = b.date().isoformat()
     path = sc.CARDS / f"{CC.lower()}-{day}.png"
