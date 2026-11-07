@@ -396,9 +396,8 @@
       borderColor: css("--accent"), backgroundColor: css("--accent-fill"), fill: true, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: "monotone", spanGaps: true }] }, options: o });
     const d = ((S.latest && S.latest.countries_detail) || {})[code] || {};
     listInto($("#cv-insts"), d.top_institutions, (x) => rankItem(x.name, null, fmt(x.count)));
-    listInto($("#cv-authors"), d.top_authors, (a) => rankItem(a.name, a.institution, fmt(a.citations)));
     const ld = S.latest && S.latest.latest_day;
-    $("#cv-note").textContent = `Institutions and PubMed counts are for ${ld ? longDate(ld) : "the latest day"} (collected for the top ${Object.keys((S.latest && S.latest.countries_detail) || {}).length} countries). Scientists are ranked by all-time citations with a current affiliation in ${name}.`;
+    $("#cv-note").textContent = `Institutions and PubMed counts are for ${ld ? longDate(ld) : "the latest day"} (collected for the top ${Object.keys((S.latest && S.latest.countries_detail) || {}).length} countries).`;
   }
   function countryTrendFor(k, code) { const c = rec(k).countries || {}; return Array.isArray(c) ? ((c.find((x) => x.code === code) || {}).count ?? null) : (c[code] ?? null); }
 
