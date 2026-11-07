@@ -13,7 +13,7 @@
   const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const today = new Date();
   const P = new URLSearchParams(location.search);
-  let tab = ["scholarships", "professors", "usa", "canada"].includes(P.get("tab")) ? P.get("tab") : "scholarships";
+  let tab = ["scholarships", "professors", "usa", "canada", "positions"].includes(P.get("tab")) ? P.get("tab") : "scholarships";
   function setURL(k, v) { try { const u = new URL(location.href); if (v) u.searchParams.set(k, v); else u.searchParams.delete(k); history.replaceState(null, "", u); } catch (_) {} }
 
   // ---- university / institution search (grants tabs)
@@ -89,13 +89,13 @@
       <p>Fully funded scholarships for international students, professors with funded research in 10 countries, and US and Canadian professors with active government grants — all free, with links to official sources.</p>
       <p class="st-hero-link"><a href="../us-universities/">🗺️ Map of every US university for master's &amp; PhD — application fees, tuition, international students →</a></p></div>
     <div class="st-tabs" role="tablist">
-      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button><button data-t="canada"><span class="fi fi-ca"></span> Canada active grants</button></div>
-    <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div><div id="tCanada" hidden></div>`;
+      <button data-t="scholarships">🎓 Scholarships</button><button data-t="professors">💰 Funded professors</button><button data-t="usa"><span class="fi fi-us"></span> US active grants</button><button data-t="canada"><span class="fi fi-ca"></span> Canada active grants</button><button data-t="positions">💼 US open positions</button></div>
+    <div id="tScholarships"></div><div id="tProfessors" hidden></div><div id="tUsa" hidden></div><div id="tCanada" hidden></div><div id="tPositions" hidden></div>`;
   function show(t) {
     tab = t; setURL("tab", t === "scholarships" ? "" : t);
     box.querySelectorAll(".st-tabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
-    $("#tScholarships").hidden = t !== "scholarships"; $("#tProfessors").hidden = t !== "professors"; $("#tUsa").hidden = t !== "usa"; $("#tCanada").hidden = t !== "canada";
-    if (t === "scholarships") initScholarships(); else if (t === "professors") initProfessors(); else if (t === "usa") initUsa(); else initCanada();
+    $("#tScholarships").hidden = t !== "scholarships"; $("#tProfessors").hidden = t !== "professors"; $("#tUsa").hidden = t !== "usa"; $("#tCanada").hidden = t !== "canada"; $("#tPositions").hidden = t !== "positions";
+    if (t === "scholarships") initScholarships(); else if (t === "professors") initProfessors(); else if (t === "usa") initUsa(); else if (t === "positions") initPositions(); else initCanada();
   }
   box.querySelectorAll(".st-tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.t)));
 
@@ -503,6 +503,50 @@
     if (!L.length) { $("#cList").innerHTML = `<p class="note">No active grants to show.</p>`; $("#cMore").hidden = true; return; }
     $("#cList").innerHTML = grantTable(L.slice(0, cPage * 25), "CA$");
     $("#cMore").hidden = L.length <= cPage * 25;
+  }
+
+    // =================================================================== US open positions (postdoc / graduate)
+  let POS = null, posPage = 1;
+  async function initPositions() {
+    const T = $("#tPositions");
+    if (T.dataset.ready) return; T.dataset.ready = 1;
+    T.innerHTML = `<div class="st-row"><input id="pQ" type="search" placeholder='Search topic or lab, e.g. "stem cells", "bioinformatics", "Ellis"' aria-label="Search positions">
+        <select id="pKind" aria-label="Type"><option value="">Postdoc &amp; graduate</option><option>Postdoc</option><option>Graduate</option></select>
+        <select id="pField" aria-label="Field"><option value="">All fields</option></select>
+        <select id="pSt" aria-label="State"><option value="">All states</option></select></div>
+      <p class="st-big" id="pBig">Loading open positions…</p><div id="pList"></div><div class="st-more" id="pMore"></div>
+      <p class="note">From each university's official job site, updated daily. Always read the full ad and apply on the official site. In the US, PhD students are usually admitted through department applications rather than job ads, so also try <a href="?tab=usa">professors with active grants</a>.</p>`;
+    POS = await fetch("../data/positions/us.json").then((r) => r.json()).catch(() => null);
+    if (!POS || !POS.rows || !POS.rows.length) { $("#pBig").textContent = "Open positions will appear here soon."; return; }
+    const uniq = (k) => [...new Set(POS.rows.map((r) => r[k]))].filter(Boolean).sort();
+    $("#pField").insertAdjacentHTML("beforeend", uniq("field").map((f) => `<option>${esc(f)}</option>`).join(""));
+    $("#pSt").insertAdjacentHTML("beforeend", uniq("st").map((f) => `<option>${esc(f)}</option>`).join(""));
+    if (P.get("q") && tab === "positions") $("#pQ").value = P.get("q");
+    ["#pQ", "#pKind", "#pField", "#pSt"].forEach((k) => $(k).addEventListener("input", () => { posPage = 1; renderPositions(); }));
+    renderPositions();
+  }
+  function posAge(d) {
+    const days = Math.round((today - new Date(d + "T12:00:00")) / 864e5);
+    return days <= 0 ? "today" : days === 1 ? "yesterday" : days < 30 ? `${days} days ago` : `${MON[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}`;
+  }
+  function renderPositions() {
+    const q = $("#pQ").value.trim().toLowerCase(), k = $("#pKind").value, f = $("#pField").value, st = $("#pSt").value;
+    if (tab === "positions") setURL("q", q);
+    const words = q.split(/\s+/).filter(Boolean);
+    const L = POS.rows.filter((r) => (!k || r.kind === k) && (!f || r.field === f) && (!st || r.st === st) &&
+      words.every((w) => `${r.title} ${r.sum} ${r.pi} ${r.uni} ${r.field}`.toLowerCase().includes(w)));
+    const nU = new Set(L.map((r) => r.uni)).size;
+    $("#pBig").innerHTML = `<b>${fmt(L.length)} open position${L.length === 1 ? "" : "s"}</b> at ${fmt(nU)} US universit${nU === 1 ? "y" : "ies"} · updated ${esc(POS.updated)}`;
+    const shown = L.slice(0, posPage * 20);
+    $("#pList").innerHTML = shown.length ? shown.map((r) => `<article class="sc pos"><div class="sc-top"><div>
+        <div class="pos-k"><span class="${r.kind === "Postdoc" ? "pd" : "gr"}">${esc(r.kind)}</span> ${esc(r.field)}</div>
+        <h3>${esc(r.title)}</h3><div class="sc-c">🏛️ ${esc(r.uni)} · ${esc(r.city)}, ${esc(r.st)}${r.pi ? ` · 👤 ${esc(r.pi)}` : ""}</div></div>
+        <span class="dl open">Posted ${esc(posAge(r.date))}</span></div>
+      <p>${esc(r.sum)}</p>
+      <div class="sc-ft"><span class="usu">Official job ad</span><span class="st-acts">${r.pi ? `<a href="../scientists/?q=${encodeURIComponent(r.pi)}">See ${esc(r.pi)}'s papers</a> ` : ""}<a class="sc-go" href="${esc(r.url)}" target="_blank" rel="noopener">Apply on official site ↗</a></span></div></article>`).join("")
+      : `<p class="note">No open positions match. Try a broader word or clear a filter.</p>`;
+    $("#pMore").innerHTML = L.length > shown.length ? `<button type="button">Show more (${fmt(L.length - shown.length)} more)</button>` : "";
+    const b = $("#pMore button"); if (b) b.onclick = () => { posPage++; renderPositions(); };
   }
 
   show(tab);

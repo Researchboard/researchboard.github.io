@@ -511,3 +511,11 @@ table.sci td.on, table.sci th.on { background: rgba(244,210,122,.14); font-weigh
 .usm-kpis.req b { font-size: 16.5px; }
 .usm-kpis.req b.ns { color: var(--muted); font-size: 14.5px; font-weight: 600; }
 .usm-kpis.req.dl { grid-template-columns: 1fr; } .usm-kpis.req.dl b { font-size: 15px; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; }
+
+/* US open positions tab */
+.pos-k { font-size: 12.5px; font-weight: 700; color: #4a5b70; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.pos-k span { border-radius: 20px; padding: 2px 10px; font-size: 12px; }
+.pos-k .pd { background: rgba(42,111,219,.12); color: #1d4ed8; }
+.pos-k .gr { background: rgba(16,185,129,.14); color: #047857; }
+.sc.pos h3 { font-size: 17px; line-height: 1.3; margin: 2px 0 4px; }
+.st-more button { font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 11px; border: 1px solid var(--line, #cfd8e6); background: var(--panel, #fff); color: inherit; cursor: pointer; }
