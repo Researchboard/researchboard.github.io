@@ -140,7 +140,12 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
         if auth:
             auth_html = ("<h2>Top 5 most-cited scientists</h2><ol class=\"c-list\">" +
                          "".join(f"<li>{esc(a.get('name', ''))} <span class=\"muted\">· {esc(a.get('institution') or '')}"
-                                 f" · {a.get('citations', 0):,} OpenAlex citations</span></li>" for a in auth[:5]) + "</ol>")
+                                 f" · {a.get('citations', 0):,} OpenAlex citations</span></li>" for a in auth[:5]) + "</ol>" +
+                        "<p class=\"muted small\">ℹ️ How this list is made: scientists whose latest affiliation in OpenAlex "
+                        f"includes an institution in {esc(name)}. Many work abroad too, so both institutions may be shown. "
+                        "OpenAlex matches affiliations automatically, and universities with the same name in different countries "
+                        "(for example Southeast University in Dhaka and in Nanjing, China) can get mixed up. We remove the mix-ups "
+                        "we can detect, but please check a scientist's own profile before relying on this list.</p>")
 
         last14 = list(zip(keys30, series))[-14:]
         table = ("<h2>Papers per day</h2><table class=\"c-table\"><thead><tr><th>Date</th><th>Papers</th></tr></thead><tbody>" +
@@ -168,6 +173,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
 <p class="muted small">Counts are papers (articles, reviews, preprints, letters, conference papers and book chapters) with at least one author
 affiliated with an institution in {esc(name)}, by publication date, from <a href="https://openalex.org" rel="noopener">OpenAlex</a>.
 Recent days keep rising for a week as journals report their papers.
+Institutions are matched to papers automatically by OpenAlex, so now and then a paper is credited to a different institution with the same name.
 The <b>fractional count</b> gives each country an equal share of papers written with other countries (a paper by authors from 2 countries counts ½ for each), so it is not inflated by international co-authorship.
 <a href="../about/methods.html">How we count</a>.</p>
 <p><a class="btn" href="../">Open the live dashboard</a> {('· Nearby in the ranking: ' + neigh_html) if neigh_html else ''}</p>
