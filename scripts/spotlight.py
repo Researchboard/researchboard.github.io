@@ -101,7 +101,7 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
                         "for example a big conference, so it may not last")
                 card_note = f"{names.get(c, c)}: {n:,} papers on {kd:%b} {kd.day} alone (e.g. a big conference), so this rise may not last"
                 break
-        return dict(note=note, card_note=card_note, kicker="RISING COUNTRIES · WEEK ON WEEK", title="Fastest-growing research countries",
+        return dict(note=note, card_note=card_note, kicker="RISING COUNTRIES · WEEK ON WEEK", title="This week’s rising countries",
                     sub=f"Growth in share of world papers · {span_label(wk)} vs the week before (150+ papers)", rows=rows,
                     url=f"{SITE}/country/", unit="growth",
                     intro=f"🚀 Which countries grew their share of world research the most this week? ({span_label(wk)} vs the previous 7 days)",
