@@ -496,13 +496,38 @@ def top_authors(n: int) -> list[dict]:
 AUTHOR_COUNTRY_FILTERS = ["last_known_institutions.country_code", "last_known_institution.country_code"]
 
 
+def same_name_elsewhere(a: dict, country: str) -> bool:
+    """True when every in-country affiliation shares its name with an institution in another country
+    the author has also worked at (OpenAlex sometimes confuses e.g. Southeast University in Nanjing, China,
+    with Southeast University in Dhaka, Bangladesh). Such authors are left out of the country's list."""
+    home, away = set(), set()
+    for f in a.get("affiliations") or []:
+        inst = f.get("institution") or {}
+        nm = (inst.get("display_name") or "").strip().lower()
+        (home if (inst.get("country_code") or "").upper() == country else away).add(nm)
+    return bool(home) and home <= away
+
+
 def top_authors_in(country: str, n: int = 5) -> list[dict]:
     last_err = None
     for f in AUTHOR_COUNTRY_FILTERS:
         try:
             data = openalex("authors", filter=f"{f}:{country}", sort="cited_by_count:desc",
-                            per_page=n, select=AUTHOR_FIELDS)
-            return [author_row(a) for a in data.get("results", [])]
+                            per_page=n * 4, select=AUTHOR_FIELDS + ",affiliations")
+            rows = []
+            for a in data.get("results", []):
+                if same_name_elsewhere(a, country.upper()):
+                    continue
+                row = author_row(a)
+                # show the in-country institution too when the first listed one is abroad
+                local = next((i.get("display_name") for i in a.get("last_known_institutions") or []
+                              if (i.get("country_code") or "").upper() == country.upper()), None)
+                if local and row.get("country") != country.upper():
+                    row["institution"] = f"{row['institution']} & {local}" if row.get("institution") else local
+                rows.append(row)
+                if len(rows) == n:
+                    break
+            return rows
         except RuntimeError as e:
             last_err = e
             if "HTTP 400" not in str(e) and "HTTP 403" not in str(e):
