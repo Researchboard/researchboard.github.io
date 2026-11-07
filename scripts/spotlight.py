@@ -213,6 +213,7 @@ def card(info: dict, theme: str, when: dt.date, site: str, slot: int = 0) -> Pat
             if extra and info["unit"] in ("papers",):
                 d.text((x + 510, y + 26), extra, font=F("b", 14), fill=sc.MUTED, anchor="ra")
     d.text((64, 590), f"Full rankings → {info['url'].split('://', 1)[-1]}", font=F("b", 19), fill=sc.MUTED)
+    d.text((W_ - 64, 594), "Data: OpenAlex (openalex.org)", font=F("r", 16), fill=sc.MUTED, anchor="ra")
     sc.CARDS.mkdir(parents=True, exist_ok=True)
     out = sc.CARDS / f"spotlight-{when.isoformat()}-{theme}.png"
     img.save(out, optimize=True)

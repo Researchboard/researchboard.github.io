@@ -171,6 +171,8 @@ def make_daily_card(site: str = "researchboard.net") -> Path | None:
     if inst:
         d.text((64, 548), f"Most active institution: {inst[0]['name']} ({inst[0]['count']:,} papers)",
                font=font("r", 21), fill=MUTED)
+    d.text((64, 594), "Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard",
+           font=font("r", 16), fill=MUTED)
 
     CARDS.mkdir(parents=True, exist_ok=True)
     out = CARDS / f"daily-{day}.png"
@@ -258,8 +260,10 @@ def make_market_card(site: str = "researchboard.net") -> Path | None:
         d.text((W - 88, yy), f"▲ +{c['added']:,}", font=font("x", 22), fill=up, anchor="ra")
     inst = (m.get("institutions") or [])[:1]
     if inst:
-        d.text((64, 568), f"Top institution: {inst[0]['name']}  ▲ +{inst[0]['added']:,}",
+        d.text((64, 560), f"Top institution: {inst[0]['name']}  ▲ +{inst[0]['added']:,}",
                font=font("r", 20), fill=(150, 162, 184))
+    d.text((64, 596), "Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard",
+           font=font("r", 16), fill=(150, 162, 184))
 
     CARDS.mkdir(parents=True, exist_ok=True)
     out = CARDS / f"market-{t1.date().isoformat()}.png"

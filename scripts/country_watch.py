@@ -106,12 +106,14 @@ def card(m: dict) -> Path:
     d.text((64 + w + 18, 262), "new papers", font=F("b", 30), fill=MUTED)
     d.text((64, 336), f"{m['articles_added']:,} journal articles  ·  {m['institutions_added']:,} institutions contributed",
            font=F("b", 24), fill=GOLD)
-    d.text((64, 392), "MOST ACTIVE INSTITUTIONS", font=F("b", 16), fill=MUTED)
+    d.text((64, 386), "MOST ACTIVE INSTITUTIONS", font=F("b", 16), fill=MUTED)
     for i, r in enumerate(m["institutions"][:5]):
-        y = 420 + i * 38
+        y = 412 + i * 35
         nm = r["name"] if len(r["name"]) <= 46 else r["name"][:45] + "…"
         d.text((64, y), f"{i + 1}. {nm}", font=F("b", 23), fill=WHITE)
         d.text((800, y), f"+{r['added']:,}", font=F("x", 23), fill=GOLD, anchor="ra")
+    d.text((64, 596), "Data: OpenAlex (openalex.org) · papers added in the last 24 hours, counted by ResearchBoard",
+           font=F("r", 16), fill=MUTED)
     sc.CARDS.mkdir(parents=True, exist_ok=True)
     out = sc.CARDS / f"{CC.lower()}-{b.date().isoformat()}.png"
     img.save(out, optimize=True)
