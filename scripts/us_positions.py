@@ -106,8 +106,9 @@ def summary(s, n=260):
 
 
 def supervisor(t):
-    for pat in (r"\b(?:Dr\.|Professor|Prof\.)\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z]\.)?\s+[A-Z][a-zA-Z'\-]+)",
-                r"\bthe\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)?)\s+[Ll]ab(?:oratory)?\b",
+    for pat in (r"\b[Ll]ab(?:oratory|oratories)? of (?:Dr\.\s+|Professor\s+)?([A-Z][a-zA-Z'\-]+\s+[A-Z][a-zA-Z'\-]+)",
+                r"\b(?:Dr\.|Professor|Prof\.)\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z]\.)?\s+[A-Z][a-zA-Z'\-]+)",
+                r"\b[Tt]he\s+([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)?)\s+[Ll]ab(?:oratory)?\b",
                 r"\b([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+)?)\s+[Ll]ab\b"):
         m = re.search(pat, t)
         if m and not re.search(r"^(The|Our|This|Research|Honey|Bee|UGA|UNC|AI|Computer|Mixed|Vision)\b", m.group(1)):
