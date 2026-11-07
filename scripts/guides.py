@@ -169,7 +169,7 @@ A paper counts for a country when at least one author works at an institution th
 
 ## How many countries publish research?
 
-In the last {n} days, researchers in **{len(ranked)} countries and territories** published at least one paper. Click any country above for its own page with daily numbers, top universities and most-cited scientists, or search any country in the search box at the top.
+In the last {n} days, researchers in **{len(ranked)} countries and territories** published at least one paper. Click any country above for its own page with daily numbers and top universities, or search any country in the search box at the top.
 """)
 
     # ---------------------------------------------------------------- 3. universities
@@ -349,7 +349,7 @@ Each paper is counted once, under its main field (OpenAlex topics). See the [liv
 
 ## Follow your country
 
-Every country has its own page with papers per day, top universities and most-cited scientists. ResearchBoard also posts a daily Bangladesh update on Facebook. Use the search box at the top to look up any university, for example University of Dhaka or BUET.
+Every country has its own page with papers per day and top universities. ResearchBoard also posts a daily Bangladesh update on Facebook. Use the search box at the top to look up any university, for example University of Dhaka or BUET.
 """)
     rank_of = {c: i for i, (c, _) in enumerate(ranked, 1)}
 

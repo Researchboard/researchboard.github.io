@@ -636,7 +636,6 @@ def main() -> int:
             "papers": country_counts.get(code, 0),
             "pubmed_added": pm,
             "top_institutions": safe(f"institutions {code}", lambda: top_institutions(rank_day, code, 5), []),
-            "top_authors": safe(f"authors {code}", lambda: top_authors_in(code), []),
         }
     rec["pubmed_by_country"] = pubmed_by_country
 
@@ -655,11 +654,8 @@ def main() -> int:
             week_flt + f",authorships.institutions.country_code:{code}", "authorships.institutions.lineage"), 5), None)
         if insts is None:
             insts = (old_detail.get(code) or {}).get("top_institutions", [])
-        auth = safe(f"authors {code}", lambda: top_authors_in(code), None)
-        if auth is None:
-            auth = (old_detail.get(code) or {}).get("top_authors", [])
         countries_detail[code] = {"name": names.get(code, code), "papers": country_counts.get(code, 0),
-                                  "top_institutions": insts or [], "inst_days": 7, "top_authors": auth or []}
+                                  "top_institutions": insts or [], "inst_days": 7}
 
     # 4) Country of each institution shown on the board.
     inst_country = dict(previous_latest.get("inst_country", {}))

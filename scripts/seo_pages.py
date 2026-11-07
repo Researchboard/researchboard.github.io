@@ -135,17 +135,7 @@ def build(root: Path, site_url: str, page, out_blog: Path) -> list[tuple[str, st
                                  for i in insts[:5]) + "</ol>")
         inst_html += (f'<p><a href="../universities/?c={code}#udir"><b>See every university in {esc(name)} →</b></a></p>'
                       if len(code) == 2 else "")
-        auth = det.get("top_authors") or []
-        auth_html = ""
-        if auth:
-            auth_html = ("<h2>Top 5 most-cited scientists</h2><ol class=\"c-list\">" +
-                         "".join(f"<li>{esc(a.get('name', ''))} <span class=\"muted\">· {esc(a.get('institution') or '')}"
-                                 f" · {a.get('citations', 0):,} OpenAlex citations</span></li>" for a in auth[:5]) + "</ol>" +
-                        "<p class=\"muted small\">ℹ️ How this list is made: scientists whose latest affiliation in OpenAlex "
-                        f"includes an institution in {esc(name)}. Many work abroad too, so both institutions may be shown. "
-                        "OpenAlex matches affiliations automatically, and universities with the same name in different countries "
-                        "(for example Southeast University in Dhaka and in Nanjing, China) can get mixed up. We remove the mix-ups "
-                        "we can detect, but please check a scientist's own profile before relying on this list.</p>")
+        auth_html = ""  # country scientist lists removed: affiliation matching can mislead
 
         last14 = list(zip(keys30, series))[-14:]
         table = ("<h2>Papers per day</h2><table class=\"c-table\"><thead><tr><th>Date</th><th>Papers</th></tr></thead><tbody>" +
@@ -178,9 +168,9 @@ The <b>fractional count</b> gives each country an equal share of papers written 
 <a href="../about/methods.html">How we count</a>.</p>
 <p><a class="btn" href="../">Open the live dashboard</a> {('· Nearby in the ranking: ' + neigh_html) if neigh_html else ''}</p>
 </article>"""
-        title = f"{name} research output {d.year}: papers per day, universities and scientists · ResearchBoard"
+        title = f"{name} research output {d.year}: papers per day and universities · ResearchBoard"
         desc = (f"{name}: {n:,} research papers published on {nice(d)}" + (f" (#{rank} worldwide)" if rank else "") +
-                f". Daily research statistics for {name}: papers, top universities and most-cited scientists, updated every day.")
+                f". Daily research statistics for {name}: papers per day and top universities, updated every day.")
         htm = page(title, desc, body, f"{site_url}/country/{slug}.html", active="Countries", extra_head=
                    f'<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" integrity="sha384-aQuvIWWIbpu/mSqULLDiUveyYiPoJzPKAWjUmGJ+Elm+N/LJhzfZqsutsfw870JS" crossorigin="anonymous">'
                    f'<script type="application/ld+json">{ld}</script>')
