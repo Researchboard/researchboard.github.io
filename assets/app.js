@@ -1,6 +1,9 @@
 /* ResearchBoard — renders data/history.json and data/latest.json */
 (function () {
   "use strict";
+  // government parent bodies (e.g. "State Council of the People's Republic of China") gather every institute's papers; leave them out
+  const GOV_RE = /^(State Council of|United States Department of|U\.?S\.? Department of|Department of |Ministry |Ministère|Ministerio|Ministério|Office of Science$|Government of|National Health Service$|Federal Ministry)/i;
+  const realInsts = (a) => (a || []).filter((x) => !GOV_RE.test((x.name || "").trim()));
 
   const S = { history: null, latest: null, day: null, metric: "papers", range: 30, crange: 7, country: null, charts: {}, world: null };
   const $ = (s) => document.querySelector(s);
@@ -259,7 +262,7 @@
   function renderTables() {
     const r = rec(S.day), total = r.papers;
     fillTable($("#tbl-countries tbody"), countries(S.day).slice(0, 10), (c, i) => countryRow(c, i, total, countryTrend(c.code)));
-    fillTable($("#tbl-insts tbody"), (r.institutions || []).slice(0, 10), (x, i) => {
+    fillTable($("#tbl-insts tbody"), realInsts(r.institutions).slice(0, 10), (x, i) => {
       const tr = el("tr"); tr.dataset.name = x.name;
       rowCells(tr, [td(String(i + 1), "rank"), nameCell(x.name), td(fmt(x.count), "num"), ccCell(instCountry(x.id))]);
       const t = el("td"); t.appendChild(sparkline(instTrend(x.id))); tr.appendChild(t);
@@ -285,7 +288,7 @@
     } else if (kind === "universities") {
       $("#moreTitle").textContent = "Top universities & institutes · " + shortDate(S.day);
       head([["#"], ["Institution"], ["Papers", "num"], ["Country"]]);
-      fillTable(tbody, r.institutions || [], (x, i) => { const tr = el("tr"); tr.dataset.name = x.name; return rowCells(tr, [td(String(i + 1), "rank"), nameCell(x.name), td(fmt(x.count), "num"), ccCell(instCountry(x.id))]); });
+      fillTable(tbody, realInsts(r.institutions), (x, i) => { const tr = el("tr"); tr.dataset.name = x.name; return rowCells(tr, [td(String(i + 1), "rank"), nameCell(x.name), td(fmt(x.count), "num"), ccCell(instCountry(x.id))]); });
     } else {
       $("#moreTitle").textContent = "Top journals · " + shortDate(S.day);
       head([["#"], ["Journal"], ["Papers", "num"]]);
@@ -502,7 +505,10 @@
       if (m.pubmed_yesterday) items.push(tk("PubMed records added", "▲ +" + fmt(m.pubmed_yesterday), null, true));
       if (m.countries_active) items.push(tk("Countries contributing", fmt(m.countries_active), null, true));
       (m.countries || []).slice(0, 10).forEach((c) => items.push(tk(countryName(c.code), "▲ +" + fmt(c.added), c.code)));
-      (m.institutions || []).slice(0, 5).forEach((i) => items.push(tk(i.name, "▲ +" + fmt(i.added))));
+      { const topC = Math.max(0, ...(m.countries || []).map((c) => c.added)), lim = Math.min(topC, 0.25 * Math.max(m.papers_added || 0, 1));
+        const ic = (S.latest && S.latest.inst_country) || {}, cAdd = {}; (m.countries || []).forEach((c) => { cAdd[c.code] = c.added; });
+        const minC = Math.min(...Object.values(cAdd), Infinity);
+        realInsts(m.institutions).filter((i) => { const cc = ic[i.id], own = cc ? (cc in cAdd ? cAdd[cc] : minC) : lim; return i.added > 0 && i.added <= Math.min(lim, own); }).slice(0, 5).forEach((i) => items.push(tk(i.name, "▲ +" + fmt(i.added)))); }
       // two copies so the scroll loops seamlessly
       [0, 1].forEach((copy) => items.forEach((n) => { const x = n.cloneNode(true); if (copy) x.setAttribute("aria-hidden", "true"); track.appendChild(x); }));
     }

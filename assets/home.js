@@ -1,6 +1,9 @@
 /* ResearchBoard homepage — market ticker, world map, summary, previews, trend */
 (function () {
   "use strict";
+  // government parent bodies (e.g. "State Council of the People's Republic of China") gather every institute's papers; leave them out
+  const GOV_RE = /^(State Council of|United States Department of|U\.?S\.? Department of|Department of |Ministry |Ministère|Ministerio|Ministério|Office of Science$|Government of|National Health Service$|Federal Ministry)/i;
+  const realInsts = (a) => (a || []).filter((x) => !GOV_RE.test((x.name || "").trim()));
 
   const S = { history: null, latest: null, day: null, metric: "papers", range: 30, chart: null, world: null };
   const $ = (s) => document.querySelector(s);
@@ -110,7 +113,10 @@
       if (m.pubmed_yesterday) items.push(tk("PubMed records added", "▲ +" + fmt(m.pubmed_yesterday), null, true));
       if (m.countries_active) items.push(tk("Countries contributing", fmt(m.countries_active), null, true));
       (m.countries || []).slice(0, 10).forEach((c) => items.push(tk(countryName(c.code), "▲ +" + fmt(c.added), c.code)));
-      (m.institutions || []).slice(0, 5).forEach((i) => items.push(tk(i.name, "▲ +" + fmt(i.added))));
+      { const topC = Math.max(0, ...(m.countries || []).map((c) => c.added)), lim = Math.min(topC, 0.25 * Math.max(m.papers_added || 0, 1));
+        const ic = (S.latest && S.latest.inst_country) || {}, cAdd = {}; (m.countries || []).forEach((c) => { cAdd[c.code] = c.added; });
+        const minC = Math.min(...Object.values(cAdd), Infinity);
+        realInsts(m.institutions).filter((i) => { const cc = ic[i.id], own = cc ? (cc in cAdd ? cAdd[cc] : minC) : lim; return i.added > 0 && i.added <= Math.min(lim, own); }).slice(0, 5).forEach((i) => items.push(tk(i.name, "▲ +" + fmt(i.added)))); }
       [0, 1].forEach((copy) => items.forEach((n) => { const x = n.cloneNode(true); if (copy) x.setAttribute("aria-hidden", "true"); track.appendChild(x); }));
     }
     const ld = S.latest.latest_day;
@@ -150,7 +156,7 @@
       const left = el("span"); left.append(flag(c.code), `${k + 1}. ${c.name}`);
       a.append(left, el("b", null, fmt(c.count))); t3.appendChild(a);
     });
-    const inst = (r.institutions || [])[0], field = (r.fields || [])[0];
+    const inst = realInsts(r.institutions)[0], field = (r.fields || [])[0];
     const p = $("#sumText"); p.replaceChildren();
     if (inst) { p.append("Most active institution: "); p.appendChild(el("b", null, inst.name)); p.append(` (${fmt(inst.count)} papers). `); }
     if (field) { p.append("Leading field: "); p.appendChild(el("b", null, field.name)); p.append(` (${fmt(field.count)} papers).`); }
@@ -242,7 +248,7 @@
     const ic = L.inst_country || {};
     box.append(
       card("🌍", "Top countries", countries(S.day).slice(0, 5).map((c) => ({ name: c.name, code: c.code, value: c.count, href: "country/" + slug(c.name) + ".html" })), "See all countries", "country/"),
-      card("🏛️", "Top universities", (r.institutions || []).slice(0, 5).map((x) => ({ name: x.name, code: ic[x.id], value: x.count, href: "explore/?id=" + encodeURIComponent(x.id) })), "See all universities", "universities/"),
+      card("🏛️", "Top universities", realInsts(r.institutions).slice(0, 5).map((x) => ({ name: x.name, code: ic[x.id], value: x.count, href: "explore/?id=" + encodeURIComponent(x.id) })), "See all universities", "universities/"),
       card("📚", "Top journals", (r.journals || []).slice(0, 5).map((x) => ({ name: x.name, value: x.count })), "See all journals", "journals/"),
       card("🔬", "Research fields", (r.fields || []).slice(0, 5).map((x) => ({ name: x.name, value: x.count })), "See all fields", "fields/", { bars: true }),
       card("📄", "Most-cited new papers", (L.hot_papers || []).slice(0, 5).map((p) => ({ name: p.title, value: p.citations, href: p.doi || "https://openalex.org/" + p.id, ext: true })), "See all papers", "papers/", { badge: "last 2 years" }),
