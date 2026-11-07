@@ -244,15 +244,16 @@ def compose_spotlight(when: dt.date | None = None, theme: str | None = None) -> 
         unit = " papers" if info["unit"] == "papers" else (" citations" if info["unit"] == "citations" and not val.startswith("+") else "")
         more = f" ({extra})" if extra and info["unit"] == "growth" else ""
         lines.append(f"{medals[i]} {name} — {val}{unit}{more}")
-    lines += ["", f"See the full rankings and search any country or university 👉 {info['url']}", "",
+    lines += ["", f"See the full rankings and search any country or university 👉 {info['url']}",
+              "📊 Data: OpenAlex (openalex.org), the open catalog of the world's research, counted by ResearchBoard.", "",
               " ".join(["#Research", "#Science"] + [t for t in info["tags"] if t] + ["#ResearchBoard"])]
     short = [info["intro"][:110]]
     for i, (badge, name, val, *_r) in enumerate(info["rows"][:3]):
         short.append(f"{medals[i]} {name if len(name) <= 42 else name[:40].rsplit(' ', 1)[0] + '…'} — {val}")
-    short += [f"More: {info['url'].split('://', 1)[-1]}", "#Science #Research"]
+    short += [f"More: {info['url'].split('://', 1)[-1]}", "Data: OpenAlex", "#Science #Research"]
     sh = "\n".join(short)
-    while len(sh) > 295 and len(short) > 3:
-        short.pop(-3); sh = "\n".join(short)
+    while len(sh) > 295 and len(short) > 4:
+        short.pop(-4); sh = "\n".join(short)
     rel = path.relative_to(ROOT / "posts" / "images")
     return {"day": f"{when.isoformat()}-{theme}", "text": "\n".join(lines), "short": sh, "url": info["url"],
             "title": info["title"], "card_path": path, "card_url": f"{SITE}/blog/images/{rel.as_posix()}"}

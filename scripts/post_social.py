@@ -127,14 +127,16 @@ def compose() -> dict | None:
     if inst:
         lines += ["", f"Most active institution: {inst[0]['name']} ({inst[0]['count']:,} papers)"]
     url = f"{SITE}/blog/daily-{day}.html"
-    lines += ["", f"Full daily report 👉 {url}", "", "#Research #Science #OpenScience #Bibliometrics #PubMed #ResearchBoard"]
+    lines += ["", f"Full daily report 👉 {url}",
+              "📊 Data: OpenAlex (openalex.org) for papers, citations and institutions, and PubMed (US National Library of Medicine), counted by ResearchBoard.",
+              "", "#Research #Science #OpenScience #Bibliometrics #PubMed #ResearchBoard"]
     card = ROOT / "posts" / "images" / "cards" / f"daily-{day}.png"
     short = [f"📊 Research Report: {d:%a}, {d:%b} {d.day}, {d.year} — fully counted",
              f"📄 {f(rec.get('papers'))} papers · 🌍 {f(rec.get('countries_active'))} countries",
              f"🧬 {f(rec.get('pubmed_added'))} PubMed · 🔗 {f(rec.get('citations_made'))} citations"]
     if top:
         short.append(" ".join(f"{medals[i]} {names.get(c, c)}" for i, (c, _) in enumerate(top)))
-    short += [f"Report: {url.split('://', 1)[-1]}", "#Science #Research"]
+    short += [f"Report: {url.split('://', 1)[-1]}", "Data: OpenAlex & PubMed", "#Science #Research"]
     return {"day": day, "text": "\n".join(lines), "url": url, "short": "\n".join(short),
             "title": f"Research Report: {d:%A}, {d:%B} {d.day}, {d.year} — fully counted",
             "card_path": card if card.exists() else None,
@@ -163,7 +165,9 @@ def compose_market() -> dict | None:
     inst = (m.get("institutions") or [])[:1]
     if inst:
         lines += ["", f"🏛️ Top institution: {inst[0]['name']} +{inst[0]['added']:,}"]
-    lines += ["", f"Live dashboard 👉 {SITE}", "", "#Research #Science #OpenScience #ResearchTrends #ResearchBoard"]
+    lines += ["", f"Live dashboard 👉 {SITE}",
+              "📊 Data: OpenAlex (openalex.org) and PubMed (US National Library of Medicine), counted by ResearchBoard.",
+              "", "#Research #Science #OpenScience #ResearchTrends #ResearchBoard"]
     day = t1.date().isoformat()
     card = ROOT / "posts" / "images" / "cards" / f"market-{day}.png"
     short = [f"📈 Research trends — {span}", f"▲ +{m['papers_added']:,} new papers added"]
@@ -171,7 +175,7 @@ def compose_market() -> dict | None:
         short.append(f"🧬 +{m['pubmed_yesterday']:,} PubMed records")
     if movers:
         short.append("Top: " + " · ".join(f"{names.get(c['code'], c['code'])} +{c['added']:,}" for c in movers[:3]))
-    short += [f"Live: {SITE.split('://', 1)[-1]}", "#Science #Research"]
+    short += [f"Live: {SITE.split('://', 1)[-1]}", "Data: OpenAlex & PubMed", "#Science #Research"]
     return {"day": day, "text": "\n".join(lines), "url": SITE + "/", "short": "\n".join(short),
             "title": f"Research trends — {span} to {t1:%b} {t1.day}",
             "card_path": card if card.exists() else None,
