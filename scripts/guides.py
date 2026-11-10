@@ -408,10 +408,10 @@ Open the full pages for [{cell(na)}](../country/{slugify(na)}.html) and [{cell(n
         if len(up) >= 5:
             rows = "\n".join(f"| {i} | {ctry(c)} | {v:,} | +{g * 100:.0f}% |" for i, (c, v, g) in enumerate(up, 1))
             write(f"fastest-growing-research-countries",
-                  f"Fastest-growing research countries right now ({year})",
+                  f"Rising research countries right now ({year})",
                   f"{names.get(up[0][0], up[0][0])} grew its share of world research the most in the last two weeks. Top 20 rising countries, updated daily.",
                   "data guide, countries, growth", day, f"""
-**{names.get(up[0][0], up[0][0])} is the fastest-growing research country right now**: its share of the world's new papers rose {up[0][2] * 100:.0f}% in the last two weeks compared with the two weeks before.
+**{names.get(up[0][0], up[0][0])} is the top rising research country right now**: its share of the world's new papers rose {up[0][2] * 100:.0f}% in the last two weeks compared with the two weeks before.
 
 {upd}
 
