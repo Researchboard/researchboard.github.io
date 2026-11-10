@@ -44,6 +44,12 @@ def span_label(keys: list[str]) -> str:
     return f"{a:%b} {a.day} – {b:%b} {b.day}, {b.year}" if a.month != b.month else f"{a:%b} {a.day}–{b.day}, {b.year}"
 
 
+def span_short(keys: list[str]) -> str:
+    """'Oct 28 – Nov 3' (no year) for card titles."""
+    a, b = dt.date.fromisoformat(keys[0]), dt.date.fromisoformat(keys[-1])
+    return f"{a:%b} {a.day} – {b:%b} {b.day}" if a.month != b.month else f"{a:%b} {a.day}–{b.day}"
+
+
 def latin(text: str) -> bool:
     return all(ord(ch) < 0x0250 or 0x2000 <= ord(ch) < 0x2070 for ch in text)
 
@@ -79,9 +85,9 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
         if theme == "countries":
             top = sorted(tot.items(), key=lambda kv: -kv[1])[:10]
             rows = [(c, names.get(c, c), f"{n:,}", n, "") for c, n in top]
-            return dict(kicker="WEEKLY LEADERBOARD · COUNTRIES", title="Top 10 research countries this week",
+            return dict(kicker="WEEKLY LEADERBOARD · COUNTRIES", title=f"Top 10 research countries, {span_short(wk)}",
                         sub=f"Papers published · {span_label(wk)}", rows=rows, url=f"{SITE}/country/",
-                        intro=f"🌍 Which countries published the most research this week? ({span_label(wk)})",
+                        intro=f"🌍 Which countries published the most research from {span_label(wk)}?",
                         unit="papers", tags=[tag(names.get(c, c)) for c, *_ in top[:4]])
         if not prev:
             return None
@@ -101,10 +107,10 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
                         "for example a big conference, so it may not last")
                 card_note = f"{names.get(c, c)}: {n:,} papers on {kd:%b} {kd.day} alone (e.g. a big conference), so this rise may not last"
                 break
-        return dict(note=note, card_note=card_note, kicker="RISING COUNTRIES · WEEK ON WEEK", title="This week’s rising countries",
-                    sub=f"Growth in share of world papers · {span_label(wk)} vs the week before (150+ papers)", rows=rows,
+        return dict(note=note, card_note=card_note, kicker="RISING COUNTRIES · WEEK ON WEEK", title=f"Rising countries, {span_short(wk)}",
+                    sub=f"Growth in share of world papers · {span_label(wk)} vs the 7 days before (150+ papers)", rows=rows,
                     url=f"{SITE}/country/", unit="growth",
-                    intro=f"🚀 Which countries grew their share of world research the most this week? ({span_label(wk)} vs the previous 7 days)",
+                    intro=f"🚀 Which countries grew their share of world research the most from {span_label(wk)}, compared with the 7 days before?",
                     tags=[tag(r[1]) for r in rows[:4]])
 
     if theme == "universities":
@@ -133,9 +139,9 @@ def build(theme: str, hist: dict, latest: dict) -> dict | None:
         if not top:
             return None
         rows = [("", nm[i], f"{n:,}", n, "") for i, n in top]
-        return dict(kicker="WEEKLY LEADERBOARD · JOURNALS", title="Top 10 journals this week",
+        return dict(kicker="WEEKLY LEADERBOARD · JOURNALS", title=f"Top 10 journals, {span_short(wk)}",
                     sub=f"Papers published · {span_label(wk)}", rows=rows, url=f"{SITE}/journals/", unit="papers",
-                    intro=f"📚 Which journals published the most papers this week? ({span_label(wk)})",
+                    intro=f"📚 Which journals published the most papers from {span_label(wk)}?",
                     tags=["#Journals", "#Publishing", "#AcademicPublishing"])
 
     if theme == "fields":
