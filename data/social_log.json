@@ -81,10 +81,10 @@
   "2026-11-16-rising",
   "2026-11-16-fields",
   "2026-11-17-scientists",
-  "2026-11-17-countries"
+  "2026-11-17-countries",
+  "2026-11-17-universities"
  ],
  "linkedin_spotlight": [
-  "2026-10-28-journals",
   "2026-10-28-rising",
   "2026-10-29-fields",
   "2026-10-29-scientists",
@@ -143,10 +143,10 @@
   "2026-11-16-rising",
   "2026-11-16-fields",
   "2026-11-17-scientists",
-  "2026-11-17-countries"
+  "2026-11-17-countries",
+  "2026-11-17-universities"
  ],
  "bluesky_spotlight": [
-  "2026-10-28-journals",
   "2026-10-28-rising",
   "2026-10-29-fields",
   "2026-10-29-scientists",
@@ -205,7 +205,8 @@
   "2026-11-16-rising",
   "2026-11-16-fields",
   "2026-11-17-scientists",
-  "2026-11-17-countries"
+  "2026-11-17-countries",
+  "2026-11-17-universities"
  ],
  "bluesky": [
   "2026-10-24",
