@@ -110,7 +110,8 @@
   "2026-11-22-countries",
   "2026-11-22-papers",
   "2026-11-23-journals",
-  "2026-11-23-rising"
+  "2026-11-23-rising",
+  "2026-11-23-fields"
  ],
  "linkedin_spotlight": [
   "2026-11-02-fields",
@@ -175,7 +176,6 @@
   "2026-11-23-journals"
  ],
  "bluesky_spotlight": [
-  "2026-11-02-fields",
   "2026-11-03-scientists",
   "2026-11-03-countries",
   "2026-11-03-universities",
@@ -234,7 +234,8 @@
   "2026-11-22-countries",
   "2026-11-22-papers",
   "2026-11-23-journals",
-  "2026-11-23-rising"
+  "2026-11-23-rising",
+  "2026-11-23-fields"
  ],
  "bluesky": [
   "2026-10-24",
