@@ -1,5 +1,5 @@
 {
- "checked": "2026-10-30",
+ "checked": "2026-11-27",
  "results": [
   {
    "id": "sisgp",
@@ -54,7 +54,7 @@
   {
    "id": "csc",
    "url": "https://www.campuschina.org/",
-   "status": 0
+   "status": 412
   },
   {
    "id": "aus",
